@@ -87,7 +87,8 @@ fun PosterCard(
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text(meta.name, color = TextPrimary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // Two lines, so that a long name stays readable and the cards stay level.
+        Text(meta.name, color = TextPrimary, fontSize = 13.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 17.sp)
         if (caption != null) {
             Text(caption, color = TextSecondary, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
