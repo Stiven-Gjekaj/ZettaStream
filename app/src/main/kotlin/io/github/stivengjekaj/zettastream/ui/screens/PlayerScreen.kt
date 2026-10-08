@@ -90,6 +90,8 @@ private const val SEEK_STEP = 10_000L
 private const val SEEK_FAST = 30_000L
 private const val CONFIRM_WINDOW = 3_000L
 private const val COUNTDOWN = 10_000L
+/** A key held this long is a long press, also on a remote that does not mark long presses. */
+private const val LONG_PRESS_MS = 500L
 
 fun subtitleMime(sub: Subtitle): String {
     val path = sub.url.substringBefore('?').lowercase()
@@ -179,6 +181,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var prompt by remember { mutableStateOf<String?>(null) }
     var torrentText by remember { mutableStateOf<String?>(null) }
     var optionsOpen by remember { mutableStateOf(false) }
+    var okHeld by remember { mutableStateOf(false) }
     var skips by remember { mutableStateOf(emptyList<SkipRange>()) }
     val autoSkipped = remember { mutableSetOf<Long>() }
     var countdownEnds by remember { mutableStateOf<Long?>(null) }
@@ -466,6 +469,12 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 { cycle(SubtitleEdge.entries, viewer.subtitleEdge, -1) { v, x -> v.copy(subtitleEdge = x) } },
                 { cycle(SubtitleEdge.entries, viewer.subtitleEdge, 1) { v, x -> v.copy(subtitleEdge = x) } }),
         )
+        when (playback) {
+            is VideoPlayback -> if (playback.episodes.size > 1) {
+                rows += OptionRow("Episode", "Previous  /  Next", { optionsOpen = false; changeEpisode(-1) }, { optionsOpen = false; changeEpisode(1) })
+            }
+            is LivePlayback -> rows += OptionRow("Channel", "Previous  /  Next", { changeEpisode(-1) }, { changeEpisode(1) })
+        }
         if (playback is VideoPlayback) {
             rows += OptionRow("Speed", if (speed == 1f) "Normal" else "${speed}x", { setSpeed(-1) }, { setSpeed(1) })
             rows += OptionRow("Source", "Choose another source", onSelect = { saveProgress(); app.back {} })
@@ -476,6 +485,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     /** Keys for the options panel while it is open. */
     fun onOptionsKey(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return true
+        // A held OK repeats. Only its first press counts, so that the long press that opened the panel does not select.
+        val center = event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER
+        if (center && event.repeatCount > 0) return true
         val rows = optionRows()
         when (event.keyCode) {
             KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_0 -> optionsOpen = false
@@ -501,19 +513,39 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         if (countdownEnds != null && event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                    // The key comes up later. Mark it as used, so that it does not also pause.
+                    okHeld = true
                     countdownEnds = System.currentTimeMillis(); return true
                 }
                 KeyEvent.KEYCODE_BACK -> { countdownEnds = null; countdownCancelled = true; return true }
             }
         }
         if (event.keyCode == KeyEvent.KEYCODE_BACK) return false
+        val isOk = event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER ||
+            event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+        // OK acts when the key comes up, so that holding it can open the options instead.
+        // A remote with no Menu key reaches the options this way.
+        if (isOk) {
+            when {
+                event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 -> okHeld = false
+                event.action == KeyEvent.ACTION_DOWN && !okHeld &&
+                    (event.isLongPress || event.eventTime - event.downTime >= LONG_PRESS_MS) -> {
+                    okHeld = true
+                    optionsRow = 0
+                    optionsOpen = true
+                }
+                event.action == KeyEvent.ACTION_UP && !okHeld -> {
+                    // While a skip prompt shows, OK skips, as on the large streaming services.
+                    if (Skip.current(skips, player.currentPosition) != null) skip()
+                    else if (player.isPlaying) player.pause() else player.play()
+                    show()
+                }
+            }
+            return true
+        }
         if (event.action != KeyEvent.ACTION_DOWN) return true
         val isLive = playback is LivePlayback
         when (event.keyCode) {
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
-                if (event.repeatCount == 0) { if (player.isPlaying) player.pause() else player.play() }
-                show(); return true
-            }
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MEDIA_REWIND -> {
                 if (!isLive) player.seekTo((player.currentPosition - if (event.repeatCount > 0) SEEK_FAST else SEEK_STEP).coerceAtLeast(0))
                 show(); return true
@@ -630,8 +662,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 }
                 if (app.isTv) {
                     Text(
-                        if (playback is LivePlayback) "Channel up and down: change channel   Menu: options"
-                        else "OK: pause   Left and Right: 10 s   1 to 9: jump   Text: skip intro   Menu: options",
+                        if (playback is LivePlayback) "Channel up and down: change channel   Hold OK or Menu: options"
+                        else "OK: pause   Left and Right: 10 s   1 to 9: jump   Hold OK or Menu: options",
                         color = TextSecondary, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp),
                     )
                 }
@@ -649,7 +681,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         } else Skip.current(skips, position)?.let { range ->
             val label = when (range.kind) { SkipKind.Opening -> "Skip intro"; SkipKind.Ending -> "Skip ending"; SkipKind.Recap -> "Skip recap" }
             Text(
-                if (app.isTv) "$label: press Text" else label,
+                if (app.isTv) "$label: press OK" else label,
                 color = OnAccent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 48.dp, bottom = 140.dp)
                     .clip(Corner).background(Accent).clickable { skip() }.padding(horizontal = 18.dp, vertical = 10.dp),

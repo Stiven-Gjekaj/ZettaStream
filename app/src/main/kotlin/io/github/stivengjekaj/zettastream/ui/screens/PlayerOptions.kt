@@ -94,7 +94,7 @@ fun PlayerOptionsPanel(rows: List<OptionRow>, focused: Int, modifier: Modifier =
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text("Options", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text("Up and Down: choose. Left and Right: change. Back: close.", color = TextSecondary, fontSize = 12.sp)
+        Text("Up and Down: choose. Left and Right: change. OK: select. Back: close.", color = TextSecondary, fontSize = 12.sp)
         Spacer(Modifier.padding(4.dp))
         // A list that scrolls, so that each row can come into view on a small screen.
         val list = rememberLazyListState()
