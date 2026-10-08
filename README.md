@@ -58,14 +58,16 @@ tab bar and touch controls.
 ### Watching
 
 - Rows of posters from the catalogs of each addon
-- Streams from all addons at the same time, grouped by addon
+- Streams from all addons at the same time, with badges for quality, HDR,
+  and dual audio, and torrents sorted by seeders
 - Torrent streams, played while they download, with no seeding after
 - Seasons and episodes, with the next episode to watch
+- A countdown to the next episode, from the same source and quality
 - Continue watching, a watchlist, and watched marks, on the device only
 - Subtitles from the stream and from subtitle addons
 - Change the subtitle and the audio track with one button
 - Viewer settings: subtitles, languages, subtitle size, next episode
-- An options panel in the player: Menu or `0`
+- An options panel in the player: Menu, `0`, or hold OK
 - Skip the intro of an anime episode at the exact second, from AniSkip
 - Subtitles from OpenSubtitles when no subtitle addon is in your list
 - Live TV from M3U playlists, with now and next from an XMLTV guide
@@ -75,7 +77,10 @@ tab bar and touch controls.
 
 ### Made for a TV
 
-- A side menu that stays hidden until you press Menu or `0`
+- A side menu that stays hidden until you press Menu or `0`, or select the
+  Menu button at the top
+- Works with a game controller or a keyboard
+- Turn each home row on or off, with new releases first
 - Number buttons go straight to each screen
 - Colour buttons for the watchlist, watched, sources, and filters
 - Channel buttons for the next episode or the next channel
@@ -159,6 +164,7 @@ torrent addon's settings also changes its torrents into HTTP links.
 | Directions, OK | Move, select | Left and Right: back or forward 10 s. OK: pause |
 | Back | Go back. Close the menu | Leave the player |
 | Menu, `0` | Open or close the menu | Open or close the options |
+| Hold OK | | Open the options |
 | `1` to `5` | Home, Search, Library, Settings, Live TV | `1` to `9`: go to 10% to 90% |
 | Info | Open the focused title | Show the title and the time |
 | Guide | Live TV | |
@@ -170,6 +176,14 @@ torrent addon's settings also changes its torrents into HTTP links.
 | Subtitles | | Next subtitle track |
 | Language | | Next audio track |
 | Text | | Skip the intro, ending, or recap (anime). Otherwise jump 85 s |
+| OK at a prompt | | Skip the part, or play the next episode now |
+
+A remote with no Menu key and no number keys can still do each action. Press
+Up to reach the Menu button at the top of the screen. In the player, hold OK
+for the options, which also change the episode or the channel.
+
+A game controller and a keyboard also work. A or Enter is OK. B or Escape is
+Back. Start, X, or Tab is Menu. Y is Info. L1 and R1 are Channel down and up.
 
 Some TVs keep a button for themselves. Settings, Remote control test shows
 each button that reaches the app.
