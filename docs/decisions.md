@@ -286,3 +286,13 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   comes back at once.
 - A card follows the image shape that the addon gives: poster, landscape, or
   square.
+
+## 2026-10-08: Player options and subtitles
+
+- In the player, Menu or `0` opens an options panel. It changes the
+  subtitles, the audio track, the subtitle size, the speed, and the source.
+- Subtitles come from the stream itself and from each subtitle addon in the
+  list. When no addon in the list gives subtitles for a video, the app asks
+  the official OpenSubtitles addon of Stremio. It is free and needs no key.
+- Subtitle tracks show the language name. Two tracks in one language show a
+  number, for example "English 1" and "English 2".
