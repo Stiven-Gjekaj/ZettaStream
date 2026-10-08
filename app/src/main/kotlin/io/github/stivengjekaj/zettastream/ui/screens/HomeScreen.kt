@@ -61,7 +61,8 @@ fun HomeScreen(app: AppState) {
     val library by c.library.data.collectAsState()
     val rows = remember(addonState) { c.addons.homeRows() }
     val types = remember(addonState) { c.addons.types() }
-    val shown = rows.filter { (app.homeFilter == null || typeKey(it.catalog.type) == app.homeFilter) }
+    val viewer by c.settings.settings.collectAsState()
+    val shown = rows.filter { (app.homeFilter == null || typeKey(it.catalog.type) == app.homeFilter) && it.key !in viewer.hiddenRows }
     val resume = remember(library) { Library.continueWatching(library) }
     val latest = app.latestVersion
 

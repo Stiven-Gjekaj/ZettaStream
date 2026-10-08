@@ -47,6 +47,7 @@ import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.TvSideMenu
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.screens.DetailScreen
+import io.github.stivengjekaj.zettastream.ui.screens.HomeRowsScreen
 import io.github.stivengjekaj.zettastream.ui.screens.HomeScreen
 import io.github.stivengjekaj.zettastream.ui.screens.KeyTestScreen
 import io.github.stivengjekaj.zettastream.ui.screens.LibraryScreen
@@ -164,6 +165,7 @@ private fun Content(app: AppState, screen: Screen) {
         Screen.Settings -> SettingsScreen(app)
         Screen.Sources -> SourcesScreen(app)
         Screen.KeyTest -> KeyTestScreen(app)
+        Screen.HomeRows -> HomeRowsScreen(app)
         is Screen.Detail -> DetailScreen(app, screen.preview)
         is Screen.Streams -> StreamsScreen(app, screen)
         is Screen.Player -> PlayerScreen(app, screen.playback)

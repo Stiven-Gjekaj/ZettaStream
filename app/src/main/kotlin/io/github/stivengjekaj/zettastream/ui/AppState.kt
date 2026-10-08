@@ -77,6 +77,7 @@ sealed interface Screen {
     data class Player(val playback: Playback) : Screen
     data object Sources : Screen
     data object KeyTest : Screen
+    data object HomeRows : Screen
 
     /**
      * A `when` and not a list: a list in the companion object can hold null

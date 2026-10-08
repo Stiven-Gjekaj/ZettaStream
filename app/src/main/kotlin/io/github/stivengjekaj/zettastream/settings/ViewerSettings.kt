@@ -47,6 +47,8 @@ data class ViewerSettings(
     val directFirst: Boolean = false,
     val torrentUpload: Boolean = false,
     val vpnNotice: Boolean = true,
+    /** The keys of the home rows that the viewer turned off. */
+    val hiddenRows: Set<String> = emptySet(),
 )
 
 /** Keeps the viewer settings in the private storage of the app. */

@@ -95,6 +95,7 @@ fun SettingsScreen(app: AppState) {
                 tv,
             ) { app.open(Screen.Sources) }
         }
+        item { SettingsRow("Home rows", "${viewer.hiddenRows.size} rows off. Turn each row of the home screen off or on.", tv) { app.open(Screen.HomeRows) } }
         item { Section("Viewing", tv) }
         item { SettingsRow("Subtitles", "${onOff(viewer.subtitlesOn)}. The Subtitles button changes them while you watch.", tv) { set { it.copy(subtitlesOn = !it.subtitlesOn) } } }
         item {
