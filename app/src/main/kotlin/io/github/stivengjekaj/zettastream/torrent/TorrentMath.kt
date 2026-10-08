@@ -32,14 +32,45 @@ object TorrentMath {
     }
 
     /**
-     * Selects the file to play: the index that the addon gave when it is a
-     * video, otherwise the largest video file, otherwise the largest file.
+     * Selects the file to play, in this order: the index that the addon gave
+     * when it is a video, the file with the name that the addon gave, the
+     * video with the episode number in its name, and the largest video.
+     * A season pack often has no index, so the name and the episode matter.
      */
-    fun chooseFile(names: List<String>, sizes: List<Long>, preferred: Int?): Int {
+    fun chooseFile(
+        names: List<String>,
+        sizes: List<Long>,
+        preferred: Int?,
+        filename: String? = null,
+        season: Int? = null,
+        episode: Int? = null,
+    ): Int {
         if (names.isEmpty()) return -1
         if (preferred != null && preferred in names.indices && isVideo(names[preferred])) return preferred
         val videos = names.indices.filter { isVideo(names[it]) }
+        if (filename != null) {
+            val wanted = filename.substringAfterLast('/').lowercase()
+            videos.firstOrNull { names[it].substringAfterLast('/').lowercase() == wanted }?.let { return it }
+        }
+        if (episode != null) {
+            val matches = videos.filter { matchesEpisode(names[it], season, episode) }
+            if (matches.isNotEmpty()) return matches.maxBy { sizes[it] }
+        }
         return (videos.ifEmpty { names.indices.toList() }).maxBy { sizes[it] }
+    }
+
+    /** Finds S01E02, 1x02, or " - 02" (the anime form) in a file name. */
+    fun matchesEpisode(name: String, season: Int?, episode: Int): Boolean {
+        val n = name.substringAfterLast('/')
+        val e = "0*$episode"
+        val patterns = buildList {
+            if (season != null) {
+                add(Regex("""(?i)s0*${season}[ ._-]*e$e(?!\d)"""))
+                add(Regex("""(?i)(?<!\d)0*${season}x$e(?!\d)"""))
+            }
+            add(Regex("""(?i)(?:\s-\s|\be|\bep\.?\s?|episode\s)$e(?!\d)"""))
+        }
+        return patterns.any { it.containsMatchIn(n) }
     }
 
     fun isVideo(name: String): Boolean = name.substringAfterLast('.', "").lowercase() in VideoExtensions

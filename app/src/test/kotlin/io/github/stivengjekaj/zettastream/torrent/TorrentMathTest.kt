@@ -38,6 +38,23 @@ class TorrentMathTest {
     }
 
     @Test
+    fun inASeasonPackTheFileNameOfTheAddonComesFirst() {
+        val names = listOf("Pack/Show.S01E01.mkv", "Pack/Show.S01E02.mkv", "Pack/Show.S01E03.mkv")
+        val sizes = listOf(900L, 800L, 1000L)
+        assertEquals(1, TorrentMath.chooseFile(names, sizes, null, filename = "Show.S01E02.mkv"))
+    }
+
+    @Test
+    fun inASeasonPackTheEpisodeNumberComesNext() {
+        val names = listOf("Show.S01E01.mkv", "Show.S01E02.mkv", "Show.S01E12.mkv", "Show.S02E02.mkv")
+        val sizes = listOf(900L, 800L, 1000L, 1200L)
+        assertEquals(1, TorrentMath.chooseFile(names, sizes, null, season = 1, episode = 2))
+        val anime = listOf("[Group] Show - 01 [1080p].mkv", "[Group] Show - 05 [1080p].mkv", "[Group] Show - 15 [1080p].mkv")
+        assertEquals(1, TorrentMath.chooseFile(anime, listOf(1L, 1L, 2L), null, episode = 5))
+        assertEquals(1, TorrentMath.chooseFile(listOf("a.1x01.mp4", "a.1x02.mp4"), listOf(5L, 1L), null, season = 1, episode = 2))
+    }
+
+    @Test
     fun withNoVideoTheLargestFileIsTheChoice() {
         assertEquals(0, TorrentMath.chooseFile(listOf("a.bin", "b.txt"), listOf(10L, 1L), null))
         assertEquals(-1, TorrentMath.chooseFile(emptyList(), emptyList(), null))

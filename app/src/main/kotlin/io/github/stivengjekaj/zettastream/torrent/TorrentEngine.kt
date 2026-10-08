@@ -70,7 +70,15 @@ class TorrentEngine(
      * Gets the metadata of the torrent, starts the download of one file, and
      * gives the local URL of that file. This can take up to a minute.
      */
-    suspend fun open(infoHash: String, sources: List<String>, fileIdx: Int?, name: String?): String = withContext(Dispatchers.IO) {
+    suspend fun open(
+        infoHash: String,
+        sources: List<String>,
+        fileIdx: Int?,
+        name: String?,
+        filename: String? = null,
+        season: Int? = null,
+        episode: Int? = null,
+    ): String = withContext(Dispatchers.IO) {
         val hash = infoHash.lowercase()
         open[hash]?.let { return@withContext server.url(hash, it) }
         val session = session()
@@ -81,7 +89,7 @@ class TorrentEngine(
         val files = info.files()
         val names = (0 until files.numFiles()).map { files.fileName(it) }
         val sizes = (0 until files.numFiles()).map { files.fileSize(it) }
-        val index = TorrentMath.chooseFile(names, sizes, fileIdx)
+        val index = TorrentMath.chooseFile(names, sizes, fileIdx, filename, season, episode)
         if (index < 0) throw IOException("The torrent has no file")
         val priorities = Array(files.numFiles()) { if (it == index) Priority.TOP_PRIORITY else Priority.IGNORE }
         session.download(info, dir, null, priorities, null, TorrentFlags.SEQUENTIAL_DOWNLOAD)

@@ -36,10 +36,30 @@ data class VideoPlayback(
     val torrent: TorrentSource? = null,
 ) : Playback
 
-data class TorrentSource(val infoHash: String, val fileIdx: Int?, val sources: List<String>, val name: String?)
+data class TorrentSource(
+    val infoHash: String,
+    val fileIdx: Int?,
+    val sources: List<String>,
+    val name: String?,
+    val filename: String? = null,
+)
 
 fun Stream.torrentSource(): TorrentSource? =
-    if (isTorrent) TorrentSource(infoHash!!, fileIdx, sources, behaviorHints?.filename ?: title?.lineSequence()?.firstOrNull()) else null
+    if (isTorrent) {
+        TorrentSource(infoHash!!, fileIdx, sources, behaviorHints?.filename ?: title?.lineSequence()?.firstOrNull(), behaviorHints?.filename)
+    } else {
+        null
+    }
+
+/** Reads the season and the episode from a video ID such as `tt0903747:1:2` or `kitsu:1376:5`. */
+fun seasonEpisode(videoId: String): Pair<Int?, Int?> {
+    val parts = videoId.split(':')
+    return when {
+        parts.firstOrNull()?.startsWith("tt") == true && parts.size >= 3 -> parts[1].toIntOrNull() to parts[2].toIntOrNull()
+        parts.size >= 3 -> null to parts.last().toIntOrNull()
+        else -> null to null
+    }
+}
 
 data class LivePlayback(val channels: List<Channel>, val index: Int) : Playback
 

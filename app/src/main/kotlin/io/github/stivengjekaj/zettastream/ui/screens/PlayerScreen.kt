@@ -63,6 +63,7 @@ import io.github.stivengjekaj.zettastream.ui.LivePlayback
 import io.github.stivengjekaj.zettastream.ui.Playback
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.VideoPlayback
+import io.github.stivengjekaj.zettastream.ui.seasonEpisode
 import io.github.stivengjekaj.zettastream.ui.torrentSource
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
@@ -203,7 +204,10 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 } else {
                     // The engine first gets the torrent information from peers, then serves the file locally.
                     torrentText = "Finding peers for the torrent"
-                    val local = runCatching { c.torrents.open(torrent.infoHash, torrent.sources, torrent.fileIdx, torrent.name) }
+                    val (season, episode) = seasonEpisode(playback.videoId)
+                    val local = runCatching {
+                        c.torrents.open(torrent.infoHash, torrent.sources, torrent.fileIdx, torrent.name, torrent.filename, season, episode)
+                    }
                     local.onSuccess { load(it, emptyMap(), playback.subtitles, startAt) }
                         .onFailure { error = "This torrent does not start (${it.message}). Press Yellow or Back to choose another source." }
                 }
