@@ -68,7 +68,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
         if (!focused && playable.isNotEmpty()) { focused = runCatching { firstFocus.requestFocus() }.isSuccess }
     }
 
-    fun play(stream: Stream) {
+    fun play(stream: Stream, addonUrl: String) {
         app.open(
             Screen.Player(
                 VideoPlayback(
@@ -79,6 +79,9 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                     headers = stream.requestHeaders,
                     subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
                     episodes = screen.episodes,
+                    addonUrl = addonUrl,
+                    bingeGroup = stream.behaviorHints?.bingeGroup,
+                    streamName = stream.name,
                 ),
             ),
         )
@@ -139,7 +142,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                         .focusRing(shape, scaleTo = 1.02f)
                         .clip(shape)
                         .background(SurfaceHigh)
-                        .clickable { play(stream) }
+                        .clickable { play(stream, group.addon.manifestUrl) }
                         .padding(14.dp),
                 ) {
                     Text(stream.name?.replace('\n', ' ') ?: group.addon.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,

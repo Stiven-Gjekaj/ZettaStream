@@ -125,9 +125,25 @@ class AddonRepository(
         }
     }
 
+    /** Asks one addon for the playable streams of a video. Null when the addon is not installed. */
+    suspend fun streamsFrom(addonUrl: String, type: String, videoId: String): List<Stream>? {
+        val addon = state.value.addons.firstOrNull { it.manifestUrl == addonUrl } ?: return null
+        return runCatching { client.streams(addon, type, videoId) }.getOrDefault(emptyList()).filter { it.isPlayable }
+    }
+
     suspend fun subtitles(type: String, videoId: String): List<Subtitle> = coroutineScope {
         state.value.addons.filter { it.supports("subtitles", type, videoId) }.map { addon ->
             async { runCatching { client.subtitles(addon, type, videoId) }.getOrDefault(emptyList()) }
         }.awaitAll().flatten().distinctBy { it.url }
     }
 }
+
+/**
+ * Selects the stream of the next episode that comes from the same source as
+ * the current one. The addon marks streams of one source with a binge group.
+ * Without one, a stream with the same name is the best match.
+ */
+fun pickSameSource(streams: List<Stream>, bingeGroup: String?, streamName: String?): Stream? =
+    streams.firstOrNull { bingeGroup != null && it.behaviorHints?.bingeGroup == bingeGroup }
+        ?: streams.firstOrNull { streamName != null && it.name == streamName }
+        ?: streams.firstOrNull()

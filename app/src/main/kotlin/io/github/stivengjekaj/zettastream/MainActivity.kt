@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -104,7 +105,8 @@ private fun Root(app: AppState, finish: () -> Unit) {
     val fullScreen = screen is Screen.Player
     Box(Modifier.fillMaxSize().background(Background)) {
         Column(Modifier.fillMaxSize().then(if (fullScreen || app.isTv) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
-            Box(Modifier.weight(1f)) { Content(app, screen) }
+            // A new key for each screen, so that a player for the next episode starts fresh.
+            Box(Modifier.weight(1f)) { key(screen) { Content(app, screen) } }
             if (!app.isTv && screen.isTopLevel) PhoneTabBar(screen) { app.open(it) }
         }
         if (app.isTv && !fullScreen) {

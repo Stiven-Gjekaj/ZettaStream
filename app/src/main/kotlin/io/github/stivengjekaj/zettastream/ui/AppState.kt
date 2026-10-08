@@ -27,6 +27,10 @@ data class VideoPlayback(
     val headers: Map<String, String>,
     val subtitles: List<Subtitle>,
     val episodes: List<Video>,
+    /** The addon that gave the stream, so that the next episode can come from the same source. */
+    val addonUrl: String? = null,
+    val bingeGroup: String? = null,
+    val streamName: String? = null,
 ) : Playback
 
 data class LivePlayback(val channels: List<Channel>, val index: Int) : Playback
