@@ -35,7 +35,8 @@ class TorrentServer(private val scope: CoroutineScope) {
     @Synchronized
     private fun start(): Int {
         socket?.let { return it.localPort }
-        val server = ServerSocket(0, 16, InetAddress.getLoopbackAddress())
+        // The URL says 127.0.0.1, so bind that address. The loopback address can be ::1 on Android.
+        val server = ServerSocket(0, 16, InetAddress.getByName("127.0.0.1"))
         socket = server
         scope.launch(Dispatchers.IO) {
             while (isActive) {

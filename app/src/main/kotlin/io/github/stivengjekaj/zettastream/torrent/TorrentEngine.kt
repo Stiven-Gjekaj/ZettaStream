@@ -14,6 +14,7 @@ import org.libtorrent4j.Sha1Hash
 import org.libtorrent4j.TorrentFlags
 import org.libtorrent4j.TorrentHandle
 import org.libtorrent4j.TorrentInfo
+import org.libtorrent4j.swig.settings_pack
 import org.libtorrent4j.SessionHandle
 import java.io.File
 import java.io.IOException
@@ -58,9 +59,12 @@ class TorrentEngine(
     private fun settingsPack(): SettingsPack = SettingsPack()
         .connectionsLimit(200)
         .activeDownloads(4)
-        // libtorrent reads 0 as no limit, so 1 KB/s is the lowest upload limit.
+        // libtorrent reads 0 as no limit. A few KB/s keeps peers willing to send.
         .uploadRateLimit(if (settings.value.torrentUpload) 0 else MIN_UPLOAD)
         .seedingOutgoingConnections(false)
+        // Without this, the requests for pieces count against the upload limit,
+        // and a low limit stops the download too.
+        .setBoolean(settings_pack.bool_types.rate_limit_ip_overhead.swigValue(), false)
 
     /**
      * Gets the metadata of the torrent, starts the download of one file, and
@@ -109,7 +113,7 @@ class TorrentEngine(
     }
 
     companion object {
-        const val MIN_UPLOAD = 1024
+        const val MIN_UPLOAD = 4 * 1024
         const val METADATA_TIMEOUT = 60
 
         fun pathName(name: String): String = URLEncoder.encode(name, "UTF-8").replace("+", "%20")
