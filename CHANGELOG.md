@@ -24,6 +24,14 @@ newest one.
 - Shows the peers, the speed, and the progress while a torrent loads.
 - Asks the user to use a VPN at start. The app does not check for one.
 
+### Player
+
+- Menu or `0` in the player opens an options panel: subtitles, audio,
+  subtitle size, speed, and source.
+- Subtitle tracks show the language name, such as "English", and not a code.
+- When no subtitle addon is in the list, the app gets subtitles from
+  OpenSubtitles.
+
 ### Settings
 
 - Adds viewer settings: subtitles on or off, the subtitle language, the

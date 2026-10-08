@@ -65,6 +65,8 @@ tab bar and touch controls.
 - Subtitles from the stream and from subtitle addons
 - Change the subtitle and the audio track with one button
 - Viewer settings: subtitles, languages, subtitle size, next episode
+- An options panel in the player: Menu or `0`
+- Subtitles from OpenSubtitles when no subtitle addon is in your list
 - Live TV from M3U playlists, with now and next from an XMLTV guide
 
 </td>
@@ -152,7 +154,7 @@ torrent addon's settings also changes its torrents into HTTP links.
 | ------ | -------- | ------------- |
 | Directions, OK | Move, select | Left and Right: back or forward 10 s. OK: pause |
 | Back | Go back. Close the menu | Leave the player |
-| Menu, `0` | Open or close the menu | |
+| Menu, `0` | Open or close the menu | Open or close the options |
 | `1` to `5` | Home, Search, Library, Settings, Live TV | `1` to `9`: go to 10% to 90% |
 | Info | Open the focused title | Show the title and the time |
 | Guide | Live TV | |
