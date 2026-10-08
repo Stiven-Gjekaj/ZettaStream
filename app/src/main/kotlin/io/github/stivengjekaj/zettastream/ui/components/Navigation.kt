@@ -39,7 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -66,7 +66,7 @@ val NavItems = listOf(
 
 /** The side menu on the TV. It is hidden until the user opens it. */
 @Composable
-fun TvSideMenu(open: Boolean, current: Screen, onSelect: (Screen) -> Unit, onClose: () -> Unit) {
+fun TvSideMenu(open: Boolean, current: Screen, onSelect: (Screen) -> Unit) {
     AnimatedVisibility(open, enter = fadeIn(), exit = fadeOut()) {
         Box(
             Modifier.fillMaxSize().background(
@@ -76,28 +76,32 @@ fun TvSideMenu(open: Boolean, current: Screen, onSelect: (Screen) -> Unit, onClo
     }
     AnimatedVisibility(open, enter = slideInHorizontally { -it }, exit = slideOutHorizontally { -it }) {
         val selected = remember { FocusRequester() }
-        val hadFocus = remember { booleanArrayOf(false) }
+        val items = remember { List(NavItems.size) { FocusRequester() } }
         Column(
             Modifier
                 .fillMaxHeight()
                 .width(280.dp)
                 .background(Background.copy(alpha = 0.98f))
-                .padding(vertical = 48.dp, horizontal = 20.dp)
-                .onFocusChanged {
-                    // Close only after the menu had the focus and lost it.
-                    if (it.hasFocus) hadFocus[0] = true else if (hadFocus[0]) onClose()
-                },
+                .padding(vertical = 48.dp, horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text("ZettaStream", color = TextPrimary, fontSize = 26.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 12.dp, bottom = 24.dp))
-            NavItems.forEach { item ->
+            NavItems.forEachIndexed { index, item ->
                 val active = item.screen == current
                 val shape = Corner
                 Row(
                     Modifier
                         .fillMaxWidth()
+                        .focusRequester(items[index])
                         .then(if (active) Modifier.focusRequester(selected) else Modifier)
+                        // The focus stays in the menu. Only Back, Menu, or 0 closes it.
+                        .focusProperties {
+                            up = if (index > 0) items[index - 1] else FocusRequester.Cancel
+                            down = if (index < items.lastIndex) items[index + 1] else FocusRequester.Cancel
+                            left = FocusRequester.Cancel
+                            right = FocusRequester.Cancel
+                        }
                         .focusRing(shape, scaleTo = 1.03f)
                         .clip(shape)
                         .background(if (active) SurfaceHigh else Color.Transparent)
@@ -112,7 +116,7 @@ fun TvSideMenu(open: Boolean, current: Screen, onSelect: (Screen) -> Unit, onClo
                 }
             }
             Spacer(Modifier.weight(1f))
-            Text("Menu or 0: open and close", color = TextSecondary, fontSize = 13.sp, modifier = Modifier.padding(start = 12.dp))
+            Text("Back, Menu, or 0: close", color = TextSecondary, fontSize = 13.sp, modifier = Modifier.padding(start = 12.dp))
         }
         LaunchedEffect(Unit) { runCatching { selected.requestFocus() } }
     }

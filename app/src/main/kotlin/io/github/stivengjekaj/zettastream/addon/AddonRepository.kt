@@ -79,7 +79,13 @@ class AddonRepository(
         return homeRows().map { typeKey(it.catalog.type) }.distinct().sortedBy { order.indexOf(it).let { i -> if (i < 0) 99 else i } }
     }
 
-    suspend fun catalog(row: CatalogRow): List<MetaPreview> = client.catalog(row.addon, row.catalog)
+    private val catalogCache = java.util.concurrent.ConcurrentHashMap<String, List<MetaPreview>>()
+
+    /** The last answer of a catalog, so that a screen comes back at once after Back. */
+    fun cachedCatalog(row: CatalogRow): List<MetaPreview>? = catalogCache[row.key]
+
+    suspend fun catalog(row: CatalogRow): List<MetaPreview> =
+        client.catalog(row.addon, row.catalog).also { catalogCache[row.key] = it }
 
     /** Searches each catalog that supports a search. Results come as they arrive. */
     fun search(query: String): Flow<List<MetaPreview>> = channelFlow {

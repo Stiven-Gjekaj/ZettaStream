@@ -66,6 +66,20 @@ sealed interface Screen {
         }
 }
 
+/**
+ * Remembers the focused item of each screen. When the user comes back to a
+ * screen, the item with that key takes the focus again.
+ */
+object FocusMemory {
+    private val saved = mutableMapOf<Screen, String>()
+    var last: String? = null
+    var pending: String? = null
+
+    fun leave(screen: Screen) { last?.let { saved[screen] = it } }
+
+    fun returnTo(screen: Screen) { pending = saved.remove(screen) }
+}
+
 /** The state of the interface: the screens, the menu, and the key routing. */
 class AppState(val container: AppContainer, val isTv: Boolean) {
     val stack = mutableStateListOf<Screen>(Screen.Home)
@@ -88,6 +102,7 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
 
     fun open(screen: Screen) {
         menuOpen = false
+        FocusMemory.leave(current)
         if (screen.isTopLevel) {
             stack.clear()
             stack.add(screen)
@@ -104,32 +119,20 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     /** Goes back one step. See the Back button in docs/decisions.md. */
     fun back(finish: () -> Unit) {
         when {
-            stack.size > 1 -> stack.removeAt(stack.lastIndex)
-            !isTv -> if (current != Screen.Home) open(Screen.Home) else finish()
-            menuOpen -> exitDialog = true
-            else -> menuOpen = true
+            menuOpen -> menuOpen = false
+            stack.size > 1 -> {
+                stack.removeAt(stack.lastIndex)
+                FocusMemory.returnTo(current)
+            }
+            current != Screen.Home -> open(Screen.Home)
+            isTv -> exitDialog = true
+            else -> finish()
         }
-    }
-
-    /**
-     * Opens the menu when the user presses Left on an item at the left edge.
-     * Without this, Left on the first poster of a row moves the focus up.
-     */
-    fun opensMenuOnLeft(event: KeyEvent, focusedLeft: Float, density: Float): Boolean {
-        if (!isTv || menuOpen || current is Screen.Player || current is Screen.KeyTest) return false
-        if (event.keyCode != KeyEvent.KEYCODE_DPAD_LEFT || event.action != KeyEvent.ACTION_DOWN) return false
-        if (focusedLeft > LEFT_EDGE_DP * density) return false
-        menuOpen = true
-        return true
     }
 
     /** Handles a key that no part of the interface used. */
     fun onUnhandledKey(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return false
-        if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT && isTv && current !is Screen.Player && !menuOpen) {
-            menuOpen = true
-            return true
-        }
         val action = RemoteKeys.global(event.keyCode) ?: return false
         if (event.repeatCount > 0 && action != RemoteAction.PageDown && action != RemoteAction.PageUp) return true
         screenActions[action]?.let { it(); return true }

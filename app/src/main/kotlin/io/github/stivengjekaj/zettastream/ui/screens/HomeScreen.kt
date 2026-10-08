@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -44,6 +45,7 @@ import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
+import io.github.stivengjekaj.zettastream.ui.typeKey
 import io.github.stivengjekaj.zettastream.ui.typeLabel
 import io.github.stivengjekaj.zettastream.ui.typeKey
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
@@ -61,7 +63,7 @@ fun HomeScreen(app: AppState) {
     val resume = remember(library) { Library.continueWatching(library) }
     val latest = app.latestVersion
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 48.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), state = rememberLazyListState(), contentPadding = PaddingValues(bottom = 48.dp)) {
         item {
             Row(
                 Modifier.padding(start = Sizes.gutter(tv), end = Sizes.gutter(tv), top = if (tv) 32.dp else 16.dp),
@@ -165,12 +167,13 @@ fun HomeScreen(app: AppState) {
 @Composable
 private fun CatalogRowView(app: AppState, row: CatalogRow) {
     val tv = app.isTv
-    val metas by produceState<List<MetaPreview>?>(null, row.key) {
-        value = runCatching { app.container.addons.catalog(row) }.getOrDefault(emptyList())
+    val cached = app.container.addons.cachedCatalog(row)
+    val metas by produceState(cached, row.key) {
+        if (cached == null) value = runCatching { app.container.addons.catalog(row) }.getOrDefault(emptyList())
     }
     val list = metas
     if (list != null && list.isEmpty()) return
     SectionTitle(row.catalog.name, tv, detail = "${typeLabel(row.catalog.type)} from ${row.addon.name}")
     if (list == null) PlaceholderRow(tv)
-    else PosterRow(list, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it })
+    else PosterRow(list, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = row.key)
 }

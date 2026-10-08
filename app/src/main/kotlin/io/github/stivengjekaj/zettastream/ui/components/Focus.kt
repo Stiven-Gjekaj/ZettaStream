@@ -2,8 +2,6 @@ package io.github.stivengjekaj.zettastream.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,26 +28,14 @@ fun Modifier.focusRing(
     onFocus: () -> Unit = {},
 ): Modifier = composed {
     var focused by remember { mutableStateOf(false) }
-    val left = remember { floatArrayOf(Float.MAX_VALUE) }
     val scale by animateFloatAsState(if (focused) scaleTo else 1f, label = "focus scale")
     this
         .onFocusChanged {
             focused = it.isFocused
-            if (it.isFocused) {
-                FocusTracker.left = left[0]
-                onFocus()
-            }
-        }
-        .onGloballyPositioned {
-            left[0] = it.boundsInWindow().left
-            if (focused) FocusTracker.left = left[0]
+            if (it.isFocused) onFocus()
         }
         .graphicsLayer { scaleX = scale; scaleY = scale }
         .border(2.dp, if (focused) Accent else Color.Transparent, shape)
 }
 
 
-/** Remembers where the focused item is, so that Left at the left edge can open the menu. */
-object FocusTracker {
-    var left: Float = Float.MAX_VALUE
-}

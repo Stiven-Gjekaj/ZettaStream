@@ -72,7 +72,7 @@ fun LibraryScreen(app: AppState) {
         if (data.watchlist.isNotEmpty()) {
             item {
                 SectionTitle("Watchlist", tv)
-                PosterRow(data.watchlist, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it })
+                PosterRow(data.watchlist, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = "watchlist")
             }
         }
     }

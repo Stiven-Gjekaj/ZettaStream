@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
-import io.github.stivengjekaj.zettastream.ui.components.FocusTracker
 import io.github.stivengjekaj.zettastream.ui.components.PhoneTabBar
 import io.github.stivengjekaj.zettastream.ui.components.Toast
 import io.github.stivengjekaj.zettastream.ui.components.TvSideMenu
@@ -91,7 +91,6 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         app.keyCapture?.let { if (it(event)) return true }
-        if (app.opensMenuOnLeft(event, FocusTracker.left, resources.displayMetrics.density)) return true
         if (super.dispatchKeyEvent(event)) return true
         return app.onUnhandledKey(event)
     }
@@ -108,15 +107,19 @@ private fun Root(app: AppState, finish: () -> Unit) {
     BackHandler { app.back(finish) }
 
     val screen = app.current
+    val states = rememberSaveableStateHolder()
     val fullScreen = screen is Screen.Player
     Box(Modifier.fillMaxSize().background(Background)) {
         Column(Modifier.fillMaxSize().then(if (fullScreen || app.isTv) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
             // A new key for each screen, so that a player for the next episode starts fresh.
-            Box(Modifier.weight(1f)) { key(screen) { Content(app, screen) } }
+            // Each screen keeps its scroll positions while it is on the stack, so Back returns to the same place.
+            Box(Modifier.weight(1f)) {
+                key(screen) { states.SaveableStateProvider(screen.toString()) { Content(app, screen) } }
+            }
             if (!app.isTv && screen.isTopLevel) PhoneTabBar(screen) { app.open(it) }
         }
         if (app.isTv && !fullScreen) {
-            TvSideMenu(app.menuOpen, screen, onSelect = { app.open(it) }, onClose = { app.menuOpen = false })
+            TvSideMenu(app.menuOpen, screen, onSelect = { app.open(it) })
         }
         Toast(app.toast, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
     }

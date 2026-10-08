@@ -113,7 +113,10 @@ fun SearchScreen(app: AppState) {
             modifier = Modifier.fillMaxSize(),
         ) {
             items(results, key = { it.type + it.id }) { meta ->
-                PosterCard(meta, Sizes.posterWidth(tv), onClick = { app.open(Screen.Detail(meta)) }, onFocus = { app.focusedMeta = meta })
+                PosterCard(
+                    meta, Sizes.posterWidth(tv), onClick = { app.open(Screen.Detail(meta)) }, onFocus = { app.focusedMeta = meta },
+                    focusKey = "search|${meta.type}|${meta.id}",
+                )
             }
         }
     }

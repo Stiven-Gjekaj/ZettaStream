@@ -19,6 +19,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import io.github.stivengjekaj.zettastream.ui.FocusMemory
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +47,19 @@ object Sizes {
     fun gutter(tv: Boolean): Dp = if (tv) 48.dp else 16.dp
 }
 
+/** The shape of a card image. Addons say "poster", "landscape", or "square". */
+enum class CardShape(val widthScale: Float, val heightRatio: Float) {
+    Poster(1f, 1.5f), Landscape(1.8f, 9f / 16f), Square(1.15f, 1f);
+
+    companion object {
+        fun of(posterShape: String?): CardShape = when (posterShape?.lowercase()) {
+            "landscape" -> Landscape
+            "square" -> Square
+            else -> Poster
+        }
+    }
+}
+
 @Composable
 fun PosterCard(
     meta: MetaPreview,
@@ -50,14 +68,29 @@ fun PosterCard(
     onFocus: () -> Unit = {},
     progress: Float? = null,
     caption: String? = null,
+    focusKey: String? = null,
 ) {
     val shape = Corner
-    Column(Modifier.width(width)) {
+    val card = CardShape.of(meta.posterShape)
+    val cardWidth = width * card.widthScale
+    val requester = remember { FocusRequester() }
+    // After Back, the card that had the focus takes it again.
+    LaunchedEffect(focusKey) {
+        if (focusKey != null && FocusMemory.pending == focusKey) {
+            FocusMemory.pending = null
+            runCatching { requester.requestFocus() }
+        }
+    }
+    Column(Modifier.width(cardWidth)) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(width * 1.5f)
-                .focusRing(shape, onFocus = onFocus)
+                .height(cardWidth * card.heightRatio)
+                .focusRequester(requester)
+                .focusRing(shape, onFocus = {
+                    if (focusKey != null) FocusMemory.last = focusKey
+                    onFocus()
+                })
                 .clip(shape)
                 .background(SurfaceHigh)
                 .clickable(onClick = onClick),
@@ -73,8 +106,9 @@ fun PosterCard(
                 AsyncImage(
                     model = meta.poster,
                     contentDescription = meta.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    // A square image is often a channel logo, so show all of it.
+                    contentScale = if (card == CardShape.Square) ContentScale.Fit else ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().then(if (card == CardShape.Square) Modifier.padding(10.dp) else Modifier),
                 )
             }
             if (progress != null) {
@@ -109,6 +143,7 @@ fun PosterRow(
     tv: Boolean,
     onClick: (MetaPreview) -> Unit,
     onFocus: (MetaPreview) -> Unit,
+    keyPrefix: String = "",
 ) {
     TvRow(tv) {
         LazyRow(
@@ -116,7 +151,10 @@ fun PosterRow(
             horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
         ) {
             items(metas, key = { it.type + it.id }) { meta ->
-                PosterCard(meta, Sizes.posterWidth(tv), onClick = { onClick(meta) }, onFocus = { onFocus(meta) })
+                PosterCard(
+                meta, Sizes.posterWidth(tv), onClick = { onClick(meta) }, onFocus = { onFocus(meta) },
+                focusKey = "$keyPrefix|${meta.type}|${meta.id}",
+            )
             }
         }
     }
