@@ -12,6 +12,21 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.1.2 (2026-10-08)
+
+- Shows the English name of an anime when the addon gives one.
+- Numbers the episodes of an anime season correctly: season 2 of a show
+  shows as S2, not as S1.
+- Adds an "All seasons" button to an anime season, which opens the whole
+  show under one name.
+- Shows a title name on up to two lines.
+- The next episode plays from the same source, with no stop at the list of
+  streams.
+- The channel buttons in the player show a small prompt first. A second
+  press changes the episode or the channel.
+- Each focused item in a row stops at the same place, so rows do not wobble.
+- The search field has one border, and Down moves from it to the results.
+
 ## 0.1.1 (2026-10-08)
 
 - A selected chip is grey now. Only the focused control is white, so the
