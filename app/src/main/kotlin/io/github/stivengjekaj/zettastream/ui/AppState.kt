@@ -10,6 +10,7 @@ import androidx.compose.ui.focus.FocusManager
 import io.github.stivengjekaj.zettastream.AppContainer
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.addon.Stream
+import io.github.stivengjekaj.zettastream.addon.StreamInfo
 import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.Video
 import io.github.stivengjekaj.zettastream.iptv.Channel
@@ -32,6 +33,8 @@ data class VideoPlayback(
     val addonUrl: String? = null,
     val bingeGroup: String? = null,
     val streamName: String? = null,
+    /** What the text of the stream said, so that the next episode can match it. */
+    val streamInfo: StreamInfo? = null,
     /** A torrent stream: the engine gives the local URL when the player starts. */
     val torrent: TorrentSource? = null,
 ) : Playback

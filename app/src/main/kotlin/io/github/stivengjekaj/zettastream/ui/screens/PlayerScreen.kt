@@ -59,6 +59,7 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.ui.SubtitleView
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.Subtitle
+import io.github.stivengjekaj.zettastream.addon.StreamInfo
 import io.github.stivengjekaj.zettastream.addon.pickSameSource
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.remote.RemoteKeys
@@ -336,7 +337,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 c.scope.launch {
                     val type = playback.meta.type
                     val stream = c.addons.streamsFrom(addonUrl, type, target.id, withTorrents = c.settings.settings.value.showTorrents)
-                        ?.let { pickSameSource(it, playback.bingeGroup, playback.streamName) }
+                        ?.let { pickSameSource(it, playback.bingeGroup, playback.streamName, playback.streamInfo, playback.torrent != null) }
                     if (stream == null) { app.replace(streamsScreen); return@launch }
                     val subtitles = withTimeoutOrNull(4000) { c.addons.subtitles(type, target.id) }.orEmpty()
                     app.replace(
@@ -350,6 +351,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                                 subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
                                 bingeGroup = stream.behaviorHints?.bingeGroup ?: playback.bingeGroup,
                                 streamName = stream.name ?: playback.streamName,
+                                streamInfo = StreamInfo.of(stream),
                             ),
                         ),
                     )

@@ -1,6 +1,16 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
+import io.github.stivengjekaj.zettastream.addon.StreamInfo
+import io.github.stivengjekaj.zettastream.addon.StreamOrder
+import io.github.stivengjekaj.zettastream.remote.RemoteAction
+import io.github.stivengjekaj.zettastream.ui.components.ZButton
+import io.github.stivengjekaj.zettastream.ui.theme.Outline
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,27 +62,43 @@ import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 fun count(n: Int, word: String): String = "$n $word" + if (n == 1) "" else "s"
 
 @Composable
+private fun Badge(text: String, strong: Boolean = false) {
+    Text(
+        text, color = if (strong) OnAccent else TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(end = if (strong) 10.dp else 0.dp).clip(Corner)
+            .background(if (strong) TextSecondary else Outline).padding(horizontal = 6.dp, vertical = 2.dp),
+    )
+}
+
+@Composable
 fun StreamsScreen(app: AppState, screen: Screen.Streams) {
     val c = app.container
     val tv = app.isTv
     val type = screen.meta.type
-    val groups = remember(screen.videoId) { mutableStateListOf<StreamGroup>() }
-    var done by remember(screen.videoId) { mutableStateOf(false) }
+    val viewer by c.settings.settings.collectAsState()
+    var reloads by remember(screen.videoId) { mutableIntStateOf(0) }
+    val groups = remember(screen.videoId, reloads) { mutableStateListOf<StreamGroup>() }
+    var done by remember(screen.videoId, reloads) { mutableStateOf(false) }
     val asked = remember(screen.videoId) { c.addons.addons.value.addons.count { it.supports("stream", type, screen.videoId) } }
     val subtitles by produceState(emptyList<Subtitle>(), screen.videoId) { value = c.addons.subtitles(type, screen.videoId) }
     val firstFocus = remember { FocusRequester() }
     var focused by remember(screen.videoId) { mutableStateOf(false) }
 
-    LaunchedEffect(screen.videoId) {
+    LaunchedEffect(screen.videoId, reloads) {
         c.addons.streams(type, screen.videoId, withTorrents = c.settings.settings.value.showTorrents).collect { groups += it }
         done = true
+    }
+    // Blue asks every addon again. A slow addon sometimes answers with fewer streams.
+    DisposableEffect(Unit) {
+        app.screenActions = mapOf(RemoteAction.Filter to { reloads++ })
+        onDispose { app.screenActions = emptyMap() }
     }
     val playable = groups.filter { it.streams.isNotEmpty() }
     LaunchedEffect(playable.size) {
         if (!focused && playable.isNotEmpty()) { focused = runCatching { firstFocus.requestFocus() }.isSuccess }
     }
 
-    fun play(stream: Stream, addonUrl: String) {
+    fun play(stream: Stream, addonUrl: String, info: StreamInfo) {
         app.open(
             Screen.Player(
                 VideoPlayback(
@@ -86,6 +112,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                     addonUrl = addonUrl,
                     bingeGroup = stream.behaviorHints?.bingeGroup,
                     streamName = stream.name,
+                    streamInfo = info,
                     torrent = stream.torrentSource(),
                 ),
             ),
@@ -102,6 +129,13 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 color = TextSecondary, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp),
             )
             if (!done) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+            Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ZButton(onClick = { reloads++ }, tv = tv) { Text("Reload streams") }
+                ZButton(onClick = { c.scope.launch { c.settings.update { it.copy(directFirst = !it.directFirst) } } }, tv = tv) {
+                    Text(if (viewer.directFirst) "Direct links first: on" else "Direct links first: off")
+                }
+            }
+            if (tv) Text("Blue: reload", color = TextSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
         }
         if (asked == 0) {
             item {
@@ -122,21 +156,18 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 )
             }
         }
+        // Addons that did not answer, or that hide torrents, show under the list.
+        val notes = groups.filter { it.error != null || it.hiddenTorrents > 0 }
         var first = true
-        groups.forEach { group ->
-            item(key = "head-" + group.addon.manifestUrl) {
+        StreamOrder.sections(groups, viewer.directFirst).forEach { section ->
+            item(key = "head-" + section.title) {
                 Text(
-                    group.addon.name + when {
-                        group.error != null -> "  (no answer)"
-                        group.hiddenTorrents > 0 -> "  (${count(group.hiddenTorrents, "torrent stream")} hidden)"
-                        else -> ""
-                    },
-                    color = if (group.error != null) Danger else TextSecondary,
-                    fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                    section.title, color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 18.dp, bottom = 6.dp),
                 )
             }
-            items(group.streams, key = { group.addon.manifestUrl + "|" + (it.url ?: it.infoHash + ":" + it.fileIdx) }) { stream ->
+            items(section.streams, key = { section.title + "|" + it.addon.manifestUrl + "|" + (it.stream.url ?: it.stream.infoHash + ":" + it.stream.fileIdx) }) { listed ->
+                val stream = listed.stream
                 val isFirst = first.also { first = false }
                 val shape = Corner
                 Column(
@@ -147,24 +178,31 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                         .focusRing(shape, scaleTo = 1.02f)
                         .clip(shape)
                         .background(SurfaceHigh)
-                        .clickable { play(stream, group.addon.manifestUrl) }
+                        .clickable { play(stream, listed.addon.manifestUrl, listed.info) }
                         .padding(14.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (stream.isTorrent) {
-                            Text(
-                                "TORRENT", color = OnAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(end = 10.dp).clip(Corner).background(TextSecondary).padding(horizontal = 6.dp, vertical = 2.dp),
-                            )
-                        }
-                        Text(stream.name?.replace('\n', ' ') ?: group.addon.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,
+                        if (stream.isTorrent) Badge("TORRENT", strong = true)
+                        Text(stream.name?.replace('\n', ' ') ?: listed.addon.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,
                             fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
-                    if (stream.details.isNotBlank()) {
-                        Text(stream.details, color = TextSecondary, fontSize = 13.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
+                    val badges = listed.info.badges
+                    if (badges.isNotEmpty()) {
+                        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) { badges.forEach { Badge(it) } }
                     }
+                    if (stream.details.isNotBlank()) {
+                        Text(stream.details, color = TextSecondary, fontSize = 13.sp, maxLines = 3, overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 4.dp))
+                    }
+                    if (viewer.directFirst) Text(listed.addon.name, color = TextSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
                 }
             }
+        }
+        items(notes, key = { "note-" + it.addon.manifestUrl }) { group ->
+            Text(
+                group.addon.name + if (group.error != null) ": no answer" else ": ${count(group.hiddenTorrents, "torrent stream")} hidden",
+                color = if (group.error != null) Danger else TextSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp),
+            )
         }
     }
 }

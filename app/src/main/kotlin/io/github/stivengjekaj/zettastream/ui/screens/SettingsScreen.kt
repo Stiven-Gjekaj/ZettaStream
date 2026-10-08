@@ -116,6 +116,7 @@ fun SettingsScreen(app: AppState) {
         item { SettingsRow("Press the channel buttons twice", "${onOff(viewer.confirmChannel)}. When off, one press changes the episode or the channel.", tv) { set { it.copy(confirmChannel = !it.confirmChannel) } } }
         item { Section("Torrents", tv) }
         item { SettingsRow("Show torrent streams", "${onOff(viewer.showTorrents)}. Torrent streams connect you to other people, who can see your IP address.", tv) { set { it.copy(showTorrents = !it.showTorrents) } } }
+        item { SettingsRow("Direct links first", "${onOff(viewer.directFirst)}. Direct links show above torrents in the list of streams.", tv) { set { it.copy(directFirst = !it.directFirst) } } }
         item { SettingsRow("Share while streaming", "${onOff(viewer.torrentUpload)}. When off, the app uploads almost nothing.", tv) { set { it.copy(torrentUpload = !it.torrentUpload) } } }
         item { SettingsRow("VPN notice at start", onOff(viewer.vpnNotice), tv) { set { it.copy(vpnNotice = !it.vpnNotice) } } }
         item { Section("App", tv) }
