@@ -11,6 +11,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -32,8 +35,9 @@ import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.PosterCard
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
-import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
+import io.github.stivengjekaj.zettastream.ui.theme.Outline
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 
@@ -67,14 +71,19 @@ fun SearchScreen(app: AppState) {
             value = text,
             onValueChange = { text = it },
             singleLine = true,
-            label = { Text("Search titles") },
+            // A placeholder, not a floating label: a label cuts a gap in the top border.
+            placeholder = { Text("Search titles", color = TextSecondary) },
+            leadingIcon = { Icon(Icons.Rounded.Search, null, tint = TextSecondary) },
+            shape = Corner,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { query = text.trim(); keyboard?.hide() }),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Accent, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
-                focusedLabelColor = Accent, unfocusedLabelColor = TextSecondary,
+                focusedBorderColor = Accent, unfocusedBorderColor = Outline,
+                focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+                cursorColor = Accent,
             ),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv)).focusRing(scaleTo = 1.01f),
+            // The field draws its own border when it has the focus, so it has no focus ring.
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv)),
         )
         if (searching) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 8.dp))
         if (!searching && query.isNotBlank() && results.isEmpty()) {
