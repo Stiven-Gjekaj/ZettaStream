@@ -171,11 +171,27 @@ class AddonRepository(
 }
 
 /**
- * Selects the stream of the next episode that comes from the same source as
- * the current one. The addon marks streams of one source with a binge group.
- * Without one, a stream with the same name is the best match.
+ * Selects the stream of the next episode from the same source. A stream in
+ * the same binge group comes first, because the addon says that it is the
+ * same source. Then the stream whose data is most like the current one:
+ * resolution, codec, HDR, release group, and audio. A stream with the same
+ * kind (direct or torrent) and the same name breaks a tie, then more seeders.
  */
-fun pickSameSource(streams: List<Stream>, bingeGroup: String?, streamName: String?): Stream? =
-    streams.firstOrNull { bingeGroup != null && it.behaviorHints?.bingeGroup == bingeGroup }
-        ?: streams.firstOrNull { streamName != null && it.name == streamName }
-        ?: streams.firstOrNull()
+fun pickSameSource(
+    streams: List<Stream>,
+    bingeGroup: String?,
+    streamName: String?,
+    current: StreamInfo? = null,
+    wasTorrent: Boolean? = null,
+): Stream? {
+    if (streams.isEmpty()) return null
+    val pool = streams.filter { bingeGroup != null && it.behaviorHints?.bingeGroup == bingeGroup }.ifEmpty { streams }
+    val info = pool.associateWith { StreamInfo.of(it) }
+    return pool.maxWith(
+        compareBy<Stream> { s -> current?.let { StreamInfo.similarity(it, info.getValue(s)) } ?: 0 }
+            .thenBy { s -> if (wasTorrent != null && s.isTorrent == wasTorrent) 1 else 0 }
+            .thenBy { s -> if (streamName != null && s.name == streamName) 1 else 0 }
+            .thenBy { s -> info.getValue(s).seeders ?: 0 }
+            .thenByDescending { s -> pool.indexOf(s) },
+    )
+}

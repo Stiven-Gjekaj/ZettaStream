@@ -29,4 +29,24 @@ class PickSameSourceTest {
         assertEquals("https://a/1", pickSameSource(streams, "gone", "gone")?.url)
         assertNull(pickSameSource(emptyList(), "a-720", null))
     }
+
+    @Test
+    fun theDataMattersMoreThanTheName() {
+        val next = listOf(
+            stream("https://x/720", "Server A", null).copy(title = "[Group] Show - 06 (720p) x264"),
+            stream("https://x/1080", "Server B", null).copy(title = "[SubsPlease] Show - 06 (1080p) HEVC"),
+        )
+        val current = StreamInfo.parse("[SubsPlease] Show - 05 (1080p) HEVC")
+        assertEquals("https://x/1080", pickSameSource(next, null, "Server A", current)?.url)
+    }
+
+    @Test
+    fun theBingeGroupStillComesFirst() {
+        val next = listOf(
+            stream("https://x/1080", "B", "other").copy(title = "Show 1080p HEVC"),
+            stream("https://x/720", "A", "mine").copy(title = "Show 720p"),
+        )
+        val current = StreamInfo.parse("Show 1080p HEVC")
+        assertEquals("https://x/720", pickSameSource(next, "mine", null, current)?.url)
+    }
 }
