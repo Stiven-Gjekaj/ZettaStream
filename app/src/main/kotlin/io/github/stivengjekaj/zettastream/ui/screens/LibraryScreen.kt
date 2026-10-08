@@ -24,6 +24,7 @@ import io.github.stivengjekaj.zettastream.ui.components.PosterCard
 import io.github.stivengjekaj.zettastream.ui.components.PosterRow
 import io.github.stivengjekaj.zettastream.ui.components.SectionTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 
 @Composable
@@ -50,18 +51,20 @@ fun LibraryScreen(app: AppState) {
         if (resume.isNotEmpty()) {
             item {
                 SectionTitle("Continue watching", tv)
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
-                ) {
-                    items(resume, key = { it.videoId }) { p ->
-                        PosterCard(
-                            p.meta, Sizes.posterWidth(tv),
-                            onClick = { app.open(Screen.Detail(p.meta)) },
-                            onFocus = { app.focusedMeta = p.meta },
-                            progress = if (p.duration > 0) p.position.toFloat() / p.duration else null,
-                            caption = p.label,
-                        )
+                TvRow(tv) {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
+                    ) {
+                        items(resume, key = { it.videoId }) { p ->
+                            PosterCard(
+                                p.meta, Sizes.posterWidth(tv),
+                                onClick = { app.open(Screen.Detail(p.meta)) },
+                                onFocus = { app.focusedMeta = p.meta },
+                                progress = if (p.duration > 0) p.position.toFloat() / p.duration else null,
+                                caption = p.label,
+                            )
+                        }
                     }
                 }
             }

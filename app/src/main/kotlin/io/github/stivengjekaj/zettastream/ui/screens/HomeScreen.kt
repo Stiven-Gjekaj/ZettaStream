@@ -34,6 +34,7 @@ import io.github.stivengjekaj.zettastream.ui.components.PosterCard
 import io.github.stivengjekaj.zettastream.ui.components.PosterRow
 import io.github.stivengjekaj.zettastream.ui.components.SectionTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
@@ -80,22 +81,24 @@ fun HomeScreen(app: AppState) {
         }
         if (types.size > 1) {
             item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(listOf<String?>(null) + types) { type ->
-                        FilterChip(
-                            shape = Corner,
-                            selected = app.homeFilter == type,
-                            onClick = { app.homeFilter = type },
-                            label = { Text(typeLabel(type), fontSize = if (tv) 16.sp else 14.sp) },
-                            modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
-                                containerColor = Surface, labelColor = TextSecondary,
-                            ),
-                        )
+                TvRow(tv) {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(listOf<String?>(null) + types) { type ->
+                            FilterChip(
+                                shape = Corner,
+                                selected = app.homeFilter == type,
+                                onClick = { app.homeFilter = type },
+                                label = { Text(typeLabel(type), fontSize = if (tv) 16.sp else 14.sp) },
+                                modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
+                                    containerColor = Surface, labelColor = TextSecondary,
+                                ),
+                            )
+                        }
                     }
                 }
             }
@@ -133,18 +136,20 @@ fun HomeScreen(app: AppState) {
         if (resume.isNotEmpty() && (app.homeFilter == null)) {
             item(key = "resume") {
                 SectionTitle("Continue watching", tv)
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
-                ) {
-                    items(resume, key = { it.videoId }) { p ->
-                        PosterCard(
-                            p.meta, Sizes.posterWidth(tv),
-                            onClick = { app.open(Screen.Detail(p.meta)) },
-                            onFocus = { app.focusedMeta = p.meta },
-                            progress = if (p.duration > 0) p.position.toFloat() / p.duration else null,
-                            caption = p.label,
-                        )
+                TvRow(tv) {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
+                    ) {
+                        items(resume, key = { it.videoId }) { p ->
+                            PosterCard(
+                                p.meta, Sizes.posterWidth(tv),
+                                onClick = { app.open(Screen.Detail(p.meta)) },
+                                onFocus = { app.focusedMeta = p.meta },
+                                progress = if (p.duration > 0) p.position.toFloat() / p.duration else null,
+                                caption = p.label,
+                            )
+                        }
                     }
                 }
             }

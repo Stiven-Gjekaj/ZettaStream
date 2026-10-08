@@ -59,6 +59,7 @@ import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
@@ -212,19 +213,21 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
             }
             if (isSeries && seasons.size > 1) {
                 item {
-                    LazyRow(Modifier.padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(seasons) { s ->
-                            FilterChip(
-                                shape = Corner,
-                                selected = s == selectedSeason,
-                                onClick = { season = s },
-                                label = { Text(when (s) { null -> "Other"; 0 -> "Specials"; else -> "Season $s" }) },
-                                modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
-                                    containerColor = Surface, labelColor = TextSecondary,
-                                ),
-                            )
+                    TvRow(tv) {
+                        LazyRow(Modifier.padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            items(seasons) { s ->
+                                FilterChip(
+                                    shape = Corner,
+                                    selected = s == selectedSeason,
+                                    onClick = { season = s },
+                                    label = { Text(when (s) { null -> "Other"; 0 -> "Specials"; else -> "Season $s" }) },
+                                    modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
+                                        containerColor = Surface, labelColor = TextSecondary,
+                                    ),
+                                )
+                            }
                         }
                     }
                 }

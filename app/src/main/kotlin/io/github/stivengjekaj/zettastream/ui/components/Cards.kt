@@ -110,30 +110,34 @@ fun PosterRow(
     onClick: (MetaPreview) -> Unit,
     onFocus: (MetaPreview) -> Unit,
 ) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
-    ) {
-        items(metas, key = { it.type + it.id }) { meta ->
-            PosterCard(meta, Sizes.posterWidth(tv), onClick = { onClick(meta) }, onFocus = { onFocus(meta) })
+    TvRow(tv) {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
+        ) {
+            items(metas, key = { it.type + it.id }) { meta ->
+                PosterCard(meta, Sizes.posterWidth(tv), onClick = { onClick(meta) }, onFocus = { onFocus(meta) })
+            }
         }
     }
 }
 
 @Composable
 fun PlaceholderRow(tv: Boolean) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
-        userScrollEnabled = false,
-    ) {
-        items(6) {
-            Box(
-                Modifier
-                    .size(Sizes.posterWidth(tv), Sizes.posterWidth(tv) * 1.5f)
-                    .clip(Corner)
-                    .background(SurfaceHigh.copy(alpha = 0.5f)),
-            )
+    TvRow(tv) {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
+            userScrollEnabled = false,
+        ) {
+            items(6) {
+                Box(
+                    Modifier
+                        .size(Sizes.posterWidth(tv), Sizes.posterWidth(tv) * 1.5f)
+                        .clip(Corner)
+                        .background(SurfaceHigh.copy(alpha = 0.5f)),
+                )
+            }
         }
     }
 }

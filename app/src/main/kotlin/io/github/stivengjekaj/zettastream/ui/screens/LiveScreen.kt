@@ -46,6 +46,7 @@ import io.github.stivengjekaj.zettastream.ui.LivePlayback
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Surface
@@ -100,22 +101,24 @@ fun LiveScreen(app: AppState) {
         }
         if (groups.size > 1) {
             item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(listOf<String?>(null) + groups) { g ->
-                        FilterChip(
-                            shape = Corner,
-                            selected = g == group,
-                            onClick = { group = g },
-                            label = { Text(g ?: "All") },
-                            modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
-                                containerColor = Surface, labelColor = TextSecondary,
-                            ),
-                        )
+                TvRow(tv) {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(listOf<String?>(null) + groups) { g ->
+                            FilterChip(
+                                shape = Corner,
+                                selected = g == group,
+                                onClick = { group = g },
+                                label = { Text(g ?: "All") },
+                                modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
+                                    containerColor = Surface, labelColor = TextSecondary,
+                                ),
+                            )
+                        }
                     }
                 }
             }
