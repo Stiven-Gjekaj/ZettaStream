@@ -3,7 +3,7 @@
 This file records each choice that the owner makes for ZettaStream.
 Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 
-## 2026-10-08: Scope and platforms
+## 2026-10-08: Scope and platforms (platforms replaced on 2026-10-08, see "Android only, native Kotlin")
 
 - ZettaStream is a stream aggregator, similar to Miruro.
 - It shows anime, movies, and TV series.
@@ -18,7 +18,7 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - Reason: the public repository contains no endpoint of a third-party stream
   site.
 
-## 2026-10-08: Stack
+## 2026-10-08: Stack (replaced on 2026-10-08, see "Android only, native Kotlin")
 
 - One codebase: a React web app that is also a PWA.
 - Phones and PCs use the web app.
@@ -147,3 +147,21 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   debrid key returns HTTP streams, so the app plays it with no extra code.
   A torrent engine sends the IP address of the user to the swarm, and a
   browser cannot operate one.
+
+## 2026-10-08: Android only, native Kotlin
+
+- This choice replaces "Stack" and the platform part of "Scope and
+  platforms".
+- ZettaStream is an Android app only. One APK operates on Android TV, on
+  Android phones, and on each other device that installs an APK.
+- There is no web app and no PC app.
+- The app is native Kotlin with Jetpack Compose. The TV layout uses Compose
+  for TV. The phone layout uses Material 3.
+- The player is Media3 ExoPlayer.
+- Reason: ExoPlayer has HLS, subtitle tracks, audio tracks, and hardware
+  decoding. The app gets each remote control key code directly. A WebView is
+  too slow for the processor of a TV.
+- The build tool is Gradle. GitHub Actions builds the signed APK.
+- An Android TV emulator on the Mac tests the D-pad navigation. The Hitachi
+  TV confirms the special buttons.
+- On a phone, the user pastes the source lines directly into the app.
