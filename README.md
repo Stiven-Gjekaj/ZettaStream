@@ -135,6 +135,9 @@ ZettaStream reads three kinds of line. Put one URL on each line:
 The new list replaces the old list. To remove a source, remove its line and
 send the list again. Each QR code works one time.
 
+The order of the lines sets the order of the rows on the home screen. Put the
+addon whose catalogs you like most first.
+
 A metadata addon such as Cinemeta gives the rows on the home screen. A stream
 addon gives the streams. ZettaStream plays HTTP streams and torrent streams.
 
