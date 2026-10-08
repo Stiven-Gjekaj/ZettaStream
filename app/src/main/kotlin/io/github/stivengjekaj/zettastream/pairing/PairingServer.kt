@@ -51,9 +51,10 @@ object PairingHttp {
         )
     }
 
-    fun form(text: String): Map<String, String> = text.split('&').filter { it.isNotEmpty() }.associate {
-        URLDecoder.decode(it.substringBefore('='), "UTF-8") to URLDecoder.decode(it.substringAfter('=', ""), "UTF-8")
-    }
+    /** Reads `a=1&b=2`. A pair with a bad escape, such as a lone `%`, is left out. */
+    fun form(text: String): Map<String, String> = text.split('&').filter { it.isNotEmpty() }.mapNotNull {
+        runCatching { URLDecoder.decode(it.substringBefore('='), "UTF-8") to URLDecoder.decode(it.substringAfter('=', ""), "UTF-8") }.getOrNull()
+    }.toMap()
 
     fun write(output: OutputStream, status: String, html: String) {
         val bytes = html.toByteArray(Charsets.UTF_8)
@@ -118,7 +119,8 @@ class PairingServer(
         job = scope.launch(Dispatchers.IO) {
             while (isActive) {
                 val client = runCatching { server.accept() }.getOrNull() ?: break
-                launch { handle(client) }
+                // A bad request from a device on the network must not stop the app.
+                launch { runCatching { handle(client) } }
             }
         }
         return "http://$address:${server.localPort}/?t=$token"

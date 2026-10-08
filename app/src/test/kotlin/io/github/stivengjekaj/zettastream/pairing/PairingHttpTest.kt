@@ -19,6 +19,11 @@ class PairingHttpTest {
     }
 
     @Test
+    fun aBadEscapeLeavesOutOnlyItsPair() {
+        assertEquals(mapOf("lines" to "a b"), PairingHttp.form("t=%&lines=a+b"))
+    }
+
+    @Test
     fun refusesABodyThatIsTooLarge() {
         val raw = "POST / HTTP/1.1\r\nContent-Length: ${PairingHttp.MAX_BODY + 1}\r\n\r\n"
         assertNull(PairingHttp.read(raw.byteInputStream()))
