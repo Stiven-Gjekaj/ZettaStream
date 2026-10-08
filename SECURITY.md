@@ -34,10 +34,17 @@ JSON, M3U playlists, and XMLTV guides. These are in scope:
   one time.
 - A fault that shows or sends the source list, which can hold keys, to a
   person or a server that the user did not choose.
+- A fault in the local server of the torrent engine. It must accept
+  connections from 127.0.0.1 only, and it must serve only the file of an open
+  torrent.
+- A torrent file or a peer that makes the app run code or read a file outside
+  its torrent folder.
 
 ## What is out of scope
 
 - The content of a source. A source is a service of another party.
+- The IP address that a torrent shows to its peers. That is how BitTorrent
+  works. The app tells the user to use a VPN.
 - A device on the same local network that can see the pairing page while the
   Sources screen is open. Without the token, it cannot send a list.
 - A rooted device, or a person with physical access to the unlocked device.

@@ -45,7 +45,20 @@ it. Many works are protected by copyright. In many countries, it is illegal to
 watch, download, or share a protected work without the permission of the
 holder of the rights. Know the law of the country where you are, and obey it.
 
-## 6. Services of other parties
+## 6. Torrent streams
+
+The Software can play torrent streams. A torrent connects your device to the
+devices of other people. Each of them can see your IP address, and your device
+sends small parts of the file to them while you watch. In many countries,
+monitoring companies record the IP addresses in a torrent, and a holder of the
+rights can act against them.
+
+The Software limits the upload, and it deletes each torrent when you stop
+watching, but it cannot hide your IP address. It asks you to use a VPN, and it
+does not check that you do. You can turn off torrent streams in the settings.
+You are responsible for each torrent that you open.
+
+## 7. Services of other parties
 
 A source is a service of another party. It has its own terms, and it can stop,
 change, or fail at any time. The project has no control over a source, and is
@@ -54,7 +67,7 @@ not responsible for it.
 The Software also asks the GitHub API for the newest release of the Software.
 GitHub has its own terms and its own privacy policy.
 
-## 7. Your data
+## 8. Your data
 
 The Software keeps your source list, your watchlist, and your watch history on
 your device only. It does not send them to the project. It has no account, no
@@ -62,26 +75,27 @@ analytics, and no advertising.
 
 The Software sends requests to the sources that you add, and one request to
 the GitHub API at each start. These services can see your IP address, as any
-server on the internet can.
+server on the internet can. A torrent also shows your IP address to its peers.
+See section 6.
 
 On a TV, the Sources screen serves a page on your local network for a short
 time, so that a phone can send the list. The page accepts one list for each QR
 code.
 
-## 8. Contributions
+## 9. Contributions
 
 When you contribute to the Software, you agree that your contribution carries
 the same MIT Licence as the rest of the project. See
 [CONTRIBUTING.md](CONTRIBUTING.md). A contribution that adds a source, or a
 link to a source, is refused.
 
-## 9. The name of the project
+## 10. The name of the project
 
 "ZettaStream" names this project. You may name the project. Please do not use
 the name in a way that suggests that this project agrees with, or has a
 connection to, a changed or unofficial version, unless you have permission.
 
-## 10. Changes to these terms
+## 11. Changes to these terms
 
 These terms can change while the project grows. The copy in the default branch
 of the repository is the current one. Use after a change means that you accept
