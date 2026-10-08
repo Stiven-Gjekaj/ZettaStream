@@ -10,6 +10,7 @@ import io.github.stivengjekaj.zettastream.addon.AddonRepository
 import io.github.stivengjekaj.zettastream.iptv.LiveRepository
 import io.github.stivengjekaj.zettastream.library.Library
 import io.github.stivengjekaj.zettastream.net.Http
+import io.github.stivengjekaj.zettastream.settings.SettingsStore
 import io.github.stivengjekaj.zettastream.source.SourceStore
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ class AppContainer(app: Application) {
     val live = LiveRepository(http, sources.sources, scope)
     val library = Library(File(app.filesDir, "library.json"))
     val updates = UpdateChecker(http)
+    val settings = SettingsStore(File(app.filesDir, "settings.json"))
 }
 
 class ZettaStreamApp : Application(), SingletonImageLoader.Factory {

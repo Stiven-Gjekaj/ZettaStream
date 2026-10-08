@@ -25,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.BuildConfig
+import io.github.stivengjekaj.zettastream.settings.SettingsStore
+import io.github.stivengjekaj.zettastream.settings.SubtitleSize
+import io.github.stivengjekaj.zettastream.settings.ViewerSettings
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
@@ -55,13 +58,24 @@ fun SettingsRow(title: String, detail: String, tv: Boolean, onClick: () -> Unit)
 }
 
 @Composable
+private fun Section(title: String, tv: Boolean) {
+    Text(
+        title.uppercase(), color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.5.sp,
+        modifier = Modifier.padding(start = Sizes.gutter(tv), end = Sizes.gutter(tv), top = 20.dp, bottom = 6.dp),
+    )
+}
+
+@Composable
 fun SettingsScreen(app: AppState) {
     val c = app.container
     val tv = app.isTv
     val scope = rememberCoroutineScope()
     val sources by c.sources.sources.collectAsState()
     val addons by c.addons.addons.collectAsState()
+    val viewer by c.settings.settings.collectAsState()
     var confirmClear by remember { mutableStateOf(false) }
+    fun set(change: (ViewerSettings) -> ViewerSettings) { scope.launch { c.settings.update(change) } }
+    fun onOff(on: Boolean) = if (on) "On" else "Off"
     var update by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = if (tv) 32.dp else 16.dp)) {
@@ -77,6 +91,26 @@ fun SettingsScreen(app: AppState) {
                 tv,
             ) { app.open(Screen.Sources) }
         }
+        item { Section("Viewing", tv) }
+        item { SettingsRow("Subtitles", "${onOff(viewer.subtitlesOn)}. The Subtitles button changes them while you watch.", tv) { set { it.copy(subtitlesOn = !it.subtitlesOn) } } }
+        item {
+            SettingsRow("Subtitle language", SettingsStore.languageName(viewer.subtitleLanguage.ifEmpty { "en" }), tv) {
+                set { it.copy(subtitleLanguage = SettingsStore.next(SettingsStore.Languages.drop(1).map { l -> l.first }, it.subtitleLanguage)) }
+            }
+        }
+        item { SettingsRow("Subtitle size", viewer.subtitleSize.label, tv) { set { it.copy(subtitleSize = SettingsStore.next(SubtitleSize.entries, it.subtitleSize)) } } }
+        item {
+            SettingsRow("Audio language", SettingsStore.languageName(viewer.audioLanguage), tv) {
+                set { it.copy(audioLanguage = SettingsStore.next(SettingsStore.Languages.map { l -> l.first }, it.audioLanguage)) }
+            }
+        }
+        item { SettingsRow("Play the next episode", "${onOff(viewer.autoplayNext)}. At the end of an episode, the next one starts.", tv) { set { it.copy(autoplayNext = !it.autoplayNext) } } }
+        item { SettingsRow("Press the channel buttons twice", "${onOff(viewer.confirmChannel)}. When off, one press changes the episode or the channel.", tv) { set { it.copy(confirmChannel = !it.confirmChannel) } } }
+        item { Section("Torrents", tv) }
+        item { SettingsRow("Show torrent streams", "${onOff(viewer.showTorrents)}. Torrent streams connect you to other people, who can see your IP address.", tv) { set { it.copy(showTorrents = !it.showTorrents) } } }
+        item { SettingsRow("Share while streaming", "${onOff(viewer.torrentUpload)}. When off, the app uploads almost nothing.", tv) { set { it.copy(torrentUpload = !it.torrentUpload) } } }
+        item { SettingsRow("VPN notice at start", onOff(viewer.vpnNotice), tv) { set { it.copy(vpnNotice = !it.vpnNotice) } } }
+        item { Section("App", tv) }
         item { SettingsRow("Remote control test", "Shows the code of each button that you press", tv) { app.open(Screen.KeyTest) } }
         item { SettingsRow("Clear the watch history", "Removes the progress of each video. The watchlist stays.", tv) { confirmClear = true } }
         item {
