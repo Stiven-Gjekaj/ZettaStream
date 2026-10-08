@@ -12,6 +12,52 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.4.0 (2026-10-09)
+
+### Streams
+
+- Each stream shows badges for its resolution, HDR, codec, source, dual
+  audio, size, and seeders.
+- Torrents sort by seeders. A setting puts direct links above torrents.
+- "Reload streams" or Blue asks each addon again.
+- A link that gives a web page, or that the server refuses, shows a clear
+  message in the player.
+
+### Watching
+
+- A countdown to the next episode shows at the start of the ending. OK plays
+  the next episode at once.
+- The next episode plays from the same source, with the same resolution and
+  release group when the addon has it.
+- A setting skips intros by itself. Skipping the ending marks the episode as
+  watched.
+- A stream near the end of an episode no longer stops every few seconds.
+
+### Torrents
+
+- A torrent downloads only a window ahead of playback, not the full file.
+- A second torrent in the same session starts. Before, only the first one
+  started.
+- A torrent that the viewer leaves while it starts is removed.
+
+### Interface
+
+- New and trending rows come first on Home. A row that repeats a row above
+  it does not show. Settings, Home rows turns each row on or off.
+- A long name scrolls while its card has the focus.
+- A Menu button at the top of the TV screen, a long press on OK for the
+  player options, and an episode row in the options. A remote with no Menu
+  key and no number keys can do each action.
+- Game controllers and keyboards work.
+
+### Fixes
+
+- A bad request from a device on the network no longer stops the app while
+  the Sources screen shows.
+- Two saves at the same time no longer risk the library or the settings.
+- Playlists and TV guides stay in the cache for some hours, and images are
+  kept only once.
+
 ## 0.3.0 (2026-10-08)
 
 - Text skips to the exact end of the opening of an anime episode. The times
