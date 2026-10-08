@@ -56,7 +56,7 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - The code for the source list stays behind one interface, so that a
   different host can replace Supabase.
 
-## 2026-10-08: Remote control buttons
+## 2026-10-08: Remote control buttons (side menu keys replaced on 2026-10-08, see "Side menu keys")
 
 - This is the planned design. Confirm each button on the Hitachi TV with the
   key code test screen.
@@ -140,7 +140,7 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   change the channel. This replaces the Guide action in "Remote control
   buttons".
 
-## 2026-10-08: HTTP streams only
+## 2026-10-08: HTTP streams only (replaced on 2026-10-08, see "Torrent streams")
 
 - The app plays HTTP streams only. This includes HLS.
 - The app contains no torrent engine and no VPN function.
@@ -236,3 +236,53 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   press of the same button within three seconds changes the episode or the
   channel. This replaces the direct change in "Remote control buttons".
 - On a TV, a row scrolls so that the focused item stops at the left margin.
+
+## 2026-10-08: Torrent streams
+
+- This choice replaces "HTTP streams only".
+- The app has a torrent engine: libtorrent through libtorrent4j. It
+  downloads the chosen file in order and serves it to the player on
+  127.0.0.1, so that playback starts before the download is complete.
+- The streams screen shows torrent streams by default, with a TORRENT label.
+  A setting hides them.
+- The upload is limited to 4 KB/s by default. libtorrent reads 0 as no limit,
+  and peers send less to a client that sends nothing. A setting removes the
+  limit.
+- The app does not seed. When the player closes, the engine stops the torrent
+  and deletes its files.
+- The APK holds the engine for 32-bit ARM and 64-bit ARM. Only debug builds
+  hold the x86_64 engine for the emulator.
+- Reason: the owner asked for torrents, so that all Stremio addons work.
+
+## 2026-10-08: VPN notice
+
+- At each start, the app shows a notice that asks the user to use a VPN.
+- The app does not check for a VPN, and it does not stop without one.
+- The notice has a "Do not show again" button and a setting.
+
+## 2026-10-08: Viewer settings
+
+- Settings has: subtitles on or off, the subtitle language, the subtitle
+  size, the audio language, play the next episode, press the channel buttons
+  twice, show torrent streams, share while streaming, and the VPN notice.
+- The settings stay on the device, like the source list.
+
+## 2026-10-08: Side menu keys
+
+- This choice replaces the side menu part of "Remote control buttons" and of
+  "Built behavior".
+- Only Menu and `0` open the side menu. Left moves in a row, as on any
+  screen.
+- While the menu is open, the focus stays in it. Back, Menu, or `0` closes
+  it. A choice in the menu also closes it.
+- Back on a main screen goes to Home. Back on Home asks before the app
+  closes.
+
+## 2026-10-08: Return to the same place
+
+- Each screen keeps its scroll position while it is on the stack.
+- After Back, the card that had the focus takes it again.
+- The app keeps the last answer of each catalog in memory, so that a screen
+  comes back at once.
+- A card follows the image shape that the addon gives: poster, landscape, or
+  square.
