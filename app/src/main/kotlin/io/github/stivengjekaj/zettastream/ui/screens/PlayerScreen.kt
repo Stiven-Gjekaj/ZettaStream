@@ -580,7 +580,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onPlayerError(e: PlaybackException) {
-                error = "This stream does not play (${e.errorCodeName}). " +
+                error = PlayerErrors.describe(e.errorCode, e.errorCodeName) + " " +
                     if (playback is LivePlayback) "Press Channel up or down for another channel." else "Press Yellow or Back to choose another source."
             }
             override fun onPlaybackStateChanged(state: Int) {
