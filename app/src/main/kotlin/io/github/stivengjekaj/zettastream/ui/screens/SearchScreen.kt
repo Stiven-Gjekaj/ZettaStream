@@ -92,7 +92,8 @@ fun SearchScreen(app: AppState) {
             ),
             // The field draws its own border when it has the focus, so it has no focus ring.
             // A text field keeps the Down key, so send it on to the results.
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv)).onPreviewKeyEvent {
+            // On a TV, the Menu button is at the top right, so the field stops before it.
+            modifier = Modifier.fillMaxWidth().padding(start = Sizes.gutter(tv), end = if (tv) 150.dp else Sizes.gutter(tv)).onPreviewKeyEvent {
                 if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
                     keyboard?.hide()
                     focusManager.moveFocus(FocusDirection.Down)

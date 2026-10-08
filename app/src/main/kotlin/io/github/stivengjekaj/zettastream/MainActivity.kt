@@ -38,10 +38,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
+import io.github.stivengjekaj.zettastream.remote.RemoteKeys
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.PhoneTabBar
 import io.github.stivengjekaj.zettastream.ui.components.Toast
+import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.TvSideMenu
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.screens.DetailScreen
@@ -89,8 +91,13 @@ class MainActivity : ComponentActivity() {
      * Lint marks this override as a restricted API by mistake: the method is public in Activity.
      */
     @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        app.keyCapture?.let { if (it(event)) return true }
+    override fun dispatchKeyEvent(original: KeyEvent): Boolean {
+        val event = RemoteKeys.translate(original.keyCode)?.let { code ->
+            KeyEvent(original.downTime, original.eventTime, original.action, code, original.repeatCount, original.metaState,
+                original.deviceId, original.scanCode, original.flags, original.source)
+        } ?: original
+        // The remote control test shows the key as the device sent it.
+        app.keyCapture?.let { if (it(if (app.current == Screen.KeyTest) original else event)) return true }
         if (super.dispatchKeyEvent(event)) return true
         return app.onUnhandledKey(event)
     }
@@ -117,6 +124,13 @@ private fun Root(app: AppState, finish: () -> Unit) {
                 key(screen) { states.SaveableStateProvider(screen.toString()) { Content(app, screen) } }
             }
             if (!app.isTv && screen.isTopLevel) PhoneTabBar(screen) { app.open(it) }
+        }
+        if (app.isTv && screen.isTopLevel && !app.menuOpen) {
+            // A remote with no Menu key and no number keys reaches the menu with Up and this button.
+            ZButton(
+                onClick = { app.menuOpen = true }, tv = true,
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 20.dp, end = 32.dp),
+            ) { Text("Menu") }
         }
         if (app.isTv && !fullScreen) {
             TvSideMenu(app.menuOpen, screen, onSelect = { app.open(it) })
