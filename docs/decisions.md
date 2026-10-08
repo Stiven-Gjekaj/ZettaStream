@@ -296,3 +296,12 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   the official OpenSubtitles addon of Stremio. It is free and needs no key.
 - Subtitle tracks show the language name. Two tracks in one language show a
   number, for example "English 1" and "English 2".
+
+## 2026-10-08: Subtitle style
+
+- The viewer chooses the subtitle text color, the background opacity (none,
+  25%, 50%, 75%, solid), the font, and the edge (none, outline, drop shadow,
+  raised).
+- The default is white text with an outline and no background.
+- The style of the viewer replaces a style in the subtitle file.
+- The order of the lines in the source list sets the order of the home rows.

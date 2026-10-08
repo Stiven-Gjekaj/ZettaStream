@@ -12,6 +12,13 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.2.1 (2026-10-08)
+
+- Subtitles have a style: text color, background opacity from none to solid,
+  font, and edge. Change it in Settings or in the player options.
+- The streams screen says that torrents are hidden only when the setting
+  hides them.
+
 ## 0.2.0 (2026-10-08)
 
 ### Torrents
