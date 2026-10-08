@@ -3,6 +3,7 @@ package io.github.stivengjekaj.zettastream.torrent
 import io.github.stivengjekaj.zettastream.settings.ViewerSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,6 +20,8 @@ import org.libtorrent4j.SessionHandle
 import java.io.File
 import java.io.IOException
 import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /** One file of a torrent that the local server streams. */
 class TorrentFile(
@@ -95,13 +98,16 @@ class TorrentEngine(
 ) {
     private var session: SessionManager? = null
     private val server = TorrentServer(scope)
-    private val open = mutableMapOf<String, TorrentFile>()
+    // The player reads this map on the main thread, and open() writes it on an IO thread.
+    private val open = ConcurrentHashMap<String, TorrentFile>()
+    private val opening = AtomicInteger()
 
     init {
         // A torrent from an earlier run is not needed. Remove it.
         scope.launch(Dispatchers.IO) { dir.deleteRecursively(); dir.mkdirs() }
     }
 
+    @Synchronized
     private fun session(): SessionManager = session ?: SessionManager(false).also {
         it.start(SessionParams(settingsPack()))
         session = it
@@ -130,9 +136,24 @@ class TorrentEngine(
         season: Int? = null,
         episode: Int? = null,
     ): String = withContext(Dispatchers.IO) {
+        opening.incrementAndGet()
+        try { start(infoHash, sources, fileIdx, name, filename, season, episode) } finally { opening.decrementAndGet() }
+    }
+
+    private suspend fun start(
+        infoHash: String,
+        sources: List<String>,
+        fileIdx: Int?,
+        name: String?,
+        filename: String?,
+        season: Int?,
+        episode: Int?,
+    ): String = coroutineScope {
         val hash = infoHash.lowercase()
-        open[hash]?.let { return@withContext server.url(hash, it) }
+        open[hash]?.let { return@coroutineScope server.url(hash, it) }
         val session = session()
+        // close() pauses the session when the last torrent closes. A paused session starts no new torrent.
+        session.resume()
         session.applySettings(settingsPack())
         val bytes = session.fetchMagnet(TorrentMath.magnet(hash, sources, name), METADATA_TIMEOUT, dir)
             ?: throw IOException("No peer sent the torrent information in ${METADATA_TIMEOUT} seconds")
@@ -169,7 +190,7 @@ class TorrentEngine(
         val t = open.remove(hash) ?: return
         server.remove(hash)
         runCatching { session?.remove(t.handle, SessionHandle.DELETE_FILES) }
-        if (open.isEmpty()) scope.launch(Dispatchers.IO) { runCatching { session?.pause() } }
+        scope.launch(Dispatchers.IO) { if (open.isEmpty() && opening.get() == 0) runCatching { session?.pause() } }
     }
 
     companion object {
