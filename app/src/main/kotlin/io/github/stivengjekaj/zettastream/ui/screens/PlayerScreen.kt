@@ -57,6 +57,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.SubtitleView
+import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.pickSameSource
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
@@ -96,7 +97,6 @@ fun subtitleMime(sub: Subtitle): String {
     }
 }
 
-/** The name of a language code such as "eng" or "sq". An unknown code stays as it is. */
 /**
  * How much video the player keeps ready. After a stall, the default starts
  * again with 5 seconds ready, so a connection that is only a little slower
@@ -115,6 +115,7 @@ fun loadControl(isTorrent: Boolean): DefaultLoadControl = DefaultLoadControl.Bui
     .setPrioritizeTimeOverSizeThresholds(true)
     .build()
 
+/** The name of a language code such as "eng" or "sq". An unknown code stays as it is. */
 fun languageName(code: String): String {
     if (code.isBlank()) return "Subtitle"
     // Subtitle addons often give three-letter codes such as "sqi", which Java does not read directly.
@@ -235,7 +236,10 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     val local = runCatching {
                         c.torrents.open(torrent.infoHash, torrent.sources, torrent.fileIdx, torrent.name, torrent.filename, season, episode)
                     }
-                    local.onSuccess { load(it, emptyMap(), playback.subtitles, startAt) }
+                    local.onSuccess {
+                        if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "torrent url=$it")
+                        load(it, emptyMap(), playback.subtitles, startAt)
+                    }
                         .onFailure { error = "This torrent does not start (${it.message}). Press Yellow or Back to choose another source." }
                 }
             }
@@ -487,6 +491,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     if (playback is LivePlayback) "Press Channel up or down for another channel." else "Press Yellow or Back to choose another source."
             }
             override fun onPlaybackStateChanged(state: Int) {
+                if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "state=$state pos=${player.currentPosition} buf=${player.bufferedPosition} dur=${player.duration}")
                 buffering = state == Player.STATE_BUFFERING
                 if (state == Player.STATE_ENDED && playback is VideoPlayback) {
                     saveProgress()
