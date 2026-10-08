@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -52,7 +51,9 @@ import io.github.stivengjekaj.zettastream.source.SourceKind
 import io.github.stivengjekaj.zettastream.source.SourceList
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Danger
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
@@ -114,7 +115,7 @@ fun SourcesScreen(app: AppState) {
             item {
                 Row(Modifier.padding(Sizes.gutter(tv)), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
                     val url = pairUrl
-                    Box(Modifier.size(260.dp).clip(RoundedCornerShape(12.dp)).background(Color.White), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(260.dp).clip(Corner).background(Color.White), contentAlignment = Alignment.Center) {
                         if (url != null) {
                             val bitmap = remember(url) { qrBitmap(url).asImageBitmap() }
                             Image(bitmap, "QR code for the pairing page", filterQuality = FilterQuality.None, modifier = Modifier.size(244.dp))
@@ -147,7 +148,7 @@ fun SourcesScreen(app: AppState) {
                         colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Accent),
                         modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp).padding(vertical = 10.dp),
                     )
-                    Button(onClick = { scope.launch { received = c.sources.replace(draft).size } }, modifier = Modifier.focusRing()) {
+                    ZButton(onClick = { scope.launch { received = c.sources.replace(draft).size } }, tv = tv, primary = true) {
                         Text("Save")
                     }
                     received?.let { Text("Saved $it sources.", color = Accent, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp)) }
@@ -162,7 +163,7 @@ fun SourcesScreen(app: AppState) {
             val (text, ok) = status(source)
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 4.dp)
-                    .clip(RoundedCornerShape(10.dp)).background(SurfaceHigh).padding(12.dp),
+                    .clip(Corner).background(SurfaceHigh).padding(12.dp),
             ) {
                 Text(text, color = if (ok) TextPrimary else Danger, fontSize = 15.sp)
                 // Hide the path: a configured addon URL can hold a key.

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
@@ -50,7 +51,7 @@ fun PosterCard(
     progress: Float? = null,
     caption: String? = null,
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = Corner
     Column(Modifier.width(width)) {
         Box(
             Modifier
@@ -129,7 +130,7 @@ fun PlaceholderRow(tv: Boolean) {
             Box(
                 Modifier
                     .size(Sizes.posterWidth(tv), Sizes.posterWidth(tv) * 1.5f)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(Corner)
                     .background(SurfaceHigh.copy(alpha = 0.5f)),
             )
         }

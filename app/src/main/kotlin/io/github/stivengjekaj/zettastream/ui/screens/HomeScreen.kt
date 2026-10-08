@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Text
@@ -35,9 +34,12 @@ import io.github.stivengjekaj.zettastream.ui.components.PosterCard
 import io.github.stivengjekaj.zettastream.ui.components.PosterRow
 import io.github.stivengjekaj.zettastream.ui.components.SectionTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
-import io.github.stivengjekaj.zettastream.ui.theme.Cyan
+import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
@@ -64,7 +66,7 @@ fun HomeScreen(app: AppState) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Zetta", color = Accent, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold)
-                Text("Stream", color = Cyan, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold)
+                Text("Stream", color = TextSecondary, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold)
             }
         }
         if (latest != null && UpdateChecker.isNewer(latest, BuildConfig.VERSION_NAME)) {
@@ -84,12 +86,13 @@ fun HomeScreen(app: AppState) {
                 ) {
                     items(listOf<String?>(null) + types) { type ->
                         FilterChip(
+                            shape = Corner,
                             selected = app.homeFilter == type,
                             onClick = { app.homeFilter = type },
                             label = { Text(typeLabel(type), fontSize = if (tv) 16.sp else 14.sp) },
-                            modifier = Modifier.focusRing(scaleTo = 1.04f),
+                            modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Accent, selectedLabelColor = TextPrimary,
+                                selectedContainerColor = Accent, selectedLabelColor = OnAccent,
                                 containerColor = SurfaceHigh, labelColor = TextSecondary,
                             ),
                         )
@@ -106,9 +109,11 @@ fun HomeScreen(app: AppState) {
                             "On a TV, you scan a QR code with your phone and paste the list there.",
                         tv,
                     )
-                    Button(
+                    ZButton(
                         onClick = { app.open(Screen.Sources) },
-                        modifier = Modifier.padding(horizontal = Sizes.gutter(tv)).focusRing(),
+                        tv = tv,
+                        primary = true,
+                        modifier = Modifier.padding(horizontal = Sizes.gutter(tv)),
                     ) { Text("Add sources") }
                 }
             }
@@ -116,9 +121,11 @@ fun HomeScreen(app: AppState) {
             item {
                 Column {
                     Message("No addon answered", "Check the network, or check the list in Settings, Sources.", tv)
-                    Button(
+                    ZButton(
                         onClick = { c.addons.retry() },
-                        modifier = Modifier.padding(horizontal = Sizes.gutter(tv)).focusRing(),
+                        tv = tv,
+                        primary = true,
+                        modifier = Modifier.padding(horizontal = Sizes.gutter(tv)),
                     ) { Text("Try again") }
                 }
             }

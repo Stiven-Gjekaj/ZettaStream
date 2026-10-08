@@ -47,6 +47,8 @@ import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Background
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
@@ -103,12 +105,13 @@ fun LiveScreen(app: AppState) {
                 ) {
                     items(listOf<String?>(null) + groups) { g ->
                         FilterChip(
+                            shape = Corner,
                             selected = g == group,
                             onClick = { group = g },
                             label = { Text(g ?: "All") },
-                            modifier = Modifier.focusRing(scaleTo = 1.04f),
+                            modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Accent, selectedLabelColor = TextPrimary,
+                                selectedContainerColor = Accent, selectedLabelColor = OnAccent,
                                 containerColor = SurfaceHigh, labelColor = TextSecondary,
                             ),
                         )
@@ -125,7 +128,7 @@ fun LiveScreen(app: AppState) {
 
 @Composable
 private fun ChannelRow(channel: Channel, guide: Guide, now: Long, tv: Boolean, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = Corner
     val (current, next) = guide.nowAndNext(channel.tvgId, now)
     val time = DateFormat.getTimeInstance(DateFormat.SHORT)
     Row(

@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.ui.Screen
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Background
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
@@ -92,7 +93,7 @@ fun TvSideMenu(open: Boolean, current: Screen, onSelect: (Screen) -> Unit, onClo
                 modifier = Modifier.padding(start = 12.dp, bottom = 24.dp))
             NavItems.forEach { item ->
                 val active = item.screen == current
-                val shape = RoundedCornerShape(12.dp)
+                val shape = Corner
                 Row(
                     Modifier
                         .fillMaxWidth()

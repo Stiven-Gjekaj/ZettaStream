@@ -37,6 +37,7 @@ import io.github.stivengjekaj.zettastream.ui.VideoPlayback
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Danger
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
@@ -126,7 +127,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
             }
             items(group.streams, key = { group.addon.manifestUrl + "|" + it.url }) { stream ->
                 val isFirst = first.also { first = false }
-                val shape = RoundedCornerShape(12.dp)
+                val shape = Corner
                 Column(
                     Modifier
                         .fillMaxWidth()

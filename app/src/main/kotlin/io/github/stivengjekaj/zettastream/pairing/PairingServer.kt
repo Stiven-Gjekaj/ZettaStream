@@ -70,11 +70,11 @@ object PairingHttp {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>ZettaStream sources</title>
         <style>
-          body{margin:0;padding:16px;background:#0b0d12;color:#e8eaf0;font-family:system-ui,sans-serif}
-          h1{font-size:22px;margin:8px 0 4px}p{color:#a9adbc;font-size:14px}
-          textarea{width:100%;box-sizing:border-box;height:55vh;background:#151823;color:#e8eaf0;border:1px solid #2c3142;border-radius:10px;padding:10px;font:13px ui-monospace,monospace}
-          button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:10px;background:#7c5cff;color:#fff;font-size:17px;font-weight:600}
-          .msg{padding:12px;border-radius:10px;background:#1e2a1e;color:#b6f0b6}
+          body{margin:0;padding:16px;background:#000;color:#f2f2f2;font-family:ui-monospace,'JetBrains Mono',Menlo,monospace}
+          h1{font-size:20px;margin:8px 0 4px;letter-spacing:-0.5px}p{color:#8c8c8c;font-size:13px}
+          textarea{width:100%;box-sizing:border-box;height:55vh;background:#0e0e0e;color:#f2f2f2;border:1px solid #2e2e2e;border-radius:8px;padding:10px;font:12px ui-monospace,monospace}
+          button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:8px;background:#fff;color:#000;font:600 15px ui-monospace,monospace}
+          .msg{padding:12px;border-radius:8px;background:#181818;color:#f2f2f2}
         </style></head><body>
         <h1>ZettaStream sources</h1>
         ${if (message != null) "<p class=\"msg\">${escape(message)}</p>" else ""}
@@ -87,7 +87,7 @@ object PairingHttp {
 
     fun done(count: Int): String = """
         <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>body{margin:0;padding:24px;background:#0b0d12;color:#e8eaf0;font-family:system-ui,sans-serif}</style></head>
+        <style>body{margin:0;padding:24px;background:#000;color:#f2f2f2;font-family:ui-monospace,monospace}</style></head>
         <body><h1>Sent</h1><p>The TV has $count sources now. You can close this page.</p></body></html>
     """.trimIndent()
 

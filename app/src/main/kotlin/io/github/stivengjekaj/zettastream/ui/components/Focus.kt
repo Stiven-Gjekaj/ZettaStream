@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,14 +15,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 
 /**
  * Makes the focused item larger and puts a ring around it, so that the user
- * sees the focus from across the room. Put it before `clickable`.
+ * sees the focus from across the room. Put it before `clickable`, and give it
+ * the same shape as the item, so that the ring follows the edge of the item.
  */
 fun Modifier.focusRing(
-    shape: Shape = RoundedCornerShape(12.dp),
+    shape: Shape = Corner,
     scaleTo: Float = 1.06f,
     onFocus: () -> Unit = {},
 ): Modifier = composed {
@@ -43,7 +45,7 @@ fun Modifier.focusRing(
             if (focused) FocusTracker.left = left[0]
         }
         .graphicsLayer { scaleX = scale; scaleY = scale }
-        .border(3.dp, if (focused) Accent else Color.Transparent, shape)
+        .border(2.dp, if (focused) Accent else Color.Transparent, shape)
 }
 
 

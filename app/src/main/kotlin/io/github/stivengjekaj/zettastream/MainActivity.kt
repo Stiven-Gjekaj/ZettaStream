@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.unit.Dp
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,6 +30,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.FocusTracker
@@ -55,7 +59,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         app = AppState((application as ZettaStreamApp).container, deviceKind() == DeviceKind.Tv)
-        setContent { ZettaTheme { Root(app) { finish() } } }
+        setContent {
+            ZettaTheme {
+                // On a TV, a control is only as large as it looks, so the focus ring fits it.
+                // A phone keeps the larger touch area.
+                val minimum = if (app.isTv) Dp.Unspecified else LocalMinimumInteractiveComponentSize.current
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides minimum) {
+                    Root(app) { finish() }
+                }
+            }
+        }
     }
 
     /** A start with no network leaves addons that did not answer. Try them again on return. */
@@ -105,9 +118,9 @@ private fun Root(app: AppState, finish: () -> Unit) {
         AlertDialog(
             onDismissRequest = { app.exitDialog = false },
             title = { Text("Close ZettaStream?") },
-            confirmButton = { TextButton(onClick = finish, modifier = Modifier.focusRing()) { Text("Close") } },
+            confirmButton = { TextButton(shape = Corner, onClick = finish, modifier = Modifier.focusRing()) { Text("Close") } },
             dismissButton = {
-                TextButton(onClick = { app.exitDialog = false }, modifier = Modifier.focusRequester(stay).focusRing()) { Text("Stay") }
+                TextButton(shape = Corner, onClick = { app.exitDialog = false }, modifier = Modifier.focusRequester(stay).focusRing()) { Text("Stay") }
             },
         )
         LaunchedEffect(Unit) { runCatching { stay.requestFocus() } }

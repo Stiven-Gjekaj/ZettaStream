@@ -29,6 +29,7 @@ import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
@@ -37,7 +38,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsRow(title: String, detail: String, tv: Boolean, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = Corner
     Column(
         Modifier
             .fillMaxWidth()
@@ -108,9 +109,9 @@ fun SettingsScreen(app: AppState) {
             title = { Text("Clear the watch history?") },
             text = { Text("The progress of each video goes. The watchlist stays.") },
             confirmButton = {
-                TextButton(onClick = { scope.launch { c.library.clearHistory() }; confirmClear = false }, modifier = Modifier.focusRing()) { Text("Clear") }
+                TextButton(shape = Corner, onClick = { scope.launch { c.library.clearHistory() }; confirmClear = false }, modifier = Modifier.focusRing()) { Text("Clear") }
             },
-            dismissButton = { TextButton(onClick = { confirmClear = false }, modifier = Modifier.focusRing()) { Text("Cancel") } },
+            dismissButton = { TextButton(shape = Corner, onClick = { confirmClear = false }, modifier = Modifier.focusRing()) { Text("Cancel") } },
         )
     }
 }

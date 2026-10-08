@@ -24,12 +24,10 @@ import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -61,7 +59,10 @@ import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Background
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
@@ -139,7 +140,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                         AsyncImage(
                             poster, null, contentScale = ContentScale.Crop,
                             modifier = Modifier.width(if (tv) 200.dp else 110.dp).height(if (tv) 300.dp else 165.dp)
-                                .clip(RoundedCornerShape(14.dp)),
+                                .clip(Corner),
                         )
                     }
                     Column(Modifier.weight(1f)) {
@@ -157,9 +158,11 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                         if (m == null) CircularProgressIndicator(color = Accent)
                         else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             val resume = target?.let { library.progress[it.id] }?.takeIf { !it.isFinished && it.position > 0 }
-                            Button(
+                            ZButton(
                                 onClick = { play(if (isSeries) target else null) },
-                                modifier = Modifier.focusRequester(playFocus).focusRing(),
+                                tv = tv,
+                                primary = true,
+                                modifier = Modifier.focusRequester(playFocus),
                             ) {
                                 Icon(Icons.Rounded.PlayArrow, null)
                                 Spacer(Modifier.width(6.dp))
@@ -173,14 +176,14 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                                 )
                             }
                             val inList = library.watchlist.any { it.id == preview.id }
-                            OutlinedButton(onClick = { app.toggleWatchlist(m.toPreview()) }, modifier = Modifier.focusRing()) {
+                            ZButton(onClick = { app.toggleWatchlist(m.toPreview()) }, tv = tv) {
                                 Icon(if (inList) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder, null)
                                 Spacer(Modifier.width(6.dp))
                                 Text(if (inList) "In watchlist" else "Watchlist")
                             }
                             if (!isSeries) {
                                 val watched = preview.id in library.watched
-                                OutlinedButton(onClick = { scope.launch { c.library.toggleWatched(preview.id) } }, modifier = Modifier.focusRing()) {
+                                ZButton(onClick = { scope.launch { c.library.toggleWatched(preview.id) } }, tv = tv) {
                                     Icon(if (watched) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null)
                                     Spacer(Modifier.width(6.dp))
                                     Text(if (watched) "Watched" else "Mark watched")
@@ -199,12 +202,13 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                     LazyRow(Modifier.padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(seasons) { s ->
                             FilterChip(
+                                shape = Corner,
                                 selected = s == selectedSeason,
                                 onClick = { season = s },
                                 label = { Text(when (s) { null -> "Other"; 0 -> "Specials"; else -> "Season $s" }) },
-                                modifier = Modifier.focusRing(scaleTo = 1.04f),
+                                modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Accent, selectedLabelColor = TextPrimary,
+                                    selectedContainerColor = Accent, selectedLabelColor = OnAccent,
                                     containerColor = SurfaceHigh, labelColor = TextSecondary,
                                 ),
                             )
@@ -224,7 +228,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
 
 @Composable
 private fun EpisodeRow(video: Video, tv: Boolean, library: LibraryData, onFocus: () -> Unit, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = Corner
     val progress = library.progress[video.id]
     val watched = video.id in library.watched
     Row(
