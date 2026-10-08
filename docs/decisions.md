@@ -8,7 +8,8 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - ZettaStream is a stream aggregator, similar to Miruro.
 - It shows anime, movies, and TV series.
 - Anime metadata comes from AniList. Movie and TV metadata comes from TMDB.
-- The primary target is the Hitachi Cosmos smart TV with Android TV OS 12.
+- The primary target is the Hitachi Cosmos smart TV with Android TV OS 11
+  (corrected on 2026-10-08, see "The test TV runs Android TV 11").
 - Phones and PCs are secondary targets.
 
 ## 2026-10-08: Sources (replaced on 2026-10-08, see "Remote sources")
@@ -165,3 +166,12 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - An Android TV emulator on the Mac tests the D-pad navigation. The Hitachi
   TV confirms the special buttons.
 - On a phone, the user pastes the source lines directly into the app.
+
+## 2026-10-08: The test TV runs Android TV 11
+
+- The Hitachi TV runs Android TV 11 (API level 30), software version
+  v1.23.0.0. It does not run Android 12.
+- The app keeps `minSdk = 26`. Android TV 11 is in the range.
+- The Mac cannot run an Android TV 11 emulator, because Google gives only an
+  x86 image for API level 30. The emulator uses Android TV 12 (API level 31,
+  arm64). The Hitachi TV confirms the behavior of API level 30.
