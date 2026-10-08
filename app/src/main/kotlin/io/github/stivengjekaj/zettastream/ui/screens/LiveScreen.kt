@@ -47,8 +47,9 @@ import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
-import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
+import io.github.stivengjekaj.zettastream.ui.theme.Surface
+import io.github.stivengjekaj.zettastream.ui.theme.Outline
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Background
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
@@ -111,8 +112,8 @@ fun LiveScreen(app: AppState) {
                             label = { Text(g ?: "All") },
                             modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Accent, selectedLabelColor = OnAccent,
-                                containerColor = SurfaceHigh, labelColor = TextSecondary,
+                                selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
+                                containerColor = Surface, labelColor = TextSecondary,
                             ),
                         )
                     }
