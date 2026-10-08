@@ -34,7 +34,7 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   Downloader opens the stable URL
   `https://github.com/Stiven-Gjekaj/ZettaStream/releases/latest/download/ZettaStream.apk`.
 
-## 2026-10-08: Remote sources
+## 2026-10-08: Remote sources (replaced on 2026-10-08, see "User sources with phone pairing")
 
 - This choice replaces "Sources".
 - The app comes with its sources. The user does not type a URL.
@@ -101,3 +101,27 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - PC: a narrow bar of icons stays on the left. It opens when the pointer is
   on it.
 - Phone: a tab bar is at the bottom.
+
+## 2026-10-08: User sources with phone pairing
+
+- This choice replaces "Remote sources".
+- The app contains no sources. The app does not read a source list from
+  Supabase or from any other server of the owner.
+- Reason: the owner does not distribute a source list. Each user adds their
+  own sources.
+- A source is a URL to a repository of plugins. One line holds one URL.
+- The user adds sources from a phone:
+  1. The TV shows a QR code.
+  2. The phone scans the QR code and opens a page that the TV serves on the
+     local network.
+  3. The user pastes the lines and sends them.
+  4. The TV saves the list.
+- The pasted list replaces the full list. A line that the user removes also
+  removes its source from the app.
+- The QR code holds a single-use token. The TV does not accept a list
+  without the token.
+- The list goes from the phone to the TV directly. It does not go through a
+  server on the internet.
+- At each start, the app reads each repository again and gets new plugin
+  versions.
+- On a phone or a PC, the user pastes the lines directly into the app.
