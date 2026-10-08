@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -96,8 +97,14 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
         onDispose { app.screenActions = emptyMap() }
     }
     val playable = groups.filter { it.streams.isNotEmpty() }
-    LaunchedEffect(playable.size) {
-        if (!focused && playable.isNotEmpty()) { focused = runCatching { firstFocus.requestFocus() }.isSuccess }
+    val sections = StreamOrder.sections(groups, viewer.directFirst)
+    val firstStream = sections.firstOrNull()?.streams?.firstOrNull()
+    // The first stream takes the focus when it shows. The list adds its row one frame later.
+    LaunchedEffect(firstStream) {
+        if (!focused && firstStream != null) {
+            withFrameNanos { }
+            focused = runCatching { firstFocus.requestFocus() }.getOrDefault(false)
+        }
     }
 
     fun play(stream: Stream, addonUrl: String, info: StreamInfo) {
@@ -160,8 +167,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
         }
         // Addons that did not answer, or that hide torrents, show under the list.
         val notes = groups.filter { it.error != null || it.hiddenTorrents > 0 }
-        var first = true
-        StreamOrder.sections(groups, viewer.directFirst).forEach { section ->
+        sections.forEach { section ->
             item(key = "head-" + section.title) {
                 Text(
                     section.title, color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
@@ -171,7 +177,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
             items(section.streams, key = { section.title + "|" + it.addon.manifestUrl + "|" + (it.stream.url ?: it.stream.infoHash + ":" + it.stream.fileIdx) }) { listed ->
                 val stream = listed.stream
                 var rowFocused by remember { mutableStateOf(false) }
-                val isFirst = first.also { first = false }
+                val isFirst = listed == firstStream
                 val shape = Corner
                 Column(
                     Modifier
