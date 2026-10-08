@@ -39,6 +39,13 @@ android {
         }
     }
 
+    // Compress the native libraries, so that the download for Downloader stays small.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -64,6 +71,11 @@ dependencies {
     implementation(libs.media3.datasource.okhttp)
     implementation(libs.media3.ui)
     implementation(libs.zxing.core)
+    implementation(libs.libtorrent4j)
+    // 32-bit ARM for TVs and 64-bit ARM for phones. Only the emulator needs x86_64.
+    implementation(libs.libtorrent4j.arm)
+    implementation(libs.libtorrent4j.arm64)
+    debugImplementation(libs.libtorrent4j.x64)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
