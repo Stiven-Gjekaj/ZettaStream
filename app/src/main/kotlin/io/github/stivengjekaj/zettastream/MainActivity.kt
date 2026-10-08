@@ -1,32 +1,125 @@
 package io.github.stivengjekaj.zettastream
 
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
+import io.github.stivengjekaj.zettastream.ui.AppState
+import io.github.stivengjekaj.zettastream.ui.Screen
+import io.github.stivengjekaj.zettastream.ui.components.FocusTracker
+import io.github.stivengjekaj.zettastream.ui.components.PhoneTabBar
+import io.github.stivengjekaj.zettastream.ui.components.Toast
+import io.github.stivengjekaj.zettastream.ui.components.TvSideMenu
+import io.github.stivengjekaj.zettastream.ui.components.focusRing
+import io.github.stivengjekaj.zettastream.ui.screens.DetailScreen
+import io.github.stivengjekaj.zettastream.ui.screens.HomeScreen
+import io.github.stivengjekaj.zettastream.ui.screens.KeyTestScreen
+import io.github.stivengjekaj.zettastream.ui.screens.LibraryScreen
+import io.github.stivengjekaj.zettastream.ui.screens.LiveScreen
+import io.github.stivengjekaj.zettastream.ui.screens.PlayerScreen
+import io.github.stivengjekaj.zettastream.ui.screens.SearchScreen
+import io.github.stivengjekaj.zettastream.ui.screens.SettingsScreen
+import io.github.stivengjekaj.zettastream.ui.screens.SourcesScreen
+import io.github.stivengjekaj.zettastream.ui.screens.StreamsScreen
+import io.github.stivengjekaj.zettastream.ui.theme.Background
+import io.github.stivengjekaj.zettastream.ui.theme.ZettaTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
+    private lateinit var app: AppState
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val kind = deviceKind()
-        setContent {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color(0xFF0B0D12)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "ZettaStream (${kind.name})",
-                    color = Color(0xFFE8EAF0),
-                    fontSize = 32.sp,
-                )
-            }
+        enableEdgeToEdge()
+        app = AppState((application as ZettaStreamApp).container, deviceKind() == DeviceKind.Tv)
+        setContent { ZettaTheme { Root(app) { finish() } } }
+    }
+
+    /**
+     * The player and the key test take keys first. A key that nobody used goes to the app actions.
+     * Lint marks this override as a restricted API by mistake: the method is public in Activity.
+     */
+    @SuppressLint("RestrictedApi")
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        app.keyCapture?.let { if (it(event)) return true }
+        if (app.opensMenuOnLeft(event, FocusTracker.left, resources.displayMetrics.density)) return true
+        if (super.dispatchKeyEvent(event)) return true
+        return app.onUnhandledKey(event)
+    }
+}
+
+@Composable
+private fun Root(app: AppState, finish: () -> Unit) {
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(Unit) {
+        app.focusManager = focusManager
+        app.latestVersion = app.container.updates.latestVersion()
+    }
+    LaunchedEffect(app.toast) { if (app.toast != null) { delay(2500); app.toast = null } }
+    BackHandler { app.back(finish) }
+
+    val screen = app.current
+    val fullScreen = screen is Screen.Player
+    Box(Modifier.fillMaxSize().background(Background)) {
+        Column(Modifier.fillMaxSize().then(if (fullScreen || app.isTv) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
+            Box(Modifier.weight(1f)) { Content(app, screen) }
+            if (!app.isTv && screen.isTopLevel) PhoneTabBar(screen) { app.open(it) }
         }
+        if (app.isTv && !fullScreen) {
+            TvSideMenu(app.menuOpen, screen, onSelect = { app.open(it) }, onClose = { app.menuOpen = false })
+        }
+        Toast(app.toast, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
+    }
+
+    if (app.exitDialog) {
+        val stay = remember { FocusRequester() }
+        AlertDialog(
+            onDismissRequest = { app.exitDialog = false },
+            title = { Text("Close ZettaStream?") },
+            confirmButton = { TextButton(onClick = finish, modifier = Modifier.focusRing()) { Text("Close") } },
+            dismissButton = {
+                TextButton(onClick = { app.exitDialog = false }, modifier = Modifier.focusRequester(stay).focusRing()) { Text("Stay") }
+            },
+        )
+        LaunchedEffect(Unit) { runCatching { stay.requestFocus() } }
+    }
+}
+
+@Composable
+private fun Content(app: AppState, screen: Screen) {
+    when (screen) {
+        Screen.Home -> HomeScreen(app)
+        Screen.Search -> SearchScreen(app)
+        Screen.Live -> LiveScreen(app)
+        Screen.Library -> LibraryScreen(app)
+        Screen.Settings -> SettingsScreen(app)
+        Screen.Sources -> SourcesScreen(app)
+        Screen.KeyTest -> KeyTestScreen(app)
+        is Screen.Detail -> DetailScreen(app, screen.preview)
+        is Screen.Streams -> StreamsScreen(app, screen)
+        is Screen.Player -> PlayerScreen(app, screen.playback)
     }
 }
