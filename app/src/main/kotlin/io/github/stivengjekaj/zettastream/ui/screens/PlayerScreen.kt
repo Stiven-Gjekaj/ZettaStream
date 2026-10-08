@@ -47,6 +47,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import io.github.stivengjekaj.zettastream.addon.Subtitle
+import io.github.stivengjekaj.zettastream.addon.pickSameSource
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.remote.RemoteKeys
 import io.github.stivengjekaj.zettastream.ui.AppState
@@ -59,11 +60,13 @@ import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 
 private const val SEEK_STEP = 10_000L
 private const val SEEK_FAST = 30_000L
 private const val INTRO_SKIP = 85_000L
+private const val CONFIRM_WINDOW = 3_000L
 
 fun subtitleMime(sub: Subtitle): String {
     val path = sub.url.substringBefore('?').lowercase()
@@ -95,6 +98,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var playing by remember { mutableStateOf(false) }
     var position by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(C.TIME_UNSET) }
+    var prompt by remember { mutableStateOf<String?>(null) }
+    var pendingStep by remember { mutableIntStateOf(0) }
+    var pendingAt by remember { mutableLongStateOf(0L) }
     val live by c.live.live.collectAsState()
 
     val title: String
@@ -196,9 +202,54 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 val target = playback.episodes.getOrNull(index + step)
                 if (index < 0 || target == null) { show(if (step > 0) "This is the last episode" else "This is the first episode"); return }
                 saveProgress()
-                app.replace(Screen.Streams(playback.meta, target.id, episodeLabel(target), playback.episodes))
+                val label = episodeLabel(target)
+                show("Loading $label")
+                val streamsScreen = Screen.Streams(playback.meta, target.id, label, playback.episodes)
+                val addonUrl = playback.addonUrl
+                if (addonUrl == null) { app.replace(streamsScreen); return }
+                // Play the next episode from the same source, with no stop at the list of streams.
+                c.scope.launch {
+                    val type = playback.meta.type
+                    val stream = c.addons.streamsFrom(addonUrl, type, target.id)
+                        ?.let { pickSameSource(it, playback.bingeGroup, playback.streamName) }
+                    if (stream == null) { app.replace(streamsScreen); return@launch }
+                    val subtitles = withTimeoutOrNull(4000) { c.addons.subtitles(type, target.id) }.orEmpty()
+                    app.replace(
+                        Screen.Player(
+                            playback.copy(
+                                videoId = target.id,
+                                label = label,
+                                url = stream.url!!,
+                                headers = stream.requestHeaders,
+                                subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
+                                bingeGroup = stream.behaviorHints?.bingeGroup ?: playback.bingeGroup,
+                                streamName = stream.name ?: playback.streamName,
+                            ),
+                        ),
+                    )
+                }
             }
         }
+    }
+
+    /**
+     * The first press of a channel button only shows a prompt. A second press of
+     * the same button within three seconds changes the episode or the channel.
+     */
+    fun channelPress(step: Int) {
+        val now = System.currentTimeMillis()
+        if (pendingStep == step && now - pendingAt < CONFIRM_WINDOW) {
+            pendingStep = 0
+            changeEpisode(step)
+            return
+        }
+        pendingStep = step
+        pendingAt = now
+        val what = when (playback) {
+            is LivePlayback -> if (step > 0) "the next channel" else "the previous channel"
+            is VideoPlayback -> if (step > 0) "the next episode" else "the previous episode"
+        }
+        prompt = "Press again for $what"
     }
 
     fun onKey(event: KeyEvent): Boolean {
@@ -226,8 +277,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             RemoteAction.PlayPause -> if (player.isPlaying) player.pause() else player.play()
             RemoteAction.Play -> player.play()
             RemoteAction.Pause -> player.pause()
-            RemoteAction.Next -> changeEpisode(1)
-            RemoteAction.Previous -> changeEpisode(-1)
+            RemoteAction.Next -> { channelPress(1); return true }
+            RemoteAction.Previous -> { channelPress(-1); return true }
             RemoteAction.Subtitles -> cycleTrack(C.TRACK_TYPE_TEXT)
             RemoteAction.AudioTrack -> cycleTrack(C.TRACK_TYPE_AUDIO)
             RemoteAction.SkipIntro -> if (!isLive) { player.seekTo(player.currentPosition + INTRO_SKIP); show("Skipped 85 seconds") }
@@ -265,6 +316,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     }
 
     LaunchedEffect(message) { if (message != null) { delay(2500); message = null } }
+    LaunchedEffect(prompt, pendingAt) { if (prompt != null) { delay(CONFIRM_WINDOW); prompt = null; pendingStep = 0 } }
 
     val now = System.currentTimeMillis()
     val overlay = app.isTv && (now < overlayUntil || !playing || error != null)
@@ -312,6 +364,13 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     )
                 }
             }
+        }
+        prompt?.let {
+            Text(
+                it, color = TextSecondary, fontSize = 15.sp,
+                modifier = Modifier.align(Alignment.TopStart).padding(32.dp)
+                    .background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 14.dp, vertical = 8.dp),
+            )
         }
         message?.let {
             Text(
