@@ -1,27 +1,22 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
 # Local secrets
 .env
+local.properties
+*.jks
+*.keystore
+
+# Private notes that must not be public
+private/
+
+# Build output
+.gradle/
+build/
+.kotlin/
+captures/
+*.apk
+*.aab
+
+# Editors and the OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
