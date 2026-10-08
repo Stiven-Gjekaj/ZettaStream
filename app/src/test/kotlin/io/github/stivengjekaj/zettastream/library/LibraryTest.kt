@@ -51,4 +51,12 @@ class LibraryTest {
         folder.root.resolve("library.json").writeText("{not json")
         assertEquals(LibraryData(), library().data.value)
     }
+
+    @Test
+    fun markWatchedDoesNotRemoveAMark() = runTest {
+        val library = library()
+        library.markWatched("tt1:1:1")
+        library.markWatched("tt1:1:1")
+        assertTrue(library().isWatched("tt1:1:1"))
+    }
 }

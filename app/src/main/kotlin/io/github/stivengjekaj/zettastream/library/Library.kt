@@ -46,6 +46,8 @@ class Library(private val file: File, private val clock: () -> Long = System::cu
         else data.copy(watchlist = listOf(meta) + data.watchlist)
     }
 
+    suspend fun markWatched(id: String) = update { it.copy(watched = it.watched + id) }
+
     suspend fun toggleWatched(id: String) = update { data ->
         if (id in data.watched) data.copy(watched = data.watched - id) else data.copy(watched = data.watched + id)
     }
