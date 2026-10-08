@@ -44,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import io.github.stivengjekaj.zettastream.ui.components.ScrollingText
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -248,10 +250,12 @@ private fun EpisodeRow(video: Video, tv: Boolean, library: LibraryData, onFocus:
     val shape = Corner
     val progress = library.progress[video.id]
     val watched = video.id in library.watched
+    var rowFocused by remember { mutableStateOf(false) }
     Row(
         Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
+            .onFocusChanged { rowFocused = it.isFocused }
             .focusRing(shape, scaleTo = 1.02f, onFocus = onFocus)
             .clip(shape)
             .background(SurfaceHigh.copy(alpha = 0.6f))
@@ -270,7 +274,8 @@ private fun EpisodeRow(video: Video, tv: Boolean, library: LibraryData, onFocus:
         }
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(episodeLabel(video), color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            ScrollingText(episodeLabel(video), active = rowFocused, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,
+                lineHeight = if (tv) 24.sp else 20.sp, maxLines = 1)
             video.released?.take(10)?.let { Text(it, color = TextSecondary, fontSize = 12.sp) }
             video.summary?.let { Text(it, color = TextSecondary, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }

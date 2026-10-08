@@ -36,6 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import io.github.stivengjekaj.zettastream.ui.components.ScrollingText
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -168,6 +170,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
             }
             items(section.streams, key = { section.title + "|" + it.addon.manifestUrl + "|" + (it.stream.url ?: it.stream.infoHash + ":" + it.stream.fileIdx) }) { listed ->
                 val stream = listed.stream
+                var rowFocused by remember { mutableStateOf(false) }
                 val isFirst = first.also { first = false }
                 val shape = Corner
                 Column(
@@ -175,6 +178,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                         .fillMaxWidth()
                         .padding(vertical = 5.dp)
                         .then(if (isFirst) Modifier.focusRequester(firstFocus) else Modifier)
+                        .onFocusChanged { rowFocused = it.isFocused }
                         .focusRing(shape, scaleTo = 1.02f)
                         .clip(shape)
                         .background(SurfaceHigh)
@@ -183,8 +187,10 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (stream.isTorrent) Badge("TORRENT", strong = true)
-                        Text(stream.name?.replace('\n', ' ') ?: listed.addon.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,
-                            fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        ScrollingText(
+                            stream.name?.replace('\n', ' ') ?: listed.addon.name, active = rowFocused, color = TextPrimary,
+                            fontSize = if (tv) 18.sp else 15.sp, lineHeight = if (tv) 24.sp else 20.sp, maxLines = 2, fontWeight = FontWeight.SemiBold,
+                        )
                     }
                     val badges = listed.info.badges
                     if (badges.isNotEmpty()) {

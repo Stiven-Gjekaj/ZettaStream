@@ -21,6 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import io.github.stivengjekaj.zettastream.ui.FocusMemory
@@ -74,6 +78,7 @@ fun PosterCard(
     val card = CardShape.of(meta.posterShape)
     val cardWidth = width * card.widthScale
     val requester = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
     // After Back, the card that had the focus takes it again.
     LaunchedEffect(focusKey) {
         if (focusKey != null && FocusMemory.pending == focusKey) {
@@ -87,6 +92,7 @@ fun PosterCard(
                 .fillMaxWidth()
                 .height(cardWidth * card.heightRatio)
                 .focusRequester(requester)
+                .onFocusChanged { focused = it.isFocused }
                 .focusRing(shape, onFocus = {
                     if (focusKey != null) FocusMemory.last = focusKey
                     onFocus()
@@ -123,7 +129,7 @@ fun PosterCard(
         // The focused card grows by 5 percent. This space keeps it off the title.
         Spacer(Modifier.height(12.dp))
         // Two lines, so that a long name stays readable and the cards stay level.
-        Text(meta.name, color = TextPrimary, fontSize = 13.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 17.sp)
+        ScrollingText(meta.name, active = focused, color = TextPrimary, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2)
         if (caption != null) {
             Text(caption, color = TextSecondary, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
