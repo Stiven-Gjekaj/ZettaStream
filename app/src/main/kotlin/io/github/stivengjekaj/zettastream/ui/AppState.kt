@@ -43,11 +43,15 @@ sealed interface Screen {
     data object Sources : Screen
     data object KeyTest : Screen
 
-    val isTopLevel: Boolean get() = this in TopLevel
-
-    companion object {
-        val TopLevel = listOf(Home, Search, Live, Library, Settings)
-    }
+    /**
+     * A `when` and not a list: a list in the companion object can hold null
+     * for an object that is still in its initialization.
+     */
+    val isTopLevel: Boolean
+        get() = when (this) {
+            Home, Search, Live, Library, Settings -> true
+            else -> false
+        }
 }
 
 /** The state of the interface: the screens, the menu, and the key routing. */
