@@ -26,6 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -51,6 +58,7 @@ private object LastSearch {
 fun SearchScreen(app: AppState) {
     val tv = app.isTv
     val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     var text by rememberSaveable { mutableStateOf(LastSearch.query) }
     var query by remember { mutableStateOf(LastSearch.query) }
     var results by remember { mutableStateOf(LastSearch.results) }
@@ -83,7 +91,15 @@ fun SearchScreen(app: AppState) {
                 cursorColor = Accent,
             ),
             // The field draws its own border when it has the focus, so it has no focus ring.
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv)),
+            // A text field keeps the Down key, so send it on to the results.
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv)).onPreviewKeyEvent {
+                if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
+                    keyboard?.hide()
+                    focusManager.moveFocus(FocusDirection.Down)
+                } else {
+                    false
+                }
+            },
         )
         if (searching) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 8.dp))
         if (!searching && query.isNotBlank() && results.isEmpty()) {
