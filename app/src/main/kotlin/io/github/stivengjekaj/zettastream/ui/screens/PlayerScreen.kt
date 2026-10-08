@@ -52,7 +52,12 @@ import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.pickSameSource
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.remote.RemoteKeys
+import io.github.stivengjekaj.zettastream.settings.SubtitleBackground
+import io.github.stivengjekaj.zettastream.settings.SubtitleColor
+import io.github.stivengjekaj.zettastream.settings.SubtitleEdge
+import io.github.stivengjekaj.zettastream.settings.SubtitleFont
 import io.github.stivengjekaj.zettastream.settings.SubtitleSize
+import io.github.stivengjekaj.zettastream.settings.ViewerSettings
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.LivePlayback
 import io.github.stivengjekaj.zettastream.ui.Playback
@@ -330,12 +335,12 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         val audioIndex = TrackChoices.current(player, C.TRACK_TYPE_AUDIO, audio)
         fun pickSub(step: Int) { TrackChoices.select(player, C.TRACK_TYPE_TEXT, subs[(subIndex + step).mod(subs.size)]); tracksVersion++ }
         fun pickAudio(step: Int) { if (audio.isNotEmpty()) { TrackChoices.select(player, C.TRACK_TYPE_AUDIO, audio[(audioIndex + step).mod(audio.size)]); tracksVersion++ } }
-        fun size(step: Int) {
-            val sizes = SubtitleSize.entries
-            val next = sizes[(sizes.indexOf(viewer.subtitleSize) + step).mod(sizes.size)]
-            playerView?.subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * next.scale)
-            c.scope.launch { c.settings.update { it.copy(subtitleSize = next) } }
+        // A style change goes to the settings. The effect below applies it at once.
+        fun <T> cycle(options: List<T>, current: T, step: Int, change: (ViewerSettings, T) -> ViewerSettings) {
+            val next = options[(options.indexOf(current) + step).mod(options.size)]
+            c.scope.launch { c.settings.update { change(it, next) } }
         }
+        fun size(step: Int) = cycle(SubtitleSize.entries, viewer.subtitleSize, step) { v, x -> v.copy(subtitleSize = x) }
         fun setSpeed(step: Int) {
             speed = PlaybackSpeeds[(PlaybackSpeeds.indexOf(speed) + step).coerceIn(0, PlaybackSpeeds.lastIndex)]
             player.setPlaybackSpeed(speed)
@@ -344,6 +349,18 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             OptionRow("Subtitles", subs.getOrNull(subIndex)?.label ?: "Off", { pickSub(-1) }, { pickSub(1) }),
             OptionRow("Audio", audio.getOrNull(audioIndex)?.label ?: "One track", { pickAudio(-1) }, { pickAudio(1) }),
             OptionRow("Subtitle size", viewer.subtitleSize.label, { size(-1) }, { size(1) }),
+            OptionRow("Text color", viewer.subtitleColor.label,
+                { cycle(SubtitleColor.entries, viewer.subtitleColor, -1) { v, x -> v.copy(subtitleColor = x) } },
+                { cycle(SubtitleColor.entries, viewer.subtitleColor, 1) { v, x -> v.copy(subtitleColor = x) } }),
+            OptionRow("Background", viewer.subtitleBackground.label,
+                { cycle(SubtitleBackground.entries, viewer.subtitleBackground, -1) { v, x -> v.copy(subtitleBackground = x) } },
+                { cycle(SubtitleBackground.entries, viewer.subtitleBackground, 1) { v, x -> v.copy(subtitleBackground = x) } }),
+            OptionRow("Font", viewer.subtitleFont.label,
+                { cycle(SubtitleFont.entries, viewer.subtitleFont, -1) { v, x -> v.copy(subtitleFont = x) } },
+                { cycle(SubtitleFont.entries, viewer.subtitleFont, 1) { v, x -> v.copy(subtitleFont = x) } }),
+            OptionRow("Edge", viewer.subtitleEdge.label,
+                { cycle(SubtitleEdge.entries, viewer.subtitleEdge, -1) { v, x -> v.copy(subtitleEdge = x) } },
+                { cycle(SubtitleEdge.entries, viewer.subtitleEdge, 1) { v, x -> v.copy(subtitleEdge = x) } }),
         )
         if (playback is VideoPlayback) {
             rows += OptionRow("Speed", if (speed == 1f) "Normal" else "${speed}x", { setSpeed(-1) }, { setSpeed(1) })
@@ -442,6 +459,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         }
     }
 
+    // Apply the subtitle style when the view exists and each time the viewer changes it.
+    LaunchedEffect(viewer, playerView) { SubtitleStyle.apply(playerView?.subtitleView, viewer) }
+
     LaunchedEffect(message) { if (message != null) { delay(2500); message = null } }
     LaunchedEffect(prompt, pendingAt) { if (prompt != null) { delay(CONFIRM_WINDOW); prompt = null; pendingStep = 0 } }
 
@@ -456,7 +476,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     playerView = this
                     useController = !app.isTv
                     setShowSubtitleButton(true)
-                    subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * viewer.subtitleSize.scale)
+                    SubtitleStyle.apply(subtitleView, viewer)
                     keepScreenOn = true
                 }
             },

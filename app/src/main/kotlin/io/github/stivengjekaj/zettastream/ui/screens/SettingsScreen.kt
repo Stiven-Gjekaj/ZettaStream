@@ -26,6 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.settings.SettingsStore
+import io.github.stivengjekaj.zettastream.settings.SubtitleBackground
+import io.github.stivengjekaj.zettastream.settings.SubtitleColor
+import io.github.stivengjekaj.zettastream.settings.SubtitleEdge
+import io.github.stivengjekaj.zettastream.settings.SubtitleFont
 import io.github.stivengjekaj.zettastream.settings.SubtitleSize
 import io.github.stivengjekaj.zettastream.settings.ViewerSettings
 import io.github.stivengjekaj.zettastream.ui.AppState
@@ -99,6 +103,10 @@ fun SettingsScreen(app: AppState) {
             }
         }
         item { SettingsRow("Subtitle size", viewer.subtitleSize.label, tv) { set { it.copy(subtitleSize = SettingsStore.next(SubtitleSize.entries, it.subtitleSize)) } } }
+        item { SettingsRow("Subtitle text color", viewer.subtitleColor.label, tv) { set { it.copy(subtitleColor = SettingsStore.next(SubtitleColor.entries, it.subtitleColor)) } } }
+        item { SettingsRow("Subtitle background", "${viewer.subtitleBackground.label}. A box behind the text.", tv) { set { it.copy(subtitleBackground = SettingsStore.next(SubtitleBackground.entries, it.subtitleBackground)) } } }
+        item { SettingsRow("Subtitle font", viewer.subtitleFont.label, tv) { set { it.copy(subtitleFont = SettingsStore.next(SubtitleFont.entries, it.subtitleFont)) } } }
+        item { SettingsRow("Subtitle edge", "${viewer.subtitleEdge.label}. An edge keeps text readable with no background.", tv) { set { it.copy(subtitleEdge = SettingsStore.next(SubtitleEdge.entries, it.subtitleEdge)) } } }
         item {
             SettingsRow("Audio language", SettingsStore.languageName(viewer.audioLanguage), tv) {
                 set { it.copy(audioLanguage = SettingsStore.next(SettingsStore.Languages.map { l -> l.first }, it.audioLanguage)) }

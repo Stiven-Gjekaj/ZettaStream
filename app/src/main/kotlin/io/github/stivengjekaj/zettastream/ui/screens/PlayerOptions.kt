@@ -92,7 +92,10 @@ fun PlayerOptionsPanel(rows: List<OptionRow>, focused: Int, modifier: Modifier =
         Text("Options", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text("Up and Down: choose. Left and Right: change. Back: close.", color = TextSecondary, fontSize = 12.sp)
         Spacer(Modifier.padding(4.dp))
+        // Show at most eight rows, with the focused row in view.
+        val first = (focused - 4).coerceIn(0, (rows.size - 8).coerceAtLeast(0))
         rows.forEachIndexed { i, row ->
+            if (i < first || i >= first + 8) return@forEachIndexed
             val on = i == focused
             Row(
                 Modifier
