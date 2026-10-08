@@ -9,6 +9,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.io.RandomAccessFile
 import java.net.InetAddress
+import java.net.SocketTimeoutException
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
@@ -76,7 +77,12 @@ class TorrentServer(private val scope: CoroutineScope) {
             }.toByteArray(),
         )
         if (method == "HEAD") return
-        send(torrent, hash, bytes, out)
+        // The player sends nothing after the request. A read that ends means that the player closed the connection.
+        val gone = {
+            s.soTimeout = 1
+            try { input.read() < 0 } catch (_: SocketTimeoutException) { false }
+        }
+        send(torrent, hash, bytes, out, gone)
     }
 
     private fun status(out: OutputStream, status: String, extra: String = "") {
@@ -84,7 +90,7 @@ class TorrentServer(private val scope: CoroutineScope) {
     }
 
     /** Sends [bytes] of the file. Before each piece, it sets deadlines for the pieces ahead and waits for the first. */
-    private fun send(t: TorrentFile, hash: String, bytes: LongRange, out: OutputStream) {
+    private fun send(t: TorrentFile, hash: String, bytes: LongRange, out: OutputStream, gone: () -> Boolean) {
         val pieceLength = t.info.pieceLength()
         val buffer = ByteArray(CHUNK)
         var position = bytes.first
@@ -102,6 +108,8 @@ class TorrentServer(private val scope: CoroutineScope) {
                 }
                 while (!t.handle.havePiece(piece)) {
                     if (files[hash] == null) throw IOException("The torrent is closed")
+                    // After a seek, this piece can stay ignored. Stop when the player left.
+                    if (gone()) throw IOException("The player closed the connection")
                     Thread.sleep(POLL)
                 }
                 val file = raf ?: RandomAccessFile(t.file, "r").also { raf = it }
