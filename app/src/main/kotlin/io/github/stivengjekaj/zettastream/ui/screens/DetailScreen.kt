@@ -74,6 +74,9 @@ import kotlinx.coroutines.launch
 /** The season number for the list. Specials (season 0) go last. */
 private fun seasonKey(season: Int?) = when (season) { null -> Int.MAX_VALUE - 1; 0 -> Int.MAX_VALUE; else -> season }
 
+/** Removes "Season 2", "2nd Season", or "Part 2" from the end of a name. */
+val seasonSuffix = Regex("""\s*(:\s*)?(Season\s*\d+|\d+(st|nd|rd|th)\s+Season|Part\s*\d+)$""", RegexOption.IGNORE_CASE)
+
 fun episodeLabel(v: Video): String = buildString {
     if (v.season != null && v.episode != null) append("S${v.season} E${v.episode}  ")
     append(v.label)
@@ -175,6 +178,15 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                                         else -> "Play"
                                     },
                                 )
+                            }
+                            // Anime Kitsu gives each season as its own title. The IMDb ID opens the
+                            // whole show under one name, with every season.
+                            val whole = m.imdbId?.takeIf { m.id.startsWith("kitsu:") && m.type != "movie" }
+                            if (whole != null && c.addons.addons.value.addons.any { it.supports("meta", "series", whole) }) {
+                                ZButton(
+                                    onClick = { app.open(Screen.Detail(MetaPreview(whole, "series", m.name.replace(seasonSuffix, ""), m.poster))) },
+                                    tv = tv,
+                                ) { Text("All seasons") }
                             }
                             val inList = library.watchlist.any { it.id == preview.id }
                             ZButton(onClick = { app.toggleWatchlist(m.toPreview()) }, tv = tv) {
