@@ -46,4 +46,16 @@ class AddonRepositoryTest {
         assertEquals(1, group.streams.size)
         assertEquals(2, group.hidden)
     }
+
+    @Test
+    fun retryInstallsTheAddonsAgain() = runTest {
+        val sources = MutableStateFlow(SourceList.parse("${server.url("/good/manifest.json")}"))
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope)
+        repository.addons.first { !it.loading && it.addons.isNotEmpty() }
+        val before = server.requestCount
+        repository.retry()
+        repository.addons.first { it.loading }
+        repository.addons.first { !it.loading }
+        assertEquals(before + 1, server.requestCount)
+    }
 }

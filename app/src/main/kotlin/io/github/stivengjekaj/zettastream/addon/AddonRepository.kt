@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 data class AddonState(
@@ -41,11 +42,18 @@ class AddonRepository(
 ) {
     private val state = MutableStateFlow(AddonState(loading = true))
     val addons: StateFlow<AddonState> = state.asStateFlow()
+    private val retries = MutableStateFlow(0)
 
     init {
         scope.launch {
-            sources.collectLatest { list -> install(list.filter { it.kind == SourceKind.Addon }) }
+            combine(sources, retries) { list, _ -> list }
+                .collectLatest { list -> install(list.filter { it.kind == SourceKind.Addon }) }
         }
+    }
+
+    /** Installs each addon again, for example after the network comes back. */
+    fun retry() {
+        retries.value++
     }
 
     private suspend fun install(sources: List<Source>) = coroutineScope {

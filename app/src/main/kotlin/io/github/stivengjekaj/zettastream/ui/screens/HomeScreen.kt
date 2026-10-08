@@ -113,7 +113,15 @@ fun HomeScreen(app: AppState) {
                 }
             }
         } else if (!addonState.loading && rows.isEmpty() && addonState.addons.isEmpty()) {
-            item { Message("No addon answered", "Check the list in Settings, Sources.", tv) }
+            item {
+                Column {
+                    Message("No addon answered", "Check the network, or check the list in Settings, Sources.", tv)
+                    Button(
+                        onClick = { c.addons.retry() },
+                        modifier = Modifier.padding(horizontal = Sizes.gutter(tv)).focusRing(),
+                    ) { Text("Try again") }
+                }
+            }
         }
         if (resume.isNotEmpty() && (app.homeFilter == null)) {
             item(key = "resume") {

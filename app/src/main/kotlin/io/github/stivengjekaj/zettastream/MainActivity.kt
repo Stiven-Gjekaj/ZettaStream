@@ -58,6 +58,12 @@ class MainActivity : ComponentActivity() {
         setContent { ZettaTheme { Root(app) { finish() } } }
     }
 
+    /** A start with no network leaves addons that did not answer. Try them again on return. */
+    override fun onStart() {
+        super.onStart()
+        if (app.container.addons.addons.value.failures.isNotEmpty()) app.container.addons.retry()
+    }
+
     /**
      * The player and the key test take keys first. A key that nobody used goes to the app actions.
      * Lint marks this override as a restricted API by mistake: the method is public in Activity.
