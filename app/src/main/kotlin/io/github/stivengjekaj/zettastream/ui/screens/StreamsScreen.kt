@@ -44,6 +44,9 @@ import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 
+/** Writes a count with the correct form of the word: 1 stream, 2 streams. */
+fun count(n: Int, word: String): String = "$n $word" + if (n == 1) "" else "s"
+
 @Composable
 fun StreamsScreen(app: AppState, screen: Screen.Streams) {
     val c = app.container
@@ -86,8 +89,8 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
             Text(screen.meta.name, color = TextPrimary, fontSize = if (tv) 30.sp else 22.sp, fontWeight = FontWeight.Bold)
             if (screen.label != screen.meta.name) Text(screen.label, color = TextSecondary, fontSize = 16.sp)
             Text(
-                if (done) "${playable.sumOf { it.streams.size }} streams from ${playable.size} of $asked addons"
-                else "Asking $asked addons for streams",
+                if (done) "${count(playable.sumOf { it.streams.size }, "stream")} from ${playable.size} of ${count(asked, "addon")}"
+                else "Asking ${count(asked, "addon")} for streams",
                 color = TextSecondary, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp),
             )
             if (!done) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
@@ -105,7 +108,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 val hidden = groups.sumOf { it.hidden }
                 Message(
                     "No playable stream",
-                    if (hidden > 0) "$hidden streams were torrents with no HTTP link, so they are hidden. A debrid key in the addon settings changes torrents into HTTP links."
+                    if (hidden > 0) "${count(hidden, "stream")} had only a torrent and no HTTP link, so the app hides them. A debrid key in the addon settings changes torrents into HTTP links."
                     else "No addon found a stream for this video.",
                     tv, Modifier.padding(top = 16.dp),
                 )
@@ -117,7 +120,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 Text(
                     group.addon.name + when {
                         group.error != null -> "  (no answer)"
-                        group.hidden > 0 -> "  (${group.hidden} torrent streams hidden)"
+                        group.hidden > 0 -> "  (${count(group.hidden, "torrent stream")} hidden)"
                         else -> ""
                     },
                     color = if (group.error != null) Danger else TextSecondary,
