@@ -33,8 +33,10 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
@@ -130,7 +132,15 @@ private fun Root(app: AppState, finish: () -> Unit) {
             // A remote with no Menu key and no number keys reaches the menu with Up and this button.
             ZButton(
                 onClick = { app.menuOpen = true }, tv = true,
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 20.dp, end = 32.dp),
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 20.dp, end = 32.dp)
+                    // The button is above the content, so the search by position finds nothing.
+                    // Down and Left go to the first item of the screen.
+                    .onPreviewKeyEvent { event ->
+                        val key = event.nativeKeyEvent
+                        val away = key.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || key.keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+                        if (away && key.action == KeyEvent.ACTION_DOWN) focusManager.moveFocus(FocusDirection.Next)
+                        away
+                    },
             ) { Text("Menu") }
         }
         if (app.isTv && !fullScreen) {
