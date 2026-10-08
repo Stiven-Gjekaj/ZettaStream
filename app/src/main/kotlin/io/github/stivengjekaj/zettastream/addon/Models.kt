@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.addon
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** One title in a catalog. This is the short form of [Meta]. */
@@ -16,6 +17,7 @@ data class MetaPreview(
     val releaseInfo: String? = null,
     val imdbRating: String? = null,
     val genres: List<String> = emptyList(),
+    val aliases: List<String> = emptyList(),
 )
 
 /** The full details of one title. */
@@ -32,12 +34,14 @@ data class Meta(
     val imdbRating: String? = null,
     val runtime: String? = null,
     val genres: List<String> = emptyList(),
+    val aliases: List<String> = emptyList(),
+    @SerialName("imdb_id") val imdbId: String? = null,
     val videos: List<Video> = emptyList(),
 ) {
     fun toPreview() = MetaPreview(
         id = id, type = type, name = name, poster = poster, background = background,
         logo = logo, description = description, releaseInfo = releaseInfo,
-        imdbRating = imdbRating, genres = genres,
+        imdbRating = imdbRating, genres = genres, aliases = aliases,
     )
 }
 
@@ -53,6 +57,8 @@ data class Video(
     val thumbnail: String? = null,
     val overview: String? = null,
     val description: String? = null,
+    val imdbSeason: Int? = null,
+    val imdbEpisode: Int? = null,
 ) {
     val label: String get() = title ?: name ?: episode?.let { "Episode $it" } ?: id
     val summary: String? get() = overview ?: description
@@ -119,3 +125,28 @@ internal data class StreamResponse(val streams: List<Stream> = emptyList())
 
 @Serializable
 internal data class SubtitleResponse(val subtitles: List<Subtitle> = emptyList())
+
+/** Names and numbers that read correctly for a person. */
+object Display {
+    /**
+     * Anime addons give the Japanese name in romaji and the English name as an
+     * alias. The first alias in Latin letters is the English name.
+     */
+    fun englishName(name: String, aliases: List<String>): String =
+        aliases.firstOrNull { it.isNotBlank() && isLatin(it) } ?: name
+
+    private fun isLatin(text: String): Boolean {
+        val letters = text.filter { it.isLetter() }
+        return letters.isNotEmpty() && letters.count { it.code < 0x250 } >= letters.length * 9 / 10
+    }
+
+    /**
+     * Anime Kitsu gives each season as its own title, with the episodes of
+     * season 2 numbered as season 1. The IMDb numbers are correct, so use them.
+     */
+    fun video(v: Video): Video = v.copy(season = v.imdbSeason ?: v.season, episode = v.imdbEpisode ?: v.episode)
+
+    fun preview(m: MetaPreview): MetaPreview = m.copy(name = englishName(m.name, m.aliases))
+
+    fun meta(m: Meta): Meta = m.copy(name = englishName(m.name, m.aliases), videos = m.videos.map(::video))
+}

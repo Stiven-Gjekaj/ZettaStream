@@ -23,9 +23,10 @@ class AddonClient(
     suspend fun catalog(addon: Addon, catalog: Catalog, extras: Map<String, String> = emptyMap()): List<MetaPreview> =
         json.decodeFromString<CatalogResponse>(get(addon.resourceUrl("catalog", catalog.type, catalog.id, extras))).metas
             .filter { it.id.isNotBlank() }
+            .map(Display::preview)
 
     suspend fun meta(addon: Addon, type: String, id: String): Meta? =
-        json.decodeFromString<MetaResponse>(get(addon.resourceUrl("meta", type, id))).meta
+        json.decodeFromString<MetaResponse>(get(addon.resourceUrl("meta", type, id))).meta?.let(Display::meta)
 
     suspend fun streams(addon: Addon, type: String, videoId: String): List<Stream> =
         json.decodeFromString<StreamResponse>(get(addon.resourceUrl("stream", type, videoId))).streams
