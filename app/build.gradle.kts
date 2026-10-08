@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.stivengjekaj.zettastream"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.1.1"
+        versionCode = 3
+        versionName = "0.1.2"
     }
 
     // The release key comes from environment variables. GitHub Actions sets
