@@ -23,8 +23,11 @@ data class AddonState(
 )
 
 /** A catalog row on the home screen. */
-data class CatalogRow(val addon: Addon, val catalog: Catalog) {
-    val key: String get() = "${addon.manifestUrl}|${catalog.type}|${catalog.id}"
+data class CatalogRow(val addon: Addon, val catalog: Catalog, val extras: Map<String, String> = emptyMap()) {
+    val key: String get() = "${addon.manifestUrl}|${catalog.type}|${catalog.id}" + extras.entries.joinToString("") { "|${it.key}=${it.value}" }
+
+    /** The name of the row, with the choice it uses, for example "New 2026". */
+    val title: String get() = (listOf(catalog.name) + extras.values).joinToString(" ")
 }
 
 /** The streams of one addon, or the reason that it gave none. */
@@ -74,9 +77,8 @@ class AddonRepository(
         )
     }
 
-    fun homeRows(): List<CatalogRow> = state.value.addons.flatMap { addon ->
-        addon.manifest.catalogs.filterNot { it.needsExtra }.map { CatalogRow(addon, it) }
-    }
+    /** Every row that the addons can give, in the order of [HomeRows.order]. */
+    fun homeRows(): List<CatalogRow> = HomeRows.order(state.value.addons.flatMap(HomeRows::of))
 
     /** The types that the home screen can filter by, in a fixed order. Each kind shows one time. */
     fun types(): List<String> {
@@ -90,7 +92,7 @@ class AddonRepository(
     fun cachedCatalog(row: CatalogRow): List<MetaPreview>? = catalogCache[row.key]
 
     suspend fun catalog(row: CatalogRow): List<MetaPreview> =
-        client.catalog(row.addon, row.catalog).also { catalogCache[row.key] = it }
+        client.catalog(row.addon, row.catalog, row.extras).also { catalogCache[row.key] = it }
 
     /** Searches each catalog that supports a search. Results come as they arrive. */
     fun search(query: String): Flow<List<MetaPreview>> = channelFlow {
