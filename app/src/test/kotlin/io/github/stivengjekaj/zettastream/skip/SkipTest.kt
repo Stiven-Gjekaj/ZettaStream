@@ -56,6 +56,25 @@ class SkipTest {
     }
 
     @Test
+    fun thePlainOpeningWinsOverAMixedOne() {
+        // The real answer for Attack on Titan episode 1.
+        val json = """{"found":true,"results":[
+            {"interval":{"startTime":128.406,"endTime":218.406},"skipType":"op"},
+            {"interval":{"startTime":1342.795,"endTime":1430.616},"skipType":"ed"},
+            {"interval":{"startTime":75,"endTime":135},"skipType":"mixed-op"},
+            {"interval":{"startTime":1351.63,"endTime":1441.63},"skipType":"mixed-ed"}]}"""
+        val ranges = Skip.parseAniSkip(json)
+        assertEquals(listOf(SkipKind.Opening, SkipKind.Ending), ranges.map { it.kind })
+        assertEquals(SkipAction.SeekTo(218_406, SkipKind.Opening), Skip.action(ranges, 10_000))
+    }
+
+    @Test
+    fun aMixedOpeningCountsWhenItIsTheOnlyOne() {
+        val json = """{"found":true,"results":[{"interval":{"startTime":75,"endTime":135},"skipType":"mixed-op"}]}"""
+        assertEquals(listOf(SkipRange(SkipKind.Opening, 75_000, 135_000)), Skip.parseAniSkip(json))
+    }
+
+    @Test
     fun readsTheKitsuEpisodeFromAVideoId() {
         assertEquals(1376 to 5, Skip.kitsuEpisode("kitsu:1376:5"))
         assertNull(Skip.kitsuEpisode("tt0903747:1:2"))

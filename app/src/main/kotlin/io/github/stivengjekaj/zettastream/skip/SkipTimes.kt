@@ -61,11 +61,16 @@ object Skip {
     fun parseAniSkip(json: String): List<SkipRange> = runCatching {
         val root = Json.parseToJsonElement(json) as JsonObject
         if ((root["found"] as? JsonPrimitive)?.booleanOrNull != true) return emptyList()
-        (root["results"] as JsonArray).mapNotNull { r ->
-            val o = r as JsonObject
+        val results = (root["results"] as JsonArray).map { it as JsonObject }
+        val types = results.mapNotNull { (it["skipType"] as? JsonPrimitive)?.contentOrNull }.toSet()
+        // A "mixed" range is a version of the opening or the ending that is mixed into the episode.
+        // When the plain range exists too, the two overlap, so the plain range wins.
+        results.mapNotNull { o ->
             val kind = when ((o["skipType"] as? JsonPrimitive)?.contentOrNull) {
-                "op", "mixed-op" -> SkipKind.Opening
-                "ed", "mixed-ed" -> SkipKind.Ending
+                "op" -> SkipKind.Opening
+                "mixed-op" -> if ("op" in types) return@mapNotNull null else SkipKind.Opening
+                "ed" -> SkipKind.Ending
+                "mixed-ed" -> if ("ed" in types) return@mapNotNull null else SkipKind.Ending
                 "recap" -> SkipKind.Recap
                 else -> return@mapNotNull null
             }
