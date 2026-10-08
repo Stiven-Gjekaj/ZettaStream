@@ -97,6 +97,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
     val tv = app.isTv
     val scope = rememberCoroutineScope()
     val library by c.library.data.collectAsState()
+    val addonState by c.addons.addons.collectAsState()
     val meta by produceState<Meta?>(null, preview.id) { value = c.addons.meta(preview) }
     val m = meta
     var season by remember { mutableStateOf<Int?>(null) }
@@ -183,7 +184,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                             // Anime Kitsu gives each season as its own title. The IMDb ID opens the
                             // whole show under one name, with every season.
                             val whole = m.imdbId?.takeIf { m.id.startsWith("kitsu:") && m.type != "movie" }
-                            if (whole != null && c.addons.addons.value.addons.any { it.supports("meta", "series", whole) }) {
+                            if (whole != null && addonState.addons.any { it.supports("meta", "series", whole) }) {
                                 ZButton(
                                     onClick = { app.open(Screen.Detail(MetaPreview(whole, "series", m.name.replace(seasonSuffix, ""), m.poster))) },
                                     tv = tv,
