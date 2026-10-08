@@ -305,3 +305,16 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - The default is white text with an outline and no background.
 - The style of the viewer replaces a style in the subtitle file.
 - The order of the lines in the source list sets the order of the home rows.
+
+## 2026-10-08: Skip the intro
+
+- For an anime episode with a Kitsu ID, the app gets the MyAnimeList ID from
+  Kitsu, then the opening, ending, and recap times from AniSkip. It sends the
+  length of the video, so that AniSkip can match the times to the copy.
+- Text goes to the end of the part that plays now. In the first three minutes
+  before an opening, it skips the opening. Otherwise it jumps 85 seconds.
+- A prompt shows while a part that the viewer can skip plays.
+- The app does not read chapter marks in video files, because Media3 does not
+  give them to the app.
+- A series has no free database with good cover, so it keeps the 85 second
+  jump.
