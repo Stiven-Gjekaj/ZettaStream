@@ -56,7 +56,7 @@ class LiveRepository(
     private suspend fun load(all: List<Source>) = coroutineScope {
         val failures = mutableMapOf<String, String>()
         val playlists = all.filter { it.kind == SourceKind.Playlist }.map { source ->
-            async { source.url to runCatching { Http.stream(http, source.url) { M3u.parse(it.reader().readText()) } } }
+            async { source.url to runCatching { Http.stream(http, source.url, keepForSeconds = PLAYLIST_KEEP) { M3u.parse(it.reader().readText()) } } }
         }.awaitAll()
         playlists.forEach { (url, r) -> r.exceptionOrNull()?.let { failures[url] = it.message ?: "error" } }
         val channels = playlists.mapNotNull { it.second.getOrNull() }.flatMap { it.channels }.distinctBy { it.url }
@@ -68,7 +68,7 @@ class LiveRepository(
         val now = clock()
         val guides = if (ids.isEmpty()) emptyList() else guideUrls.map { url ->
             async {
-                runCatching { Http.stream(http, url) { Xmltv.parse(it, ids, now - 3 * HOUR, now + 24 * HOUR) } }
+                runCatching { Http.stream(http, url, keepForSeconds = GUIDE_KEEP) { Xmltv.parse(it, ids, now - 3 * HOUR, now + 24 * HOUR) } }
                     .onFailure { failures[url] = it.message ?: "error" }.getOrNull()
             }
         }.awaitAll().filterNotNull()
@@ -83,5 +83,8 @@ class LiveRepository(
 
     private companion object {
         const val HOUR = 3_600_000L
+        // A playlist or a guide can be many megabytes, and most servers do not say how long to keep it.
+        const val PLAYLIST_KEEP = 3_600L
+        const val GUIDE_KEEP = 6 * 3_600L
     }
 }
