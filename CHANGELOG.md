@@ -12,6 +12,12 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.1.1 (2026-10-08)
+
+- A selected chip is grey now. Only the focused control is white, so the
+  focus is clear on a TV.
+- The streams screen writes "1 stream" and "1 addon" correctly.
+
 ## 0.1.0 (2026-10-08)
 
 The first release. It is tested on an Android TV 12 emulator and an Android 15
