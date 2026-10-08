@@ -33,4 +33,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" ZettaStream.apk \
             --title "ZettaStream $GITHUB_REF_NAME" \
-            --notes "See CHANGELOG.md. Downloader URL: https://github.com/${{ github.repository }}/releases/latest/download/ZettaStream.apk"
+            --notes "See CHANGELOG.md. On a TV, enter the code 8764108 in the Downloader app. The code opens https://github.com/${{ github.repository }}/releases/latest/download/ZettaStream.apk"
