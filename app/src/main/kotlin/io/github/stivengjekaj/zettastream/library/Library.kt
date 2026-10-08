@@ -1,6 +1,7 @@
 package io.github.stivengjekaj.zettastream.library
 
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
+import io.github.stivengjekaj.zettastream.storage.SafeFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +35,7 @@ data class LibraryData(
 /** Keeps the watchlist and the watch history on the device only. */
 class Library(private val file: File, private val clock: () -> Long = System::currentTimeMillis) {
     private val json = Json { ignoreUnknownKeys = true }
+    private val writer = SafeFile(file)
     private val state = MutableStateFlow(read())
     val data: StateFlow<LibraryData> = state.asStateFlow()
 
@@ -69,11 +71,7 @@ class Library(private val file: File, private val clock: () -> Long = System::cu
     private suspend fun update(change: (LibraryData) -> LibraryData) {
         val next = change(state.value)
         state.value = next
-        withContext(Dispatchers.IO) {
-            val temp = File(file.parentFile, file.name + ".tmp")
-            temp.writeText(json.encodeToString(LibraryData.serializer(), next))
-            temp.renameTo(file)
-        }
+        writer.write(json.encodeToString(LibraryData.serializer(), next))
     }
 
     private fun read(): LibraryData = runCatching {

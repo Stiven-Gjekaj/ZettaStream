@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.settings
 
+import io.github.stivengjekaj.zettastream.storage.SafeFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,17 +55,14 @@ data class ViewerSettings(
 /** Keeps the viewer settings in the private storage of the app. */
 class SettingsStore(private val file: File) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val writer = SafeFile(file)
     private val state = MutableStateFlow(read())
     val settings: StateFlow<ViewerSettings> = state.asStateFlow()
 
     suspend fun update(change: (ViewerSettings) -> ViewerSettings) {
         val next = change(state.value)
         state.value = next
-        withContext(Dispatchers.IO) {
-            val temp = File(file.parentFile, file.name + ".tmp")
-            temp.writeText(json.encodeToString(ViewerSettings.serializer(), next))
-            temp.renameTo(file)
-        }
+        writer.write(json.encodeToString(ViewerSettings.serializer(), next))
     }
 
     private fun read(): ViewerSettings = runCatching {
