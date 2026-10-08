@@ -1,10 +1,12 @@
 package io.github.stivengjekaj.zettastream.torrent
 
 import io.github.stivengjekaj.zettastream.settings.ViewerSettings
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.libtorrent4j.Priority
@@ -173,6 +175,11 @@ class TorrentEngine(
         }
         val h = handle ?: throw IOException("The torrent did not start")
         val torrent = TorrentFile(h, info, index, File(dir, files.filePath(index)))
+        // The viewer can leave while the peers are found. Then nothing closes this torrent, so remove it here.
+        if (!isActive) {
+            runCatching { session.remove(h, SessionHandle.DELETE_FILES) }
+            throw CancellationException("The player closed")
+        }
         torrent.prime()
         open[hash] = torrent
         server.url(hash, torrent)
