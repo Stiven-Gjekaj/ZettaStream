@@ -15,7 +15,6 @@ The mark is a bold geometric Z. The diagonal stroke carries a gradient from viol
 | Violet light | `#9d7dff` | Start of the mark gradient. |
 | Violet | `#7c5cff` | Middle of the mark gradient. Monochrome icon colour. |
 | Cyan | `#4fd1ff` | End of the mark gradient. |
-| Text | `#f4f5fa` | The word on the banner. |
 
 ## SVG sources
 
@@ -25,7 +24,7 @@ The mark is a bold geometric Z. The diagonal stroke carries a gradient from viol
 | `icon-background.svg` | Adaptive icon background layer. 108x108 viewBox. |
 | `icon-monochrome.svg` | Monochrome layer for Android 13 themed icons. Same geometry as the foreground. |
 | `icon-full.svg` | The complete square icon with rounded corners. Use it for previews and the README. |
-| `banner.svg` | Android TV launcher banner. 16:9, 320x180 viewBox. The word is Inter Bold converted to paths. |
+| `banner.svg` | Android TV launcher banner. 16:9, 320x180 viewBox. The Z is in the center, on a violet glow. |
 | `wordmark.svg` | The mark and the name side by side on a transparent background. Use it at the top of the README. |
 
 ## PNG renders
@@ -41,7 +40,6 @@ The mark is a bold geometric Z. The diagonal stroke carries a gradient from viol
 | `ic_launcher-xxhdpi.png` | 144x144 | `res/mipmap-xxhdpi/ic_launcher.png` |
 | `ic_launcher-xxxhdpi.png` | 192x192 | `res/mipmap-xxxhdpi/ic_launcher.png` |
 | `ic_launcher_round-<density>.png` | Same sizes | `res/mipmap-<density>/ic_launcher_round.png`. The round variant has a circular clip. |
-| `preview.png` | 1200x760 | Shows the icon at each size and the banner on a dark background. |
 
 ## How to render again
 
@@ -54,4 +52,4 @@ The round launcher icon uses `icon-full.svg` with the rounded rectangle clip rep
 
 ## Font
 
-The banner and the wordmark use Inter Bold, converted to paths. Inter has the SIL Open Font License. No font file is needed at build time or at run time.
+The wordmark uses Inter Bold, converted to paths. Inter has the SIL Open Font License. No font file is needed at build time or at run time.
