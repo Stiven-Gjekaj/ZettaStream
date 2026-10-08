@@ -81,8 +81,10 @@ import io.github.stivengjekaj.zettastream.ui.torrentSource
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 
@@ -279,7 +281,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     LaunchedEffect(Unit) {
         val hash = (playback as? VideoPlayback)?.torrent?.infoHash ?: return@LaunchedEffect
         while (true) {
-            c.torrents.state(hash)?.let { st ->
+            withContext(Dispatchers.IO) { c.torrents.state(hash) }?.let { st ->
                 torrentText = "Torrent: ${st.peers} peers, %.1f MB/s, %d%% of the file".format(st.downloadRate / 1_000_000f, (st.progress * 100).toInt())
             }
             delay(1000)
