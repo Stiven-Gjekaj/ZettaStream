@@ -89,15 +89,19 @@ ZettaStream is not in the Play Store. Install it with the free
 
 1. On the TV, install **Downloader** from the Play Store.
 2. In the settings of the TV, permit Downloader to install unknown apps.
-3. Open Downloader, and enter this URL:
+3. Open Downloader, and enter the code **`8764108`**.
+4. Downloader shows the real URL for a moment. Make sure that it is
+   `github.com/Stiven-Gjekaj/ZettaStream`.
+5. Install the APK, then open ZettaStream from the list of apps.
 
-   ```
-   https://github.com/Stiven-Gjekaj/ZettaStream/releases/latest/download/ZettaStream.apk
-   ```
+The code opens this URL, which you can also type:
 
-4. Install the APK, then open ZettaStream from the list of apps.
+```
+https://github.com/Stiven-Gjekaj/ZettaStream/releases/latest/download/ZettaStream.apk
+```
 
-The URL always gives the newest release. To update, do the same steps again.
+The code always gives the newest release. To update, enter the same code
+again and install over the old version.
 The home screen tells you when a newer version is available.
 
 ## Install on a phone
