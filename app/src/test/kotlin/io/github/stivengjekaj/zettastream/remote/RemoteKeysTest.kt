@@ -51,4 +51,14 @@ class RemoteKeysTest {
         assertNull(RemoteKeys.global(KeyEvent.KEYCODE_DPAD_LEFT))
         assertNull(RemoteKeys.player(KeyEvent.KEYCODE_DPAD_CENTER))
     }
+
+    @Test
+    fun controllerAndKeyboardKeysBecomeRemoteKeys() {
+        assertEquals(KeyEvent.KEYCODE_DPAD_CENTER, RemoteKeys.translate(KeyEvent.KEYCODE_BUTTON_A))
+        assertEquals(KeyEvent.KEYCODE_BACK, RemoteKeys.translate(KeyEvent.KEYCODE_BUTTON_B))
+        assertEquals(KeyEvent.KEYCODE_BACK, RemoteKeys.translate(KeyEvent.KEYCODE_ESCAPE))
+        assertEquals(KeyEvent.KEYCODE_MENU, RemoteKeys.translate(KeyEvent.KEYCODE_BUTTON_START))
+        assertEquals(KeyEvent.KEYCODE_CHANNEL_UP, RemoteKeys.translate(KeyEvent.KEYCODE_BUTTON_R1))
+        assertNull(RemoteKeys.translate(KeyEvent.KEYCODE_DPAD_UP))
+    }
 }

@@ -13,6 +13,21 @@ enum class RemoteAction {
 }
 
 object RemoteKeys {
+    /**
+     * Changes the keys of game controllers and keyboards into the keys of a
+     * TV remote, so that the app works with each of them. Null means no change.
+     */
+    fun translate(keyCode: Int): Int? = when (keyCode) {
+        KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_BUTTON_SELECT -> KeyEvent.KEYCODE_DPAD_CENTER
+        KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_ESCAPE -> KeyEvent.KEYCODE_BACK
+        KeyEvent.KEYCODE_BUTTON_START, KeyEvent.KEYCODE_BUTTON_X -> KeyEvent.KEYCODE_MENU
+        KeyEvent.KEYCODE_BUTTON_Y -> KeyEvent.KEYCODE_INFO
+        KeyEvent.KEYCODE_BUTTON_L1 -> KeyEvent.KEYCODE_CHANNEL_DOWN
+        KeyEvent.KEYCODE_BUTTON_R1 -> KeyEvent.KEYCODE_CHANNEL_UP
+        KeyEvent.KEYCODE_TAB -> KeyEvent.KEYCODE_MENU
+        else -> null
+    }
+
     /** The action of a key anywhere in the app, outside the player. */
     fun global(keyCode: Int): RemoteAction? = when (keyCode) {
         KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_NUMPAD_0 -> RemoteAction.ToggleMenu
