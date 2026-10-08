@@ -57,6 +57,9 @@ Send keys with `adb shell input keyevent`, for example `DPAD_LEFT`,
 `PROG_RED`, or `KEYCODE_5`. Note that `input keyevent 5` sends key code 5,
 which is not the digit 5.
 
+[tools/dev](tools/dev/README.md) has a test addon with legal test media, and a
+helper that taps a view by its text.
+
 ## Where a change lives
 
 | Change | Files |
