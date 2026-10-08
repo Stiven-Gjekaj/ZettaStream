@@ -43,6 +43,7 @@ data class ViewerSettings(
     val autoplayNext: Boolean = true,
     val confirmChannel: Boolean = true,
     val showTorrents: Boolean = true,
+    val directFirst: Boolean = false,
     val torrentUpload: Boolean = false,
     val vpnNotice: Boolean = true,
 )
