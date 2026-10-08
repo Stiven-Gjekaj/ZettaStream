@@ -23,6 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,6 +57,7 @@ import io.github.stivengjekaj.zettastream.ui.screens.StreamsScreen
 import io.github.stivengjekaj.zettastream.ui.theme.Background
 import io.github.stivengjekaj.zettastream.ui.theme.ZettaTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var app: AppState
@@ -115,6 +121,8 @@ private fun Root(app: AppState, finish: () -> Unit) {
         Toast(app.toast, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
     }
 
+    VpnNotice(app)
+
     if (app.exitDialog) {
         val stay = remember { FocusRequester() }
         AlertDialog(
@@ -143,4 +151,41 @@ private fun Content(app: AppState, screen: Screen) {
         is Screen.Streams -> StreamsScreen(app, screen)
         is Screen.Player -> PlayerScreen(app, screen.playback)
     }
+}
+
+/**
+ * Asks the user to use a VPN at each start, until they turn the notice off.
+ * The app does not check for a VPN and does not stop without one.
+ */
+@Composable
+private fun VpnNotice(app: AppState) {
+    val settings by app.container.settings.settings.collectAsState()
+    var shown by rememberSaveable { mutableStateOf(false) }
+    if (shown || !settings.vpnNotice) return
+    val ok = remember { FocusRequester() }
+    AlertDialog(
+        onDismissRequest = { shown = true },
+        title = { Text("Use a VPN") },
+        text = {
+            Text(
+                "Torrent streams connect your device to other people. They can see your IP address, " +
+                    "and in many countries a copyright holder can act against it. Use a VPN that permits P2P. " +
+                    "ZettaStream does not check this. You can turn off torrent streams, or this notice, in Settings.",
+            )
+        },
+        confirmButton = {
+            TextButton(shape = Corner, onClick = { shown = true }, modifier = Modifier.focusRequester(ok).focusRing()) { Text("OK") }
+        },
+        dismissButton = {
+            TextButton(
+                shape = Corner,
+                onClick = {
+                    shown = true
+                    app.container.scope.launch { app.container.settings.update { it.copy(vpnNotice = false) } }
+                },
+                modifier = Modifier.focusRing(),
+            ) { Text("Do not show again") }
+        },
+    )
+    LaunchedEffect(Unit) { runCatching { ok.requestFocus() } }
 }
