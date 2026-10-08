@@ -11,6 +11,7 @@ import io.github.stivengjekaj.zettastream.iptv.LiveRepository
 import io.github.stivengjekaj.zettastream.library.Library
 import io.github.stivengjekaj.zettastream.net.Http
 import io.github.stivengjekaj.zettastream.settings.SettingsStore
+import io.github.stivengjekaj.zettastream.torrent.TorrentEngine
 import io.github.stivengjekaj.zettastream.source.SourceStore
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,7 @@ class AppContainer(app: Application) {
     val library = Library(File(app.filesDir, "library.json"))
     val updates = UpdateChecker(http)
     val settings = SettingsStore(File(app.filesDir, "settings.json"))
+    val torrents = TorrentEngine(File(app.cacheDir, "torrents"), settings.settings, scope)
 }
 
 class ZettaStreamApp : Application(), SingletonImageLoader.Factory {

@@ -3,6 +3,7 @@ package io.github.stivengjekaj.zettastream.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -34,6 +36,8 @@ import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.VideoPlayback
+import io.github.stivengjekaj.zettastream.ui.torrentSource
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
@@ -60,7 +64,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
     var focused by remember(screen.videoId) { mutableStateOf(false) }
 
     LaunchedEffect(screen.videoId) {
-        c.addons.streams(type, screen.videoId).collect { groups += it }
+        c.addons.streams(type, screen.videoId, withTorrents = c.settings.settings.value.showTorrents).collect { groups += it }
         done = true
     }
     val playable = groups.filter { it.streams.isNotEmpty() }
@@ -75,13 +79,14 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                     meta = screen.meta,
                     videoId = screen.videoId,
                     label = screen.label,
-                    url = stream.url!!,
+                    url = stream.url.orEmpty(),
                     headers = stream.requestHeaders,
                     subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
                     episodes = screen.episodes,
                     addonUrl = addonUrl,
                     bingeGroup = stream.behaviorHints?.bingeGroup,
                     streamName = stream.name,
+                    torrent = stream.torrentSource(),
                 ),
             ),
         )
@@ -111,7 +116,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 val hidden = groups.sumOf { it.hidden }
                 Message(
                     "No playable stream",
-                    if (hidden > 0) "${count(hidden, "stream")} had only a torrent and no HTTP link, so the app hides them. A debrid key in the addon settings changes torrents into HTTP links."
+                    if (hidden > 0) "${count(hidden, "stream")} had no playable link. Torrent streams show when Settings, Show torrent streams is on. A debrid key in the addon settings changes torrents into HTTP links."
                     else "No addon found a stream for this video.",
                     tv, Modifier.padding(top = 16.dp),
                 )
@@ -131,7 +136,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                     modifier = Modifier.padding(top = 18.dp, bottom = 6.dp),
                 )
             }
-            items(group.streams, key = { group.addon.manifestUrl + "|" + it.url }) { stream ->
+            items(group.streams, key = { group.addon.manifestUrl + "|" + (it.url ?: it.infoHash + ":" + it.fileIdx) }) { stream ->
                 val isFirst = first.also { first = false }
                 val shape = Corner
                 Column(
@@ -145,8 +150,16 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                         .clickable { play(stream, group.addon.manifestUrl) }
                         .padding(14.dp),
                 ) {
-                    Text(stream.name?.replace('\n', ' ') ?: group.addon.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,
-                        fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (stream.isTorrent) {
+                            Text(
+                                "TORRENT", color = OnAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(end = 10.dp).clip(Corner).background(TextSecondary).padding(horizontal = 6.dp, vertical = 2.dp),
+                            )
+                        }
+                        Text(stream.name?.replace('\n', ' ') ?: group.addon.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,
+                            fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
                     if (stream.details.isNotBlank()) {
                         Text(stream.details, color = TextSecondary, fontSize = 13.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
                     }

@@ -56,6 +56,7 @@ import io.github.stivengjekaj.zettastream.ui.LivePlayback
 import io.github.stivengjekaj.zettastream.ui.Playback
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.VideoPlayback
+import io.github.stivengjekaj.zettastream.ui.torrentSource
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
@@ -112,6 +113,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var position by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(C.TIME_UNSET) }
     var prompt by remember { mutableStateOf<String?>(null) }
+    var torrentText by remember { mutableStateOf<String?>(null) }
     var pendingStep by remember { mutableIntStateOf(0) }
     var pendingAt by remember { mutableLongStateOf(0L) }
     val live by c.live.live.collectAsState()
@@ -157,7 +159,17 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         when (playback) {
             is VideoPlayback -> {
                 val saved = c.library.progress(playback.videoId)
-                load(playback.url, playback.headers, playback.subtitles, saved?.takeIf { !it.isFinished }?.position ?: 0)
+                val startAt = saved?.takeIf { !it.isFinished }?.position ?: 0
+                val torrent = playback.torrent
+                if (torrent == null) {
+                    load(playback.url, playback.headers, playback.subtitles, startAt)
+                } else {
+                    // The engine first gets the torrent information from peers, then serves the file locally.
+                    torrentText = "Finding peers for the torrent"
+                    val local = runCatching { c.torrents.open(torrent.infoHash, torrent.sources, torrent.fileIdx, torrent.name) }
+                    local.onSuccess { load(it, emptyMap(), playback.subtitles, startAt) }
+                        .onFailure { error = "This torrent does not start (${it.message}). Press Yellow or Back to choose another source." }
+                }
             }
             is LivePlayback -> playback.channels[channelIndex].let { load(it.url, it.headers, emptyList(), 0) }
         }
@@ -177,6 +189,17 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             duration = player.duration
             delay(500)
             if (player.isPlaying && System.currentTimeMillis() % 10_000 < 500) saveProgress()
+        }
+    }
+
+    // While a torrent loads, show its peers and speed.
+    LaunchedEffect(Unit) {
+        val hash = (playback as? VideoPlayback)?.torrent?.infoHash ?: return@LaunchedEffect
+        while (true) {
+            c.torrents.state(hash)?.let { st ->
+                torrentText = "Torrent: ${st.peers} peers, %.1f MB/s, %d%% of the file".format(st.downloadRate / 1_000_000f, (st.progress * 100).toInt())
+            }
+            delay(1000)
         }
     }
 
@@ -223,7 +246,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 // Play the next episode from the same source, with no stop at the list of streams.
                 c.scope.launch {
                     val type = playback.meta.type
-                    val stream = c.addons.streamsFrom(addonUrl, type, target.id)
+                    val stream = c.addons.streamsFrom(addonUrl, type, target.id, withTorrents = c.settings.settings.value.showTorrents)
                         ?.let { pickSameSource(it, playback.bingeGroup, playback.streamName) }
                     if (stream == null) { app.replace(streamsScreen); return@launch }
                     val subtitles = withTimeoutOrNull(4000) { c.addons.subtitles(type, target.id) }.orEmpty()
@@ -232,7 +255,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                             playback.copy(
                                 videoId = target.id,
                                 label = label,
-                                url = stream.url!!,
+                                url = stream.url.orEmpty(),
+                                torrent = stream.torrentSource(),
                                 headers = stream.requestHeaders,
                                 subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
                                 bingeGroup = stream.behaviorHints?.bingeGroup ?: playback.bingeGroup,
@@ -327,6 +351,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         onDispose {
             app.keyCapture = null
             saveProgress()
+            (playback as? VideoPlayback)?.torrent?.let { c.torrents.close(it.infoHash) }
             player.removeListener(listener)
             player.release()
         }
@@ -351,7 +376,12 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             },
             modifier = Modifier.fillMaxSize(),
         )
-        if (buffering && error == null) CircularProgressIndicator(color = Accent, modifier = Modifier.align(Alignment.Center))
+        if (buffering && error == null) {
+            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Accent)
+                torrentText?.let { Text(it, color = TextSecondary, fontSize = 15.sp, modifier = Modifier.padding(top = 16.dp)) }
+            }
+        }
         if (overlay || (!app.isTv && error != null)) {
             Column(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth()
