@@ -3,6 +3,8 @@ package io.github.stivengjekaj.zettastream.ui.screens
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import io.github.stivengjekaj.zettastream.ui.theme.Outline
+import androidx.compose.foundation.border
 import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import androidx.compose.ui.draw.clip
@@ -87,6 +89,7 @@ import java.util.Locale
 private const val SEEK_STEP = 10_000L
 private const val SEEK_FAST = 30_000L
 private const val CONFIRM_WINDOW = 3_000L
+private const val COUNTDOWN = 10_000L
 
 fun subtitleMime(sub: Subtitle): String {
     val path = sub.url.substringBefore('?').lowercase()
@@ -177,6 +180,10 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var torrentText by remember { mutableStateOf<String?>(null) }
     var optionsOpen by remember { mutableStateOf(false) }
     var skips by remember { mutableStateOf(emptyList<SkipRange>()) }
+    val autoSkipped = remember { mutableSetOf<Long>() }
+    var countdownEnds by remember { mutableStateOf<Long?>(null) }
+    var countdownCancelled by remember { mutableStateOf(false) }
+    var countdownLeft by remember { mutableIntStateOf(0) }
     var optionsRow by remember { mutableIntStateOf(0) }
     var tracksVersion by remember { mutableIntStateOf(0) }
     var speed by remember { mutableFloatStateOf(1f) }
@@ -282,10 +289,21 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         if (duration > 0) skips = c.skipTimes.forVideo(video.videoId, duration)
     }
 
+    val hasNext = (playback as? VideoPlayback)?.let { v ->
+        val i = v.episodes.indexOfFirst { it.id == v.videoId }
+        i >= 0 && i < v.episodes.lastIndex
+    } ?: false
+
+    fun markWatched() {
+        val video = playback as? VideoPlayback ?: return
+        c.scope.launch { c.library.markWatched(video.videoId) }
+    }
+
     /** Text: go to the end of the opening, ending, or recap. With no times, jump 85 seconds. */
     fun skip() {
         when (val a = Skip.action(skips, player.currentPosition)) {
             is SkipAction.SeekTo -> {
+                if (a.kind == SkipKind.Ending) markWatched()
                 player.seekTo(a.position)
                 show(when (a.kind) { SkipKind.Opening -> "Skipped the opening"; SkipKind.Ending -> "Skipped the ending"; SkipKind.Recap -> "Skipped the recap" })
             }
@@ -381,6 +399,38 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         prompt = "Press again for $what"
     }
 
+    // Auto-skip and the "Next episode" countdown follow the position.
+    LaunchedEffect(position) {
+        if (playback !is VideoPlayback) return@LaunchedEffect
+        if (viewer.autoSkipIntro) {
+            Skip.autoSkip(skips, position, autoSkipped)?.let { range ->
+                autoSkipped += range.start
+                player.seekTo(range.end)
+                show(if (range.kind == SkipKind.Recap) "Skipped the recap" else "Skipped the opening")
+            }
+        }
+        val start = Skip.countdownStart(skips, duration)
+        if (hasNext && viewer.autoplayNext && !countdownCancelled && countdownEnds == null && start != null && position >= start) {
+            countdownEnds = System.currentTimeMillis() + COUNTDOWN
+        }
+        // Going back before the start of the countdown stops it.
+        if (countdownEnds != null && start != null && position < start) countdownEnds = null
+    }
+
+    LaunchedEffect(countdownEnds) {
+        val ends = countdownEnds ?: return@LaunchedEffect
+        while (true) {
+            val left = ends - System.currentTimeMillis()
+            countdownLeft = ((left + 999) / 1000).toInt().coerceAtLeast(0)
+            if (left <= 0) break
+            delay(250)
+        }
+        countdownEnds = null
+        countdownCancelled = true
+        markWatched()
+        changeEpisode(1)
+    }
+
     fun optionRows(): List<OptionRow> {
         tracksVersion.let { } // Read, so that the rows change when the tracks change.
         val subs = TrackChoices.choices(player, C.TRACK_TYPE_TEXT)
@@ -447,6 +497,15 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             optionsOpen = true
             return true
         }
+        // While the countdown runs, OK plays the next episode now and Back stops the countdown.
+        if (countdownEnds != null && event.action == KeyEvent.ACTION_DOWN) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                    countdownEnds = System.currentTimeMillis(); return true
+                }
+                KeyEvent.KEYCODE_BACK -> { countdownEnds = null; countdownCancelled = true; return true }
+            }
+        }
         if (event.keyCode == KeyEvent.KEYCODE_BACK) return false
         if (event.action != KeyEvent.ACTION_DOWN) return true
         val isLive = playback is LivePlayback
@@ -497,7 +556,11 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 buffering = state == Player.STATE_BUFFERING
                 if (state == Player.STATE_ENDED && playback is VideoPlayback) {
                     saveProgress()
-                    if (c.settings.settings.value.autoplayNext) changeEpisode(1)
+                    if (c.settings.settings.value.autoplayNext && !countdownCancelled) {
+                        countdownEnds = null
+                        countdownCancelled = true
+                        changeEpisode(1)
+                    }
                 }
             }
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
@@ -574,7 +637,16 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 }
             }
         }
-        Skip.current(skips, position)?.let { range ->
+        if (countdownEnds != null) {
+            Column(
+                Modifier.align(Alignment.BottomEnd).padding(end = 48.dp, bottom = 140.dp)
+                    .clip(Corner).background(Color.Black.copy(alpha = 0.85f)).border(1.dp, Outline, Corner)
+                    .clickable { countdownEnds = System.currentTimeMillis() }.padding(horizontal = 20.dp, vertical = 14.dp),
+            ) {
+                Text("Next episode in $countdownLeft s", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text(if (app.isTv) "OK: play now   Back: stay" else "Tap to play now", color = TextSecondary, fontSize = 13.sp)
+            }
+        } else Skip.current(skips, position)?.let { range ->
             val label = when (range.kind) { SkipKind.Opening -> "Skip intro"; SkipKind.Ending -> "Skip ending"; SkipKind.Recap -> "Skip recap" }
             Text(
                 if (app.isTv) "$label: press Text" else label,

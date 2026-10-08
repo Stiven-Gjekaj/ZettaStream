@@ -112,7 +112,8 @@ fun SettingsScreen(app: AppState) {
                 set { it.copy(audioLanguage = SettingsStore.next(SettingsStore.Languages.map { l -> l.first }, it.audioLanguage)) }
             }
         }
-        item { SettingsRow("Play the next episode", "${onOff(viewer.autoplayNext)}. At the end of an episode, the next one starts.", tv) { set { it.copy(autoplayNext = !it.autoplayNext) } } }
+        item { SettingsRow("Play the next episode", "${onOff(viewer.autoplayNext)}. A countdown at the end of an episode starts the next one.", tv) { set { it.copy(autoplayNext = !it.autoplayNext) } } }
+        item { SettingsRow("Skip intros automatically", "${onOff(viewer.autoSkipIntro)}. The app jumps over the opening and the recap of an anime episode when it knows their times.", tv) { set { it.copy(autoSkipIntro = !it.autoSkipIntro) } } }
         item { SettingsRow("Press the channel buttons twice", "${onOff(viewer.confirmChannel)}. When off, one press changes the episode or the channel.", tv) { set { it.copy(confirmChannel = !it.confirmChannel) } } }
         item { Section("Torrents", tv) }
         item { SettingsRow("Show torrent streams", "${onOff(viewer.showTorrents)}. Torrent streams connect you to other people, who can see your IP address.", tv) { set { it.copy(showTorrents = !it.showTorrents) } } }
