@@ -318,3 +318,79 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   give them to the app.
 - A series has no free database with good cover, so it keeps the 85 second
   jump.
+
+## 2026-10-09: Torrent download window
+
+- A torrent downloads the first and the last 8 MB of the file, then a window
+  of 96 MB ahead of the point that plays. It does not download the full file
+  before playback.
+- Each piece that the player asks for gets a deadline one time only. A new
+  deadline for each read restarts the requests and slows the download.
+- The upload limit does not count the overhead of the IP packets. With the
+  overhead counted, a 4 KB/s limit also slowed the download.
+
+## 2026-10-09: Buffer of the player
+
+- The player keeps 30 to 120 seconds of video for a direct link, and 30 to
+  90 seconds for a torrent.
+- After a stall, the player waits for 20 seconds of video (12 for a torrent)
+  before it plays again. A short wait made the player stop every few seconds
+  near the end of an episode.
+
+## 2026-10-09: The list of streams
+
+- The app reads the seeders, the resolution, HDR, the codec, the source, dual
+  audio, the size, and the release group from the text of each stream. Each
+  addon writes them in its own format, so the parser accepts the common
+  forms.
+- Torrents sort by seeders. Direct links keep the order of the addon.
+- A badge shows each value that the app finds.
+- "Reload streams" or Blue asks each addon again.
+- A setting puts direct links above torrents. It is off by default.
+
+## 2026-10-09: The next episode
+
+- The next episode uses the addon of the current stream. In the answer of
+  that addon, the app compares the binge group, the name, the resolution,
+  the codec, the source, and the release group, and plays the closest
+  stream.
+- A countdown of 10 seconds shows at the start of the ending, or 20 seconds
+  before the end. OK plays the next episode at once. Back stays.
+- A setting skips intros by itself. It is off by default.
+- When the viewer skips the ending, the episode is marked as watched.
+
+## 2026-10-09: Text that is too long
+
+- A name that does not fit scrolls while its card or row has the focus.
+- A card has 12 dp of space under it, so that the focused card does not
+  cover its title.
+
+## 2026-10-09: Universal remote keys
+
+- The app maps the keys of game controllers and keyboards to the remote
+  keys. A or Enter is OK. B or Escape is Back. Start, X, or Tab is Menu. Y is
+  Info. L1 and R1 are Channel down and up.
+- A TV screen at the top of the app has a Menu button. Up reaches it. Down or
+  Left goes back to the screen.
+- A long press on OK in the player opens the options. OK also acts on a skip
+  prompt.
+- The player options have a row that changes the episode or the channel, for
+  a remote with no channel keys.
+
+## 2026-10-09: Home rows
+
+- New, latest, trending, airing, and season rows come first. Popular and top
+  rows come after them. Other rows keep the order of the source list.
+- A catalog that needs an option, such as a genre or a year, shows a row for
+  its first option. A catalog that needs a search text shows no row.
+- A row that repeats 70% or more of a row above it does not show.
+- Settings, Home rows turns each row on or off.
+
+## 2026-10-09: Network data
+
+- The app keeps a playlist for one hour and a TV guide for six hours in its
+  cache, when the server gives no time. A guide can be many megabytes.
+- Images go only into the image cache. The HTTP cache keeps only the answers
+  of the addons, so that it does not hold a second copy of each image.
+- A link that gives a web page shows a clear message in the player, and not
+  only an error code.
