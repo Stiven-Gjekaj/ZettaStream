@@ -12,6 +12,15 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.3.0 (2026-10-08)
+
+- Text skips to the exact end of the opening of an anime episode. The times
+  come from AniSkip, a free database that viewers make.
+- A "Skip intro", "Skip ending", or "Skip recap" prompt shows while that part
+  plays. On a phone, tap the prompt.
+- With no known times, for example for most series, Text still jumps 85
+  seconds.
+
 ## 0.2.3 (2026-10-08)
 
 - The player options scroll, so that Speed and Source come into view on a TV.

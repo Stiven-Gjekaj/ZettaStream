@@ -66,6 +66,7 @@ tab bar and touch controls.
 - Change the subtitle and the audio track with one button
 - Viewer settings: subtitles, languages, subtitle size, next episode
 - An options panel in the player: Menu or `0`
+- Skip the intro of an anime episode at the exact second, from AniSkip
 - Subtitles from OpenSubtitles when no subtitle addon is in your list
 - Live TV from M3U playlists, with now and next from an XMLTV guide
 
@@ -168,7 +169,7 @@ torrent addon's settings also changes its torrents into HTTP links.
 | Channel up and down | Scroll | Press twice: next or previous episode or channel |
 | Subtitles | | Next subtitle track |
 | Language | | Next audio track |
-| Text | | Skip 85 seconds of intro |
+| Text | | Skip the intro, ending, or recap (anime). Otherwise jump 85 s |
 
 Some TVs keep a button for themselves. Settings, Remote control test shows
 each button that reaches the app.
