@@ -12,6 +12,10 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.2.3 (2026-10-08)
+
+- The player options scroll, so that Speed and Source come into view on a TV.
+
 ## 0.2.2 (2026-10-08)
 
 - A torrent that holds a full season plays the correct episode. The engine
