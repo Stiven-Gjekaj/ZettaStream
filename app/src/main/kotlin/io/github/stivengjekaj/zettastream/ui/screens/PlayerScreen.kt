@@ -46,6 +46,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.SubtitleView
 import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.pickSameSource
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
@@ -89,7 +90,19 @@ fun formatTime(ms: Long): String {
 fun PlayerScreen(app: AppState, playback: Playback) {
     val c = app.container
     val context = LocalContext.current
-    val player = remember { ExoPlayer.Builder(context).build().apply { playWhenReady = true } }
+    val viewer by c.settings.settings.collectAsState()
+    val player = remember {
+        ExoPlayer.Builder(context).build().apply {
+            playWhenReady = true
+            // The viewer settings choose the first subtitle and audio tracks.
+            val start = c.settings.settings.value
+            trackSelectionParameters = trackSelectionParameters.buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !start.subtitlesOn)
+                .setPreferredTextLanguage(start.subtitleLanguage.ifEmpty { null })
+                .setPreferredAudioLanguage(start.audioLanguage.ifEmpty { null })
+                .build()
+        }
+    }
     var channelIndex by remember { mutableIntStateOf((playback as? LivePlayback)?.index ?: 0) }
     var overlayUntil by remember { mutableLongStateOf(System.currentTimeMillis() + 5000) }
     var message by remember { mutableStateOf<String?>(null) }
@@ -237,6 +250,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
      * the same button within three seconds changes the episode or the channel.
      */
     fun channelPress(step: Int) {
+        if (!viewer.confirmChannel) { changeEpisode(step); return }
         val now = System.currentTimeMillis()
         if (pendingStep == step && now - pendingAt < CONFIRM_WINDOW) {
             pendingStep = 0
@@ -300,7 +314,10 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             }
             override fun onPlaybackStateChanged(state: Int) {
                 buffering = state == Player.STATE_BUFFERING
-                if (state == Player.STATE_ENDED && playback is VideoPlayback) { saveProgress(); changeEpisode(1) }
+                if (state == Player.STATE_ENDED && playback is VideoPlayback) {
+                    saveProgress()
+                    if (c.settings.settings.value.autoplayNext) changeEpisode(1)
+                }
             }
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
             override fun onTracksChanged(tracks: Tracks) {}
@@ -328,6 +345,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     this.player = player
                     useController = !app.isTv
                     setShowSubtitleButton(true)
+                    subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * viewer.subtitleSize.scale)
                     keepScreenOn = true
                 }
             },
