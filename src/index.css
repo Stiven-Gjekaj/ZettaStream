@@ -1,0 +1,15 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --fg: #e8eaf0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
