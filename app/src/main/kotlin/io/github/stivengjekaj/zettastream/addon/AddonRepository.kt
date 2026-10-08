@@ -31,7 +31,10 @@ data class CatalogRow(val addon: Addon, val catalog: Catalog) {
 data class StreamGroup(
     val addon: Addon,
     val streams: List<Stream> = emptyList(),
-    val hidden: Int = 0,
+    /** Torrent streams that the app hides because the viewer turned torrents off. */
+    val hiddenTorrents: Int = 0,
+    /** Links that no part of the app can play, such as a YouTube ID or a link to another app. */
+    val unplayable: Int = 0,
     val error: String? = null,
 )
 
@@ -128,7 +131,8 @@ class AddonRepository(
                 val group = runCatching { client.streams(addon, type, videoId) }.fold(
                     onSuccess = { all ->
                         val playable = all.filter { it.isPlayable(withTorrents) }
-                        StreamGroup(addon, playable, hidden = all.size - playable.size)
+                        val hiddenTorrents = if (withTorrents) 0 else all.count { it.isTorrent }
+                        StreamGroup(addon, playable, hiddenTorrents, all.size - playable.size - hiddenTorrents)
                     },
                     onFailure = { StreamGroup(addon, error = it.message ?: it.javaClass.simpleName) },
                 )

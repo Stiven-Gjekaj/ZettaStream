@@ -47,7 +47,9 @@ class AddonRepositoryTest {
 
         val group = repository.streams("movie", "tt1").toList().single()
         assertEquals(1, group.streams.size)
-        assertEquals(2, group.hidden)
+        // "x" and "y" are not 40 characters, so they are not torrents: they cannot play.
+        assertEquals(0, group.hiddenTorrents)
+        assertEquals(2, group.unplayable)
     }
 
     @Test
@@ -60,7 +62,10 @@ class AddonRepositoryTest {
         val withTorrents = repository.streams("movie", "tt2", withTorrents = true).toList().single()
         assertEquals(2, withTorrents.streams.size)
         assertEquals(2, withTorrents.streams[1].fileIdx)
-        assertEquals(1, repository.streams("movie", "tt2").toList().single().streams.size)
+        val withoutTorrents = repository.streams("movie", "tt2").toList().single()
+        assertEquals(1, withoutTorrents.streams.size)
+        assertEquals(1, withoutTorrents.hiddenTorrents)
+        assertEquals(0, withTorrents.hiddenTorrents)
     }
 
     @Test

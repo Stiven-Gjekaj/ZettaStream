@@ -113,10 +113,10 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
             }
         } else if (done && playable.isEmpty()) {
             item {
-                val hidden = groups.sumOf { it.hidden }
+                val hiddenTorrents = groups.sumOf { it.hiddenTorrents }
                 Message(
                     "No playable stream",
-                    if (hidden > 0) "${count(hidden, "stream")} had no playable link. Torrent streams show when Settings, Show torrent streams is on. A debrid key in the addon settings changes torrents into HTTP links."
+                    if (hiddenTorrents > 0) "${count(hiddenTorrents, "torrent stream")} are hidden. They show when Settings, Show torrent streams is on."
                     else "No addon found a stream for this video.",
                     tv, Modifier.padding(top = 16.dp),
                 )
@@ -128,7 +128,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 Text(
                     group.addon.name + when {
                         group.error != null -> "  (no answer)"
-                        group.hidden > 0 -> "  (${count(group.hidden, "torrent stream")} hidden)"
+                        group.hiddenTorrents > 0 -> "  (${count(group.hiddenTorrents, "torrent stream")} hidden)"
                         else -> ""
                     },
                     color = if (group.error != null) Danger else TextSecondary,
