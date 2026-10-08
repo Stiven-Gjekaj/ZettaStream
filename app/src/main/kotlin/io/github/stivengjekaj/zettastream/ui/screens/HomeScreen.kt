@@ -73,7 +73,7 @@ fun HomeScreen(app: AppState) {
             item {
                 Message(
                     "Version $latest is available",
-                    "Open Downloader and enter ${UpdateChecker.DOWNLOAD_URL}",
+                    "Open Downloader and enter the code ${UpdateChecker.DOWNLOADER_CODE}",
                     tv,
                 )
             }

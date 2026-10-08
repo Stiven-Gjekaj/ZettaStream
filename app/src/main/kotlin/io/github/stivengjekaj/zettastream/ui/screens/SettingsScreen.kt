@@ -87,7 +87,7 @@ fun SettingsScreen(app: AppState) {
                     app.latestVersion = latest
                     update = when {
                         latest == null -> "GitHub did not answer. Try again later."
-                        UpdateChecker.isNewer(latest, BuildConfig.VERSION_NAME) -> "Version $latest is available. Open Downloader and enter ${UpdateChecker.DOWNLOAD_URL}"
+                        UpdateChecker.isNewer(latest, BuildConfig.VERSION_NAME) -> "Version $latest is available. Open Downloader and enter the code ${UpdateChecker.DOWNLOADER_CODE}"
                         else -> "Version ${BuildConfig.VERSION_NAME} is the newest"
                     }
                 }

@@ -26,6 +26,9 @@ class UpdateChecker(private val http: OkHttpClient) {
         const val LATEST_API = "https://api.github.com/repos/Stiven-Gjekaj/ZettaStream/releases/latest"
         const val DOWNLOAD_URL = "https://github.com/Stiven-Gjekaj/ZettaStream/releases/latest/download/ZettaStream.apk"
 
+        /** The AFTVnews short code that opens [DOWNLOAD_URL] in the Downloader app. */
+        const val DOWNLOADER_CODE = "8764108"
+
         /** Tells if [latest] is newer than [current]. Both are `MAJOR.MINOR.PATCH`. */
         fun isNewer(latest: String, current: String): Boolean {
             val a = latest.split('.', '-').map { it.toIntOrNull() ?: 0 }
