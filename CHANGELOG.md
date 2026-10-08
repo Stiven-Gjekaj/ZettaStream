@@ -12,6 +12,12 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.2.2 (2026-10-08)
+
+- A torrent that holds a full season plays the correct episode. The engine
+  finds the file by the name that the addon gives, then by the episode number
+  in the file names.
+
 ## 0.2.1 (2026-10-08)
 
 - Subtitles have a style: text color, background opacity from none to solid,
