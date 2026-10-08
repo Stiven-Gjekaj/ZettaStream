@@ -12,6 +12,33 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.2.0 (2026-10-08)
+
+### Torrents
+
+- Plays torrent streams. A libtorrent engine downloads the file in order and
+  plays it while it downloads.
+- Shows torrent streams by default, with a TORRENT label.
+- Limits the upload to 4 KB/s by default, does not seed, and deletes each
+  torrent when the player closes.
+- Shows the peers, the speed, and the progress while a torrent loads.
+- Asks the user to use a VPN at start. The app does not check for one.
+
+### Settings
+
+- Adds viewer settings: subtitles on or off, the subtitle language, the
+  subtitle size, the audio language, play the next episode, press the
+  channel buttons twice, show torrent streams, share while streaming, and the
+  VPN notice.
+
+### Fixes
+
+- Only Menu and `0` open the side menu. Left moves in a row.
+- The side menu stays open while you move in it. Back, Menu, or `0` closes it.
+- Back returns to the same scroll position and the same focused card.
+- The type filter shows each kind one time, for example one "Sports".
+- A landscape or square image gets a card of that shape.
+
 ## 0.1.2 (2026-10-08)
 
 - Shows the English name of an anime when the addon gives one.
