@@ -86,19 +86,19 @@ class TorrentServer(private val scope: CoroutineScope) {
     /** Sends [bytes] of the file. Before each piece, it sets deadlines for the pieces ahead and waits for the first. */
     private fun send(t: TorrentFile, hash: String, bytes: LongRange, out: OutputStream) {
         val pieceLength = t.info.pieceLength()
-        val lastPiece = t.info.numPieces() - 1
         val buffer = ByteArray(CHUNK)
         var position = bytes.first
+        var lastPieceSeen = -1
         var raf: RandomAccessFile? = null
         try {
             while (position <= bytes.last) {
                 if (files[hash] == null) throw IOException("The torrent is closed")
                 val request = t.info.mapFile(t.index, position, 1)
                 val piece = request.piece()
-                for (k in 0 until AHEAD) {
-                    val p = piece + k
-                    if (p > lastPiece) break
-                    if (!t.handle.havePiece(p)) t.handle.setPieceDeadline(p, (k + 1) * DEADLINE_STEP)
+                if (piece != lastPieceSeen) {
+                    lastPieceSeen = piece
+                    t.focus(piece)
+                    t.urgent(piece, AHEAD, DEADLINE_STEP)
                 }
                 while (!t.handle.havePiece(piece)) {
                     if (files[hash] == null) throw IOException("The torrent is closed")

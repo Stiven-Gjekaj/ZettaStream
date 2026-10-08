@@ -73,6 +73,23 @@ object TorrentMath {
         return patterns.any { it.containsMatchIn(n) }
     }
 
+    /**
+     * Selects the pieces to download: the head and the tail of the file,
+     * which a player reads first, and a window ahead of the read position.
+     * The engine downloads nothing else, so it does not take the whole file.
+     */
+    fun wanted(firstPiece: Int, lastPiece: Int, readPiece: Int, aheadPieces: Int, edgePieces: Int): Set<Int> {
+        if (lastPiece < firstPiece) return emptySet()
+        val head = firstPiece..minOf(lastPiece, firstPiece + edgePieces - 1)
+        val tail = maxOf(firstPiece, lastPiece - edgePieces + 1)..lastPiece
+        val start = readPiece.coerceIn(firstPiece, lastPiece)
+        val window = start..minOf(lastPiece, start + aheadPieces)
+        return (head + tail + window).toSet()
+    }
+
+    /** The number of pieces in [bytes], at least one. */
+    fun piecesFor(bytes: Long, pieceLength: Int): Int = maxOf(1, ((bytes + pieceLength - 1) / pieceLength).toInt())
+
     fun isVideo(name: String): Boolean = name.substringAfterLast('.', "").lowercase() in VideoExtensions
 
     fun mimeType(name: String): String = when (name.substringAfterLast('.', "").lowercase()) {

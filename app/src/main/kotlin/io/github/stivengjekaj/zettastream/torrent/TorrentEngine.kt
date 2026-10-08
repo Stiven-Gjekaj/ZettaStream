@@ -29,6 +29,57 @@ class TorrentFile(
 ) {
     val name: String = info.files().fileName(index)
     val size: Long = info.files().fileSize(index)
+    val firstPiece: Int = info.mapFile(index, 0, 1).piece()
+    val lastPiece: Int = info.mapFile(index, maxOf(0, size - 1), 1).piece()
+    private val ahead = TorrentMath.piecesFor(WINDOW_BYTES, info.pieceLength())
+    private val edge = TorrentMath.piecesFor(EDGE_BYTES, info.pieceLength())
+    @Volatile private var focusPiece = -1
+    private val deadlines = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
+
+    /**
+     * Asks libtorrent for the next pieces first. Each piece gets its deadline
+     * one time only: a new deadline restarts the request for that piece, so
+     * a deadline that is set again and again delays the piece.
+     */
+    fun urgent(fromPiece: Int, count: Int, step: Int) {
+        for (k in 0 until count) {
+            val p = fromPiece + k
+            if (p > lastPiece) break
+            if (p in deadlines || handle.havePiece(p)) continue
+            deadlines += p
+            handle.setPieceDeadline(p, (k + 1) * step)
+        }
+    }
+
+    /**
+     * Before the player reads, downloads only the head and the tail of the
+     * file. The player then asks for the position where it starts, which can
+     * be far from the head when it resumes.
+     */
+    fun prime() {
+        val wanted = TorrentMath.wanted(firstPiece, lastPiece, firstPiece, 0, edge)
+        runCatching { handle.prioritizePieces(Array(info.numPieces()) { if (it in wanted) Priority.TOP_PRIORITY else Priority.IGNORE }) }
+    }
+
+    /**
+     * Downloads only the head, the tail, and a window ahead of [readPiece].
+     * It changes the priorities again only when the read position moved a
+     * quarter of the window, because each change costs work in libtorrent.
+     */
+    fun focus(readPiece: Int) {
+        if (focusPiece >= 0 && readPiece >= focusPiece && readPiece - focusPiece < ahead / 4) return
+        focusPiece = readPiece
+        val wanted = TorrentMath.wanted(firstPiece, lastPiece, readPiece, ahead, edge)
+        val priorities = Array(info.numPieces()) { if (it in wanted) Priority.TOP_PRIORITY else Priority.IGNORE }
+        runCatching { handle.prioritizePieces(priorities) }
+    }
+
+    companion object {
+        /** About two to five minutes of video at the bitrates of most releases. */
+        const val WINDOW_BYTES = 96L * 1024 * 1024
+        /** The head and the tail hold the index that a player reads before it plays. */
+        const val EDGE_BYTES = 8L * 1024 * 1024
+    }
 }
 
 data class TorrentState(val peers: Int, val downloadRate: Int, val progress: Float)
@@ -101,6 +152,7 @@ class TorrentEngine(
         }
         val h = handle ?: throw IOException("The torrent did not start")
         val torrent = TorrentFile(h, info, index, File(dir, files.filePath(index)))
+        torrent.prime()
         open[hash] = torrent
         server.url(hash, torrent)
     }
