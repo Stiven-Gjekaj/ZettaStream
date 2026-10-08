@@ -150,7 +150,7 @@ debrid key in their settings.
 | Green | Mark as watched | |
 | Yellow | Choose a source | Choose another source |
 | Blue | Filter the home screen | |
-| Channel up and down | Scroll | Next or previous episode or channel |
+| Channel up and down | Scroll | Press twice: next or previous episode or channel |
 | Subtitles | | Next subtitle track |
 | Language | | Next audio track |
 | Text | | Skip 85 seconds of intro |

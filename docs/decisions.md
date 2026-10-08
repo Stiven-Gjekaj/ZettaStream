@@ -220,3 +220,19 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   is white.
 - Reason: the owner asked for a sleek and modern look. One white focus state
   on black is clear from across the room.
+
+## 2026-10-08: Anime seasons, next episode, and the channel prompt
+
+- An anime title shows the first alias in Latin letters as its name. Anime
+  addons give that alias as the English name.
+- Episodes show the IMDb season and episode numbers when the addon gives
+  them. Anime Kitsu numbers season 2 of a show as season 1 of its own title.
+- An anime season with an IMDb ID has an "All seasons" button. It opens the
+  whole show under one name, from a metadata addon that reads IMDb IDs.
+- The next episode plays from the same addon. The app takes the stream with
+  the same binge group, then the stream with the same name, then the first
+  stream. When the addon gives no stream, the list of streams opens.
+- In the player, the first press of a channel button shows a prompt. A second
+  press of the same button within three seconds changes the episode or the
+  channel. This replaces the direct change in "Remote control buttons".
+- On a TV, a row scrolls so that the focused item stops at the left margin.
