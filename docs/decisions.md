@@ -8,6 +8,7 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - ZettaStream is a stream aggregator, similar to Miruro.
 - It shows anime, movies, and TV series.
 - Anime metadata comes from AniList. Movie and TV metadata comes from TMDB.
+  (Replaced on 2026-10-08, see "Metadata from addons".)
 - The primary target is the Hitachi Cosmos smart TV with Android TV OS 11
   (corrected on 2026-10-08, see "The test TV runs Android TV 11").
 - Phones and PCs are secondary targets.
@@ -136,7 +137,8 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - A source can also be an IPTV playlist in M3U format, with an optional
   XMLTV guide. This gives live TV and sports.
 - On the TV, the Guide button opens the channel guide. Channel up and down
-  change the channel.
+  change the channel. This replaces the Guide action in "Remote control
+  buttons".
 
 ## 2026-10-08: HTTP streams only
 
@@ -175,3 +177,34 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - The Mac cannot run an Android TV 11 emulator, because Google gives only an
   x86 image for API level 30. The emulator uses Android TV 12 (API level 31,
   arm64). The Hitachi TV confirms the behavior of API level 30.
+
+## 2026-10-08: Metadata from addons
+
+- This choice replaces the metadata part of "Scope and platforms".
+- The catalogs, the posters, the descriptions, and the episode lists come
+  from metadata addons in the source list. Examples are Cinemeta for movies
+  and series, and Anime Kitsu for anime.
+- The app does not call TMDB or AniList directly. It needs no API key.
+- Reason: this is how the Stremio protocol operates. A stream addon accepts
+  the same IDs that the metadata addon gives, so the app does not map IDs.
+
+## 2026-10-08: One interface library for the TV and the phone
+
+- Both layouts use Compose Material 3. The app does not use the Compose for
+  TV library.
+- Each focusable item gets a ring and a larger size when it has the focus.
+- Reason: one set of components is less code. The focus ring makes the
+  interface clear from across the room.
+
+## 2026-10-08: Built behavior
+
+- `5` opens Live TV. The Guide button also opens Live TV.
+- Left on an item at the left edge of the screen opens the side menu.
+- The app asks the GitHub API for the newest release at start. It sends no
+  data about the user. When a newer version exists, the home screen shows
+  the Downloader URL.
+- The app permits plain HTTP, because many IPTV channels use it.
+- No file of the app goes to a backup or to a new device, because the source
+  list can hold keys.
+- The Sources screen shows only the host of each URL, because a configured
+  addon URL can hold a key.
