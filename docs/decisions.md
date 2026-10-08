@@ -53,3 +53,51 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - A `min_version` value makes an old APK tell the user to update.
 - The code for the source list stays behind one interface, so that a
   different host can replace Supabase.
+
+## 2026-10-08: Remote control buttons
+
+- This is the planned design. Confirm each button on the Hitachi TV with the
+  key code test screen.
+- The TV system keeps Home, Exit, Netflix, YouTube, Source, power, volume,
+  and mute. ZettaStream does not use them.
+- A native Capacitor plugin sends each key code to the web code, because a
+  WebView does not send all special keys.
+
+### Anywhere in the app
+
+| Button | Action |
+|---|---|
+| Directions and OK | Move and select |
+| Back | Go back. On the top screen, open the menu first. Then ask before the app closes. |
+| Menu | Open or close the side menu |
+| `0` | Open or close the side menu |
+| `1` `2` `3` `4` | Go to Home, Search, Library, Settings |
+| Info | Show the details of the selected title |
+| Guide | Show the "continue watching" list |
+| Red | Add the selected title to the watchlist, or remove it |
+| Green | Mark the selected title as watched |
+| Yellow | Choose the source and the quality |
+| Blue | Filter by type and genre |
+| Channel up and down | Scroll one row or one page |
+
+### In the player
+
+| Button | Action |
+|---|---|
+| Play, Pause, OK | Play or pause |
+| Left and Right | Go back or forward 10 seconds. Hold to go faster. |
+| Channel up and down | Go to the next or the previous episode |
+| Subtitles | Select the next subtitle track |
+| Language | Select the next audio track |
+| Info | Show the title, the episode, the time, and the source |
+| Yellow | Change to a different source |
+| `1` to `9` | Go to 10% to 90% of the episode |
+| Text | Skip the intro |
+
+### Navigation on each device
+
+- TV: the side menu is hidden. Left at the left edge, Back, Menu, or `0`
+  opens it.
+- PC: a narrow bar of icons stays on the left. It opens when the pointer is
+  on it.
+- Phone: a tab bar is at the bottom.
