@@ -2,6 +2,7 @@ package io.github.stivengjekaj.zettastream.addon
 
 import io.github.stivengjekaj.zettastream.source.Source
 import io.github.stivengjekaj.zettastream.source.SourceKind
+import io.github.stivengjekaj.zettastream.ui.typeKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -72,10 +73,10 @@ class AddonRepository(
         addon.manifest.catalogs.filterNot { it.needsExtra }.map { CatalogRow(addon, it) }
     }
 
-    /** The types that the home screen can filter by, in a fixed order. */
+    /** The types that the home screen can filter by, in a fixed order. Each kind shows one time. */
     fun types(): List<String> {
-        val order = listOf("movie", "series", "anime", "tv", "channel")
-        return homeRows().map { it.catalog.type }.distinct().sortedBy { order.indexOf(it).let { i -> if (i < 0) 99 else i } }
+        val order = listOf("movie", "series", "anime", "tv", "sport")
+        return homeRows().map { typeKey(it.catalog.type) }.distinct().sortedBy { order.indexOf(it).let { i -> if (i < 0) 99 else i } }
     }
 
     suspend fun catalog(row: CatalogRow): List<MetaPreview> = client.catalog(row.addon, row.catalog)

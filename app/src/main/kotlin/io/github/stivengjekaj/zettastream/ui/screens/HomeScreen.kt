@@ -45,6 +45,7 @@ import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import io.github.stivengjekaj.zettastream.ui.typeLabel
+import io.github.stivengjekaj.zettastream.ui.typeKey
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
 
 @Composable
@@ -56,7 +57,7 @@ fun HomeScreen(app: AppState) {
     val library by c.library.data.collectAsState()
     val rows = remember(addonState) { c.addons.homeRows() }
     val types = remember(addonState) { c.addons.types() }
-    val shown = rows.filter { app.homeFilter == null || it.catalog.type == app.homeFilter }
+    val shown = rows.filter { app.homeFilter == null || typeKey(it.catalog.type) == app.homeFilter }
     val resume = remember(library) { Library.continueWatching(library) }
     val latest = app.latestVersion
 
