@@ -11,8 +11,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -92,26 +96,33 @@ fun PlayerOptionsPanel(rows: List<OptionRow>, focused: Int, modifier: Modifier =
         Text("Options", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text("Up and Down: choose. Left and Right: change. Back: close.", color = TextSecondary, fontSize = 12.sp)
         Spacer(Modifier.padding(4.dp))
-        // Show at most eight rows, with the focused row in view.
-        val first = (focused - 4).coerceIn(0, (rows.size - 8).coerceAtLeast(0))
-        rows.forEachIndexed { i, row ->
-            if (i < first || i >= first + 8) return@forEachIndexed
-            val on = i == focused
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(Corner)
-                    .background(if (on) Accent else Surface)
-                    .border(1.dp, if (on) Accent else Color(0xFF2E2E2E), Corner)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(row.label, color = if (on) OnAccent else TextSecondary, fontSize = 15.sp, modifier = Modifier.width(150.dp))
-                Text(
-                    if (row.onSelect != null) row.value else "‹  ${row.value}  ›",
-                    color = if (on) OnAccent else TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
+        // A list that scrolls, so that each row can come into view on a small screen.
+        val list = rememberLazyListState()
+        LaunchedEffect(focused) {
+            val visible = list.layoutInfo.visibleItemsInfo
+            val first = visible.firstOrNull()?.index ?: 0
+            val last = visible.lastOrNull()?.index ?: 0
+            if (focused <= first || focused >= last) list.animateScrollToItem((focused - 2).coerceAtLeast(0))
+        }
+        LazyColumn(state = list, verticalArrangement = Arrangement.spacedBy(8.dp), userScrollEnabled = false) {
+            itemsIndexed(rows) { i, row ->
+                val on = i == focused
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Corner)
+                        .background(if (on) Accent else Surface)
+                        .border(1.dp, if (on) Accent else Color(0xFF2E2E2E), Corner)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(row.label, color = if (on) OnAccent else TextSecondary, fontSize = 15.sp, modifier = Modifier.width(150.dp))
+                    Text(
+                        if (row.onSelect != null) row.value else "‹  ${row.value}  ›",
+                        color = if (on) OnAccent else TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }
