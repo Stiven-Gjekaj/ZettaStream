@@ -283,7 +283,8 @@ the workflow build a signed APK and attach it to a release.
 
 The unit tests cover the addon protocol, the playlists and the guides, the
 source list, the library, the remote control keys, the pairing page, the
-torrent helpers, and the settings. The
+torrent helpers, the settings, the skip times, the stream data, the home
+rows, the HTTP cache, and the player messages. The
 tests of the addon client talk to a local mock server, not to a real addon.
 Lint must report no error and no warning. The workflow runs both on each push.
 
