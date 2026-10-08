@@ -109,13 +109,16 @@ class AddonRepository(
         )
     }
 
-    /** Asks each addon for streams. Each group comes when its addon answers. */
-    fun streams(type: String, videoId: String): Flow<StreamGroup> = channelFlow {
+    /**
+     * Asks each addon for streams. Each group comes when its addon answers.
+     * Torrent streams come too when [withTorrents] is true.
+     */
+    fun streams(type: String, videoId: String, withTorrents: Boolean = false): Flow<StreamGroup> = channelFlow {
         state.value.addons.filter { it.supports("stream", type, videoId) }.forEach { addon ->
             launch {
                 val group = runCatching { client.streams(addon, type, videoId) }.fold(
                     onSuccess = { all ->
-                        val playable = all.filter { it.isPlayable }
+                        val playable = all.filter { it.isPlayable(withTorrents) }
                         StreamGroup(addon, playable, hidden = all.size - playable.size)
                     },
                     onFailure = { StreamGroup(addon, error = it.message ?: it.javaClass.simpleName) },
@@ -126,9 +129,9 @@ class AddonRepository(
     }
 
     /** Asks one addon for the playable streams of a video. Null when the addon is not installed. */
-    suspend fun streamsFrom(addonUrl: String, type: String, videoId: String): List<Stream>? {
+    suspend fun streamsFrom(addonUrl: String, type: String, videoId: String, withTorrents: Boolean = false): List<Stream>? {
         val addon = state.value.addons.firstOrNull { it.manifestUrl == addonUrl } ?: return null
-        return runCatching { client.streams(addon, type, videoId) }.getOrDefault(emptyList()).filter { it.isPlayable }
+        return runCatching { client.streams(addon, type, videoId) }.getOrDefault(emptyList()).filter { it.isPlayable(withTorrents) }
     }
 
     suspend fun subtitles(type: String, videoId: String): List<Subtitle> = coroutineScope {

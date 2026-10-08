@@ -90,6 +90,8 @@ data class Stream(
     val url: String? = null,
     val ytId: String? = null,
     val infoHash: String? = null,
+    val fileIdx: Int? = null,
+    val sources: List<String> = emptyList(),
     val externalUrl: String? = null,
     val name: String? = null,
     val title: String? = null,
@@ -97,12 +99,18 @@ data class Stream(
     val subtitles: List<Subtitle> = emptyList(),
     val behaviorHints: StreamHints? = null,
 ) {
-    /**
-     * The app plays only HTTP streams. A stream with only a torrent hash,
-     * a YouTube ID, or an external link is not playable.
-     */
-    val isPlayable: Boolean
+    /** A stream with an HTTP URL. */
+    val isHttp: Boolean
         get() = url != null && (url.startsWith("http://") || url.startsWith("https://"))
+
+    /** A stream with a torrent hash and no HTTP URL. The torrent engine plays it. */
+    val isTorrent: Boolean
+        get() = !isHttp && infoHash != null && infoHash.length == 40
+
+    /** A YouTube ID or an external link is never playable. */
+    val isPlayable: Boolean get() = isHttp
+
+    fun isPlayable(withTorrents: Boolean): Boolean = isHttp || (withTorrents && isTorrent)
 
     /** The headers that the addon tells the player to send. */
     val requestHeaders: Map<String, String>
