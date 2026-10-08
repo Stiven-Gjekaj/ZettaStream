@@ -208,3 +208,15 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   list can hold keys.
 - The Sources screen shows only the host of each URL, because a configured
   addon URL can hold a key.
+
+## 2026-10-08: Black and white, monospace
+
+- The palette is black and white. Red is only for errors.
+- The icon and the TV banner are black and white too.
+- All text uses JetBrains Mono (SIL Open Font License), in the APK.
+- Each card, button, chip, and focus ring has the same 8 dp corner. The focus
+  ring follows the edge of its control.
+- On a TV, only the focused button is white. On a phone, the primary button
+  is white.
+- Reason: the owner asked for a sleek and modern look. One white focus state
+  on black is clear from across the room.
