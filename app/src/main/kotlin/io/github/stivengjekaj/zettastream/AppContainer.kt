@@ -24,6 +24,8 @@ import java.io.File
 class AppContainer(app: Application) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val http = Http.client(app.cacheDir)
+    // Coil keeps the images in its own disk cache. The HTTP cache does not keep a second copy.
+    val imageHttp = http.newBuilder().cache(null).build()
     val sources = SourceStore(File(app.filesDir, "sources.txt"))
     val addons = AddonRepository(AddonClient(http), sources.sources, scope)
     val live = LiveRepository(http, sources.sources, scope)
@@ -44,6 +46,6 @@ class ZettaStreamApp : Application(), SingletonImageLoader.Factory {
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
-        .components { add(OkHttpNetworkFetcherFactory(callFactory = { container.http })) }
+        .components { add(OkHttpNetworkFetcherFactory(callFactory = { container.imageHttp })) }
         .build()
 }
