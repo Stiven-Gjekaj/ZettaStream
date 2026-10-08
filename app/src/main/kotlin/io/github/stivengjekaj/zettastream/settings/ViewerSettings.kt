@@ -13,6 +13,22 @@ enum class SubtitleSize(val label: String, val scale: Float) {
     Small("Small", 0.8f), Normal("Normal", 1f), Large("Large", 1.3f), Huge("Huge", 1.6f)
 }
 
+/** The text color of subtitles, as ARGB. */
+enum class SubtitleColor(val label: String, val argb: Int) {
+    White("White", 0xFFFFFFFF.toInt()), Yellow("Yellow", 0xFFFFE14D.toInt()),
+    Gray("Light gray", 0xFFD0D0D0.toInt()), Cyan("Cyan", 0xFF7FE7FF.toInt()),
+}
+
+/** How much the box behind subtitles hides the video. */
+enum class SubtitleBackground(val label: String, val alpha: Int) {
+    None("None", 0), Light("25%", 64), Medium("50%", 128), Dark("75%", 191), Solid("Solid", 255)
+}
+
+enum class SubtitleFont(val label: String) { Default("Default"), Sans("Sans"), Serif("Serif"), Mono("Monospace"), Bold("Bold") }
+
+/** The edge around each letter, so that text without a box stays readable. */
+enum class SubtitleEdge(val label: String) { None("None"), Outline("Outline"), Shadow("Drop shadow"), Raised("Raised") }
+
 /** The choices of the viewer. Each value has a default that works with no change. */
 @Serializable
 data class ViewerSettings(
@@ -20,6 +36,10 @@ data class ViewerSettings(
     val subtitleLanguage: String = "en",
     val audioLanguage: String = "",
     val subtitleSize: SubtitleSize = SubtitleSize.Normal,
+    val subtitleColor: SubtitleColor = SubtitleColor.White,
+    val subtitleBackground: SubtitleBackground = SubtitleBackground.None,
+    val subtitleFont: SubtitleFont = SubtitleFont.Default,
+    val subtitleEdge: SubtitleEdge = SubtitleEdge.Outline,
     val autoplayNext: Boolean = true,
     val confirmChannel: Boolean = true,
     val showTorrents: Boolean = true,
