@@ -2,20 +2,20 @@
   <!-- ZettaStream full icon: background plus foreground, with rounded corners. -->
   <defs>
     <radialGradient id="glow" cx="54" cy="48" r="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2a2060"/>
-      <stop offset="1" stop-color="#0b0d12"/>
+      <stop offset="0" stop-color="#2a2a2a"/>
+      <stop offset="1" stop-color="#000000"/>
     </radialGradient>
     <linearGradient id="stream" x1="0" y1="0" x2="48" y2="44" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#9d7dff"/>
-      <stop offset="0.5" stop-color="#7c5cff"/>
-      <stop offset="1" stop-color="#4fd1ff"/>
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.5" stop-color="#e0e0e0"/>
+      <stop offset="1" stop-color="#9a9a9a"/>
     </linearGradient>
     <clipPath id="round">
       <rect width="108" height="108" rx="24"/>
     </clipPath>
   </defs>
   <g clip-path="url(#round)">
-    <rect width="108" height="108" fill="#0b0d12"/>
+    <rect width="108" height="108" fill="#000000"/>
     <rect width="108" height="108" fill="url(#glow)"/>
   </g>
   <g transform="translate(26.4 28.7) scale(1.15)">

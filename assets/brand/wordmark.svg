@@ -2,13 +2,13 @@
   <!-- ZettaStream wordmark on a transparent background. The word is Inter Bold converted to a path. -->
   <defs>
     <linearGradient id="stream" x1="0" y1="0" x2="48" y2="44" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#9d7dff"/>
-      <stop offset="0.5" stop-color="#7c5cff"/>
-      <stop offset="1" stop-color="#4fd1ff"/>
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.5" stop-color="#e0e0e0"/>
+      <stop offset="1" stop-color="#9a9a9a"/>
     </linearGradient>
     <linearGradient id="word" x1="72" y1="0" x2="257" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#7c5cff"/>
-      <stop offset="1" stop-color="#4fd1ff"/>
+      <stop offset="0" stop-color="#e0e0e0"/>
+      <stop offset="1" stop-color="#9a9a9a"/>
     </linearGradient>
   </defs>
   <path d="M0 0H48V12L20 32H48V44H0V32L28 12H0Z" fill="url(#stream)" transform="translate(0 5.6) scale(1.2)"/>

@@ -2,10 +2,10 @@
   <!-- ZettaStream adaptive icon: background layer -->
   <defs>
     <radialGradient id="glow" cx="54" cy="48" r="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2a2060"/>
-      <stop offset="1" stop-color="#0b0d12"/>
+      <stop offset="0" stop-color="#2a2a2a"/>
+      <stop offset="1" stop-color="#000000"/>
     </radialGradient>
   </defs>
-  <rect width="108" height="108" fill="#0b0d12"/>
+  <rect width="108" height="108" fill="#000000"/>
   <rect width="108" height="108" fill="url(#glow)"/>
 </svg>

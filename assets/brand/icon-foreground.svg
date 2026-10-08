@@ -2,9 +2,9 @@
   <!-- ZettaStream adaptive icon: foreground layer. The mark spans 26.4..81.6 by 28.7..79.3 and stays inside the 66x66 safe zone (21..87). -->
   <defs>
     <linearGradient id="stream" x1="0" y1="0" x2="48" y2="44" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#9d7dff"/>
-      <stop offset="0.5" stop-color="#7c5cff"/>
-      <stop offset="1" stop-color="#4fd1ff"/>
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.5" stop-color="#e0e0e0"/>
+      <stop offset="1" stop-color="#9a9a9a"/>
     </linearGradient>
   </defs>
   <g transform="translate(26.4 28.7) scale(1.15)">

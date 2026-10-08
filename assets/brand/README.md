@@ -4,17 +4,17 @@ This folder holds the app icon, the Android TV banner and the wordmark.
 
 ## Design
 
-The mark is a bold geometric Z. The diagonal stroke carries a gradient from violet to cyan. The gradient shows the flow of a stream. The background is the dark app colour with a soft violet glow.
+The mark is a bold geometric Z. The mark carries a gradient from white to grey. The gradient shows the flow of a stream. The background is the dark app colour with a soft grey glow.
 
 ## Colours
 
 | Name | Hex | Use |
 | --- | --- | --- |
-| Background | `#0b0d12` | Icon and banner background. Same as the app background. |
-| Glow | `#2a2060` | Centre of the radial glow behind the mark. |
-| Violet light | `#9d7dff` | Start of the mark gradient. |
-| Violet | `#7c5cff` | Middle of the mark gradient. Monochrome icon colour. |
-| Cyan | `#4fd1ff` | End of the mark gradient. |
+| Background | `#000000` | Icon and banner background. Same as the app background. |
+| Glow | `#2a2a2a` | Centre of the radial glow behind the mark. |
+| White | `#ffffff` | Start of the mark gradient. |
+| Grey | `#e0e0e0` | Middle of the mark gradient. Monochrome icon colour. |
+| Dark grey | `#9a9a9a` | End of the mark gradient. |
 
 ## SVG sources
 
@@ -24,8 +24,8 @@ The mark is a bold geometric Z. The diagonal stroke carries a gradient from viol
 | `icon-background.svg` | Adaptive icon background layer. 108x108 viewBox. |
 | `icon-monochrome.svg` | Monochrome layer for Android 13 themed icons. Same geometry as the foreground. |
 | `icon-full.svg` | The complete square icon with rounded corners. Use it for previews and the README. |
-| `banner.svg` | Android TV launcher banner. 16:9, 320x180 viewBox. The Z is in the center, on a violet glow. |
-| `wordmark.svg` | The mark and the name side by side on a transparent background. Use it at the top of the README. |
+| `banner.svg` | Android TV launcher banner. 16:9, 320x180 viewBox. The Z is in the center, on a grey glow. |
+| `wordmark.svg` | The mark and the name side by side on a transparent background. It is light, so use it on a dark background only. |
 
 ## PNG renders
 
