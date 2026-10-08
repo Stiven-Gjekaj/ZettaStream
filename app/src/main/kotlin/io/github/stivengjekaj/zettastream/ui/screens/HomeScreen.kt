@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Text
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.CatalogRow
+import io.github.stivengjekaj.zettastream.addon.HomeRows
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.library.Library
 import io.github.stivengjekaj.zettastream.ui.AppState
@@ -59,7 +61,7 @@ fun HomeScreen(app: AppState) {
     val library by c.library.data.collectAsState()
     val rows = remember(addonState) { c.addons.homeRows() }
     val types = remember(addonState) { c.addons.types() }
-    val shown = rows.filter { app.homeFilter == null || typeKey(it.catalog.type) == app.homeFilter }
+    val shown = rows.filter { (app.homeFilter == null || typeKey(it.catalog.type) == app.homeFilter) }
     val resume = remember(library) { Library.continueWatching(library) }
     val latest = app.latestVersion
 
@@ -160,12 +162,12 @@ fun HomeScreen(app: AppState) {
         if (addonState.loading && rows.isEmpty() && sources.isNotEmpty()) {
             item { PlaceholderRow(tv) }
         }
-        items(shown, key = { it.key }) { row -> CatalogRowView(app, row) }
+        itemsIndexed(shown, key = { _, row -> row.key }) { index, row -> CatalogRowView(app, row, shown.take(index)) }
     }
 }
 
 @Composable
-private fun CatalogRowView(app: AppState, row: CatalogRow) {
+private fun CatalogRowView(app: AppState, row: CatalogRow, above: List<CatalogRow>) {
     val tv = app.isTv
     val cached = app.container.addons.cachedCatalog(row)
     val metas by produceState(cached, row.key) {
@@ -173,7 +175,9 @@ private fun CatalogRowView(app: AppState, row: CatalogRow) {
     }
     val list = metas
     if (list != null && list.isEmpty()) return
-    SectionTitle(row.catalog.name, tv, detail = "${typeLabel(row.catalog.type)} from ${row.addon.name}")
+    // A row that mostly repeats a row above does not show.
+    if (list != null && HomeRows.isRepeat(list.map { it.id }, above.mapNotNull { r -> app.container.addons.cachedCatalog(r)?.map { it.id } })) return
+    SectionTitle(row.title, tv, detail = "${typeLabel(row.catalog.type)} from ${row.addon.name}")
     if (list == null) PlaceholderRow(tv)
     else PosterRow(list, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = row.key)
 }
