@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +52,7 @@ import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.pickSameSource
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.remote.RemoteKeys
+import io.github.stivengjekaj.zettastream.settings.SubtitleSize
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.LivePlayback
 import io.github.stivengjekaj.zettastream.ui.Playback
@@ -77,6 +79,31 @@ fun subtitleMime(sub: Subtitle): String {
         path.endsWith(".ass") || path.endsWith(".ssa") -> MimeTypes.TEXT_SSA
         path.endsWith(".ttml") || path.endsWith(".dfxp") -> MimeTypes.APPLICATION_TTML
         else -> MimeTypes.APPLICATION_SUBRIP
+    }
+}
+
+/** The name of a language code such as "eng" or "sq". An unknown code stays as it is. */
+fun languageName(code: String): String {
+    if (code.isBlank()) return "Subtitle"
+    // Subtitle addons often give three-letter codes such as "sqi", which Java does not read directly.
+    val tag = ThreeLetterCodes[code.lowercase()] ?: code
+    val locale = Locale.forLanguageTag(tag)
+    val name = locale.getDisplayLanguage(Locale.ENGLISH)
+    return if (name.isBlank() || name.equals(locale.language, ignoreCase = true)) code else name
+}
+
+private val ThreeLetterCodes: Map<String, String> by lazy {
+    Locale.getISOLanguages().mapNotNull { two -> runCatching { Locale.forLanguageTag(two).isO3Language to two }.getOrNull() }.toMap()
+}
+
+/** Gives each subtitle a readable label. Two tracks in one language become "English 1" and "English 2". */
+fun subtitleLabels(subtitles: List<Subtitle>): List<Pair<Subtitle, String>> {
+    val names = subtitles.map { languageName(it.lang) }
+    val totals = names.groupingBy { it }.eachCount()
+    val seen = mutableMapOf<String, Int>()
+    return subtitles.zip(names).map { (sub, name) ->
+        val n = seen.merge(name, 1, Int::plus)!!
+        sub to if (totals.getValue(name) > 1) "$name $n" else name
     }
 }
 
@@ -114,6 +141,11 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var duration by remember { mutableLongStateOf(C.TIME_UNSET) }
     var prompt by remember { mutableStateOf<String?>(null) }
     var torrentText by remember { mutableStateOf<String?>(null) }
+    var optionsOpen by remember { mutableStateOf(false) }
+    var optionsRow by remember { mutableIntStateOf(0) }
+    var tracksVersion by remember { mutableIntStateOf(0) }
+    var speed by remember { mutableFloatStateOf(1f) }
+    var playerView by remember { mutableStateOf<PlayerView?>(null) }
     var pendingStep by remember { mutableIntStateOf(0) }
     var pendingAt by remember { mutableLongStateOf(0L) }
     val live by c.live.live.collectAsState()
@@ -141,11 +173,11 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         val item = MediaItem.Builder()
             .setUri(url)
             .apply { if (url.substringBefore('?').lowercase().endsWith(".m3u8")) setMimeType(MimeTypes.APPLICATION_M3U8) }
-            .setSubtitleConfigurations(subtitles.map { sub ->
+            .setSubtitleConfigurations(subtitleLabels(subtitles).map { (sub, label) ->
                 MediaItem.SubtitleConfiguration.Builder(sub.url.toUri())
                     .setMimeType(subtitleMime(sub))
                     .setLanguage(sub.lang.ifBlank { null })
-                    .setLabel(sub.lang.ifBlank { "Subtitle" })
+                    .setLabel(label)
                     .build()
             })
             .build()
@@ -290,7 +322,60 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         prompt = "Press again for $what"
     }
 
+    fun optionRows(): List<OptionRow> {
+        tracksVersion.let { } // Read, so that the rows change when the tracks change.
+        val subs = TrackChoices.choices(player, C.TRACK_TYPE_TEXT)
+        val subIndex = TrackChoices.current(player, C.TRACK_TYPE_TEXT, subs)
+        val audio = TrackChoices.choices(player, C.TRACK_TYPE_AUDIO)
+        val audioIndex = TrackChoices.current(player, C.TRACK_TYPE_AUDIO, audio)
+        fun pickSub(step: Int) { TrackChoices.select(player, C.TRACK_TYPE_TEXT, subs[(subIndex + step).mod(subs.size)]); tracksVersion++ }
+        fun pickAudio(step: Int) { if (audio.isNotEmpty()) { TrackChoices.select(player, C.TRACK_TYPE_AUDIO, audio[(audioIndex + step).mod(audio.size)]); tracksVersion++ } }
+        fun size(step: Int) {
+            val sizes = SubtitleSize.entries
+            val next = sizes[(sizes.indexOf(viewer.subtitleSize) + step).mod(sizes.size)]
+            playerView?.subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * next.scale)
+            c.scope.launch { c.settings.update { it.copy(subtitleSize = next) } }
+        }
+        fun setSpeed(step: Int) {
+            speed = PlaybackSpeeds[(PlaybackSpeeds.indexOf(speed) + step).coerceIn(0, PlaybackSpeeds.lastIndex)]
+            player.setPlaybackSpeed(speed)
+        }
+        val rows = mutableListOf(
+            OptionRow("Subtitles", subs.getOrNull(subIndex)?.label ?: "Off", { pickSub(-1) }, { pickSub(1) }),
+            OptionRow("Audio", audio.getOrNull(audioIndex)?.label ?: "One track", { pickAudio(-1) }, { pickAudio(1) }),
+            OptionRow("Subtitle size", viewer.subtitleSize.label, { size(-1) }, { size(1) }),
+        )
+        if (playback is VideoPlayback) {
+            rows += OptionRow("Speed", if (speed == 1f) "Normal" else "${speed}x", { setSpeed(-1) }, { setSpeed(1) })
+            rows += OptionRow("Source", "Choose another source", onSelect = { saveProgress(); app.back {} })
+        }
+        return rows
+    }
+
+    /** Keys for the options panel while it is open. */
+    fun onOptionsKey(event: KeyEvent): Boolean {
+        if (event.action != KeyEvent.ACTION_DOWN) return true
+        val rows = optionRows()
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_0 -> optionsOpen = false
+            KeyEvent.KEYCODE_DPAD_UP -> optionsRow = (optionsRow - 1).coerceAtLeast(0)
+            KeyEvent.KEYCODE_DPAD_DOWN -> optionsRow = (optionsRow + 1).coerceAtMost(rows.lastIndex)
+            KeyEvent.KEYCODE_DPAD_LEFT -> rows.getOrNull(optionsRow)?.onPrevious?.invoke()
+            KeyEvent.KEYCODE_DPAD_RIGHT -> rows.getOrNull(optionsRow)?.onNext?.invoke()
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> rows.getOrNull(optionsRow)?.let { r ->
+                r.onSelect?.let { optionsOpen = false; it() } ?: r.onNext()
+            }
+        }
+        return true
+    }
+
     fun onKey(event: KeyEvent): Boolean {
+        if (optionsOpen) return onOptionsKey(event)
+        if (event.action == KeyEvent.ACTION_DOWN && (event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_0)) {
+            optionsRow = 0
+            optionsOpen = true
+            return true
+        }
         if (event.keyCode == KeyEvent.KEYCODE_BACK) return false
         if (event.action != KeyEvent.ACTION_DOWN) return true
         val isLive = playback is LivePlayback
@@ -344,7 +429,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 }
             }
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
-            override fun onTracksChanged(tracks: Tracks) {}
+            override fun onTracksChanged(tracks: Tracks) { tracksVersion++ }
         }
         player.addListener(listener)
         app.keyCapture = ::onKey
@@ -368,6 +453,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             factory = { ctx ->
                 PlayerView(ctx).apply {
                     this.player = player
+                    playerView = this
                     useController = !app.isTv
                     setShowSubtitleButton(true)
                     subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * viewer.subtitleSize.scale)
@@ -406,12 +492,15 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 }
                 if (app.isTv) {
                     Text(
-                        if (playback is LivePlayback) "Channel up and down: change channel   Language: audio   Subtitles: subtitles"
-                        else "OK: pause   Left and Right: 10 s   1 to 9: jump   Channel: episode   Text: skip intro",
+                        if (playback is LivePlayback) "Channel up and down: change channel   Menu: options"
+                        else "OK: pause   Left and Right: 10 s   1 to 9: jump   Channel: episode   Menu: options",
                         color = TextSecondary, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp),
                     )
                 }
             }
+        }
+        if (optionsOpen) {
+            PlayerOptionsPanel(optionRows(), optionsRow, Modifier.align(Alignment.CenterEnd))
         }
         prompt?.let {
             Text(
