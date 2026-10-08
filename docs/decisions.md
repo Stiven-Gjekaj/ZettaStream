@@ -125,3 +125,25 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - At each start, the app reads each repository again and gets new plugin
   versions.
 - On a phone or a PC, the user pastes the lines directly into the app.
+
+## 2026-10-08: Source protocol
+
+- A source is a Stremio addon. The URL of a source ends in `manifest.json`.
+- Reason: the Stremio addon protocol is open and uses HTTP and JSON only.
+  Many addons exist already. The app runs no code from a source, so the
+  protocol operates on the TV, the phone, and the PC.
+- A source can also be an IPTV playlist in M3U format, with an optional
+  XMLTV guide. This gives live TV and sports.
+- On the TV, the Guide button opens the channel guide. Channel up and down
+  change the channel.
+
+## 2026-10-08: HTTP streams only
+
+- The app plays HTTP streams only. This includes HLS.
+- The app contains no torrent engine and no VPN function.
+- The app does not show a stream that has only a torrent `infoHash` and no
+  HTTP URL.
+- Reason: most anime and live TV streams are HTTP. A torrent addon that has a
+  debrid key returns HTTP streams, so the app plays it with no extra code.
+  A torrent engine sends the IP address of the user to the swarm, and a
+  browser cannot operate one.
