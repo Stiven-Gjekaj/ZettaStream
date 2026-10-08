@@ -29,10 +29,21 @@ of the addon.
 
 ## A title has no playable stream
 
-ZettaStream plays HTTP streams only. A stream that is only a torrent is
-hidden, and the streams screen says how many it hid. A torrent addon gives HTTP
-streams when you put a debrid key in its settings. Some addons also give
-streams only for some kinds of ID.
+Some addons give streams only for some kinds of ID. If you turned off torrent
+streams in Settings, the streams screen says how many streams it hid.
+
+## A torrent does not start
+
+The player shows the number of peers and the speed while a torrent loads.
+
+- "Finding peers" for a long time: the torrent has few peers. Choose a stream
+  with more seeders. Addons often show the number of seeders in the name.
+- Many peers but 0 MB/s: some networks block BitTorrent. A VPN that permits
+  P2P can help.
+- The first minute of a torrent is slower than an HTTP stream, because the
+  engine must find peers and get the torrent information first.
+- Some video files use an audio format that the TV cannot decode. Choose
+  another stream.
 
 ## A stream does not play
 

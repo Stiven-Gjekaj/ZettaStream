@@ -59,10 +59,12 @@ tab bar and touch controls.
 
 - Rows of posters from the catalogs of each addon
 - Streams from all addons at the same time, grouped by addon
+- Torrent streams, played while they download, with no seeding after
 - Seasons and episodes, with the next episode to watch
 - Continue watching, a watchlist, and watched marks, on the device only
 - Subtitles from the stream and from subtitle addons
 - Change the subtitle and the audio track with one button
+- Viewer settings: subtitles, languages, subtitle size, next episode
 - Live TV from M3U playlists, with now and next from an XMLTV guide
 
 </td>
@@ -70,7 +72,7 @@ tab bar and touch controls.
 
 ### Made for a TV
 
-- A side menu that stays hidden until you press Left, Menu, or `0`
+- A side menu that stays hidden until you press Menu or `0`
 - Number buttons go straight to each screen
 - Colour buttons for the watchlist, watched, sources, and filters
 - Channel buttons for the next episode or the next channel
@@ -132,16 +134,24 @@ The new list replaces the old list. To remove a source, remove its line and
 send the list again. Each QR code works one time.
 
 A metadata addon such as Cinemeta gives the rows on the home screen. A stream
-addon gives the streams. ZettaStream plays HTTP streams only: a stream that is
-only a torrent is hidden. Many torrent addons give HTTP streams when you put a
-debrid key in their settings.
+addon gives the streams. ZettaStream plays HTTP streams and torrent streams.
+
+## Torrents and your IP address
+
+A torrent stream connects your TV to other people's devices. They can see your
+IP address. ZettaStream limits the upload to 4 KB/s, does not seed, and deletes
+each torrent when you stop watching, but it cannot hide your IP address. Use a
+VPN that permits P2P. The app reminds you at start; it does not check.
+
+To avoid torrents, turn off Settings, Show torrent streams. A debrid key in a
+torrent addon's settings also changes its torrents into HTTP links.
 
 ## The remote control
 
 | Button | Anywhere | In the player |
 | ------ | -------- | ------------- |
 | Directions, OK | Move, select | Left and Right: back or forward 10 s. OK: pause |
-| Back | Go back. On a main screen, open the menu | Leave the player |
+| Back | Go back. Close the menu | Leave the player |
 | Menu, `0` | Open or close the menu | |
 | `1` to `5` | Home, Search, Library, Settings, Live TV | `1` to `9`: go to 10% to 90% |
 | Info | Open the focused title | Show the title and the time |
@@ -170,8 +180,9 @@ each of your addons for streams at the same time, and shows each answer as it
 arrives. When an addon repairs a broken site, your TV gets the repair at once,
 because the work happens on the addon's side.
 
-The app runs no code from a source. It only sends HTTP requests and plays what
-comes back, so the same APK works on a TV and on a phone.
+The app runs no code from a source. It sends HTTP requests and plays what
+comes back. For a torrent, a libtorrent engine downloads the file in order and
+serves it to the player on `127.0.0.1`.
 
 See [docs/architecture.md](docs/architecture.md) for the whole picture, and
 [docs/decisions.md](docs/decisions.md) for the reason behind each choice.
@@ -186,6 +197,8 @@ app/src/main/kotlin/.../zettastream/
   library/    the watchlist and the watch history
   pairing/    the page that a phone opens to send the list
   remote/     what each remote control button does
+  torrent/    the torrent engine and its local server
+  settings/   the viewer settings
   ui/         the screens, the theme, and the components
 app/src/test/ the unit tests
 assets/brand/ the icon and the TV banner
@@ -249,7 +262,8 @@ the workflow build a signed APK and attach it to a release.
 ```
 
 The unit tests cover the addon protocol, the playlists and the guides, the
-source list, the library, the remote control keys, and the pairing page. The
+source list, the library, the remote control keys, the pairing page, the
+torrent helpers, and the settings. The
 tests of the addon client talk to a local mock server, not to a real addon.
 Lint must report no error and no warning. The workflow runs both on each push.
 

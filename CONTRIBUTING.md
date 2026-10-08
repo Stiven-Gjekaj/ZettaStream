@@ -18,8 +18,6 @@ site is refused. So is a change that makes the app read a source list from a
 server of the project. The reasons are in
 [docs/decisions.md](docs/decisions.md).
 
-The app plays HTTP streams only. A torrent engine is out of scope.
-
 ## Ways to help
 
 - Report a fault or ask for a feature. Open an issue.
@@ -64,6 +62,8 @@ which is not the digit 5.
 | Change | Files |
 | ------ | ----- |
 | The Stremio addon protocol | `addon/` |
+| The torrent engine and its local server | `torrent/` |
+| The viewer settings | `settings/` |
 | IPTV playlists and TV guides | `iptv/` |
 | The source list and its storage | `source/` |
 | The pairing page for the phone | `pairing/` |
