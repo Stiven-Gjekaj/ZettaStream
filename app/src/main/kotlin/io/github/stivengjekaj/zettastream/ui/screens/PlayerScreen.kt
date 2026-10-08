@@ -3,6 +3,14 @@ package io.github.stivengjekaj.zettastream.ui.screens
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
+import io.github.stivengjekaj.zettastream.ui.theme.Corner
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import io.github.stivengjekaj.zettastream.skip.SkipRange
+import io.github.stivengjekaj.zettastream.skip.SkipKind
+import io.github.stivengjekaj.zettastream.skip.SkipAction
+import io.github.stivengjekaj.zettastream.skip.Skip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -75,7 +83,6 @@ import java.util.Locale
 
 private const val SEEK_STEP = 10_000L
 private const val SEEK_FAST = 30_000L
-private const val INTRO_SKIP = 85_000L
 private const val CONFIRM_WINDOW = 3_000L
 
 fun subtitleMime(sub: Subtitle): String {
@@ -148,6 +155,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var prompt by remember { mutableStateOf<String?>(null) }
     var torrentText by remember { mutableStateOf<String?>(null) }
     var optionsOpen by remember { mutableStateOf(false) }
+    var skips by remember { mutableStateOf(emptyList<SkipRange>()) }
     var optionsRow by remember { mutableIntStateOf(0) }
     var tracksVersion by remember { mutableIntStateOf(0) }
     var speed by remember { mutableFloatStateOf(1f) }
@@ -241,6 +249,23 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 torrentText = "Torrent: ${st.peers} peers, %.1f MB/s, %d%% of the file".format(st.downloadRate / 1_000_000f, (st.progress * 100).toInt())
             }
             delay(1000)
+        }
+    }
+
+    // Get the opening and ending times when the length of the episode is known.
+    LaunchedEffect(duration > 0) {
+        val video = playback as? VideoPlayback ?: return@LaunchedEffect
+        if (duration > 0) skips = c.skipTimes.forVideo(video.videoId, duration)
+    }
+
+    /** Text: go to the end of the opening, ending, or recap. With no times, jump 85 seconds. */
+    fun skip() {
+        when (val a = Skip.action(skips, player.currentPosition)) {
+            is SkipAction.SeekTo -> {
+                player.seekTo(a.position)
+                show(when (a.kind) { SkipKind.Opening -> "Skipped the opening"; SkipKind.Ending -> "Skipped the ending"; SkipKind.Recap -> "Skipped the recap" })
+            }
+            is SkipAction.Jump -> { player.seekTo(player.currentPosition + a.by); show("Skipped 85 seconds") }
         }
     }
 
@@ -425,7 +450,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             RemoteAction.Previous -> { channelPress(-1); return true }
             RemoteAction.Subtitles -> cycleTrack(C.TRACK_TYPE_TEXT)
             RemoteAction.AudioTrack -> cycleTrack(C.TRACK_TYPE_AUDIO)
-            RemoteAction.SkipIntro -> if (!isLive) { player.seekTo(player.currentPosition + INTRO_SKIP); show("Skipped 85 seconds") }
+            RemoteAction.SkipIntro -> if (!isLive) skip()
             RemoteAction.Info -> show()
             RemoteAction.Sources -> { saveProgress(); app.back {} }
             else -> RemoteKeys.percentOf(action)?.let { pct ->
@@ -517,11 +542,20 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 if (app.isTv) {
                     Text(
                         if (playback is LivePlayback) "Channel up and down: change channel   Menu: options"
-                        else "OK: pause   Left and Right: 10 s   1 to 9: jump   Channel: episode   Menu: options",
+                        else "OK: pause   Left and Right: 10 s   1 to 9: jump   Text: skip intro   Menu: options",
                         color = TextSecondary, fontSize = 13.sp, modifier = Modifier.padding(top = 8.dp),
                     )
                 }
             }
+        }
+        Skip.current(skips, position)?.let { range ->
+            val label = when (range.kind) { SkipKind.Opening -> "Skip intro"; SkipKind.Ending -> "Skip ending"; SkipKind.Recap -> "Skip recap" }
+            Text(
+                if (app.isTv) "$label: press Text" else label,
+                color = OnAccent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 48.dp, bottom = 140.dp)
+                    .clip(Corner).background(Accent).clickable { skip() }.padding(horizontal = 18.dp, vertical = 10.dp),
+            )
         }
         if (optionsOpen) {
             PlayerOptionsPanel(optionRows(), optionsRow, Modifier.align(Alignment.CenterEnd))
