@@ -24,6 +24,8 @@ class AddonRepositoryTest {
                 "/good/manifest.json" -> ok("""{"id":"g","name":"Good","types":["movie"],"resources":["stream"],"catalogs":[{"type":"movie","id":"top"},{"type":"movie","id":"find","extra":[{"name":"search","isRequired":true}]}]}""")
                 "/good/stream/movie/tt1.json" -> ok("""{"streams":[{"url":"https://a.test/1.mp4"},{"infoHash":"x"},{"infoHash":"y"}]}""")
                 "/good/stream/movie/tt2.json" -> ok("""{"streams":[{"url":"https://a.test/1.mp4"},{"infoHash":"abcdef0123456789abcdef0123456789abcdef01","fileIdx":2,"sources":["tracker:udp://t.test:1/announce"]}]}""")
+                "/subs/manifest.json" -> ok("""{"id":"s","name":"Subs","types":["movie"],"idPrefixes":["tt"],"resources":["subtitles"],"catalogs":[]}""")
+                "/subs/subtitles/movie/tt1.json" -> ok("""{"subtitles":[{"id":"1","url":"https://s.test/1.srt","lang":"eng"}]}""")
                 else -> MockResponse.Builder().code(404).build()
             }
         }
@@ -37,7 +39,7 @@ class AddonRepositoryTest {
     @Test
     fun aBadSourceIsAFailureAndTheGoodOneIsInstalled() = runTest {
         val sources = MutableStateFlow(SourceList.parse("${server.url("/good/manifest.json")}\n${server.url("/bad/manifest.json")}"))
-        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope)
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope, fallbackSubtitlesUrl = null)
         val state = repository.addons.first { !it.loading && it.addons.isNotEmpty() }
         assertEquals(listOf("Good"), state.addons.map { it.name })
         assertEquals(1, state.failures.size)
@@ -51,7 +53,7 @@ class AddonRepositoryTest {
     @Test
     fun torrentsComeWhenTheSettingIsOn() = runTest {
         val sources = MutableStateFlow(SourceList.parse("${server.url("/good/manifest.json")}"))
-        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope)
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope, fallbackSubtitlesUrl = null)
         repository.addons.first { !it.loading && it.addons.isNotEmpty() }
         // "x" and "y" in tt1 are not 40 characters, so they are not torrents.
         assertEquals(1, repository.streams("movie", "tt1", withTorrents = true).toList().single().streams.size)
@@ -62,9 +64,29 @@ class AddonRepositoryTest {
     }
 
     @Test
+    fun withNoSubtitleAddonTheFallbackGivesSubtitles() = runTest {
+        val sources = MutableStateFlow(SourceList.parse("${server.url("/good/manifest.json")}"))
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope, server.url("/subs/manifest.json").toString())
+        repository.addons.first { !it.loading && it.addons.isNotEmpty() }
+        assertEquals(listOf("https://s.test/1.srt"), repository.subtitles("movie", "tt1").map { it.url })
+    }
+
+    @Test
+    fun withASubtitleAddonTheFallbackIsNotAsked() = runTest {
+        val subs = server.url("/subs/manifest.json").toString()
+        val sources = MutableStateFlow(SourceList.parse(subs))
+        // The fallback is on the same server, so a request to it would add to the count.
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope, server.url("/fallback/manifest.json").toString())
+        repository.addons.first { !it.loading && it.addons.isNotEmpty() }
+        val before = server.requestCount
+        assertEquals(1, repository.subtitles("movie", "tt1").size)
+        assertEquals(before + 1, server.requestCount)
+    }
+
+    @Test
     fun retryInstallsTheAddonsAgain() = runTest {
         val sources = MutableStateFlow(SourceList.parse("${server.url("/good/manifest.json")}"))
-        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope)
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope, fallbackSubtitlesUrl = null)
         repository.addons.first { !it.loading && it.addons.isNotEmpty() }
         val before = server.requestCount
         repository.retry()

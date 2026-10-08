@@ -40,7 +40,9 @@ class AddonRepository(
     private val client: AddonClient,
     sources: StateFlow<List<Source>>,
     scope: CoroutineScope,
+    private val fallbackSubtitlesUrl: String? = OPENSUBTITLES,
 ) {
+    private var fallback: Addon? = null
     private val state = MutableStateFlow(AddonState(loading = true))
     val addons: StateFlow<AddonState> = state.asStateFlow()
     private val retries = MutableStateFlow(0)
@@ -141,10 +143,26 @@ class AddonRepository(
         return runCatching { client.streams(addon, type, videoId) }.getOrDefault(emptyList()).filter { it.isPlayable(withTorrents) }
     }
 
+    /**
+     * Asks each subtitle addon. When no installed addon gives subtitles for
+     * this video, the app asks OpenSubtitles, which is free and needs no key.
+     */
     suspend fun subtitles(type: String, videoId: String): List<Subtitle> = coroutineScope {
-        state.value.addons.filter { it.supports("subtitles", type, videoId) }.map { addon ->
+        val installed = state.value.addons.filter { it.supports("subtitles", type, videoId) }
+        val addons = installed.ifEmpty { listOfNotNull(fallbackAddon()?.takeIf { it.supports("subtitles", type, videoId) }) }
+        addons.map { addon ->
             async { runCatching { client.subtitles(addon, type, videoId) }.getOrDefault(emptyList()) }
         }.awaitAll().flatten().distinctBy { it.url }
+    }
+
+    private suspend fun fallbackAddon(): Addon? {
+        val url = fallbackSubtitlesUrl ?: return null
+        return fallback ?: runCatching { client.install(url) }.getOrNull()?.also { fallback = it }
+    }
+
+    companion object {
+        /** The official OpenSubtitles addon of Stremio. */
+        const val OPENSUBTITLES = "https://opensubtitles-v3.strem.io/manifest.json"
     }
 }
 
