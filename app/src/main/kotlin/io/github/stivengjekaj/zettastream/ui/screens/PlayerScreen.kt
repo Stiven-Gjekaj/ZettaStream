@@ -52,6 +52,7 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
@@ -96,6 +97,24 @@ fun subtitleMime(sub: Subtitle): String {
 }
 
 /** The name of a language code such as "eng" or "sq". An unknown code stays as it is. */
+/**
+ * How much video the player keeps ready. After a stall, the default starts
+ * again with 5 seconds ready, so a connection that is only a little slower
+ * than the video stops about every 4 seconds. A larger buffer after a stall
+ * gives fewer and shorter stops. A torrent gets more, because its speed
+ * changes more.
+ */
+@OptIn(UnstableApi::class)
+fun loadControl(isTorrent: Boolean): DefaultLoadControl = DefaultLoadControl.Builder()
+    .setBufferDurationsMs(
+        /* minBufferMs = */ 30_000,
+        /* maxBufferMs = */ if (isTorrent) 120_000 else 90_000,
+        /* bufferForPlaybackMs = */ if (isTorrent) 6_000 else 2_500,
+        /* bufferForPlaybackAfterRebufferMs = */ if (isTorrent) 20_000 else 12_000,
+    )
+    .setPrioritizeTimeOverSizeThresholds(true)
+    .build()
+
 fun languageName(code: String): String {
     if (code.isBlank()) return "Subtitle"
     // Subtitle addons often give three-letter codes such as "sqi", which Java does not read directly.
@@ -133,7 +152,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     val context = LocalContext.current
     val viewer by c.settings.settings.collectAsState()
     val player = remember {
-        ExoPlayer.Builder(context).build().apply {
+        ExoPlayer.Builder(context).setLoadControl(loadControl(isTorrent = (playback as? VideoPlayback)?.torrent != null)).build().apply {
             playWhenReady = true
             // The viewer settings choose the first subtitle and audio tracks.
             val start = c.settings.settings.value
