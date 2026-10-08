@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.CatalogRow
 import io.github.stivengjekaj.zettastream.addon.HomeRows
-import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.library.Library
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen

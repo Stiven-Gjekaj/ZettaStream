@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -52,7 +51,6 @@ import io.github.stivengjekaj.zettastream.source.SourceList
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
-import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Danger

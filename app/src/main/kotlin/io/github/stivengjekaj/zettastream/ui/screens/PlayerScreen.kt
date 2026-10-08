@@ -58,7 +58,6 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
-import androidx.media3.ui.SubtitleView
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.StreamInfo

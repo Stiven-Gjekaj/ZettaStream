@@ -190,9 +190,6 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     }
 }
 
-/** An item whose left side is nearer than this to the screen edge is at the left edge. */
-private const val LEFT_EDGE_DP = 64
-
 /**
  * One key for types that mean the same thing. Addons write "sport" and
  * "sports", or "tv" and "channel", so the filter shows each kind one time.
