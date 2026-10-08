@@ -79,4 +79,18 @@ class SkipTest {
         assertEquals(1376 to 5, Skip.kitsuEpisode("kitsu:1376:5"))
         assertNull(Skip.kitsuEpisode("tt0903747:1:2"))
     }
+
+    @Test
+    fun theCountdownStartsAtTheEndingOrTwentySecondsBeforeTheEnd() {
+        assertEquals(1_284_000L, Skip.countdownStart(ranges, 1_400_000))
+        assertEquals(580_000L, Skip.countdownStart(emptyList(), 600_000))
+        assertNull(Skip.countdownStart(ranges, 0))
+    }
+
+    @Test
+    fun autoSkipJumpsOverTheOpeningOneTimeOnly() {
+        assertEquals(SkipKind.Opening, Skip.autoSkip(ranges, 70_000, emptySet())?.kind)
+        assertNull(Skip.autoSkip(ranges, 70_000, setOf(60_000L)))
+        assertNull(Skip.autoSkip(ranges, 1_300_000, emptySet()))
+    }
 }

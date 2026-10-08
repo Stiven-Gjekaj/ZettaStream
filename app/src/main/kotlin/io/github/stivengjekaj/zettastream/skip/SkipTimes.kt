@@ -44,6 +44,28 @@ object Skip {
         return SkipAction.Jump(FALLBACK)
     }
 
+    /** The time before the end where the "Next episode" countdown starts when no ending is known. */
+    const val COUNTDOWN_LEAD = 20_000L
+
+    /**
+     * Where the "Next episode" countdown starts: at the ending when the times
+     * have one, otherwise 20 seconds before the end. Null when the duration
+     * is not known yet.
+     */
+    fun countdownStart(ranges: List<SkipRange>, duration: Long): Long? {
+        if (duration <= 0) return null
+        val ending = ranges.lastOrNull { it.kind == SkipKind.Ending && it.start < duration }
+        return ending?.start ?: (duration - COUNTDOWN_LEAD).coerceAtLeast(0)
+    }
+
+    /**
+     * The opening or the recap that auto-skip jumps over at this position.
+     * A range that was skipped one time is not skipped again, so that the
+     * viewer can go back and watch it.
+     */
+    fun autoSkip(ranges: List<SkipRange>, position: Long, done: Set<Long>): SkipRange? =
+        ranges.firstOrNull { it.kind != SkipKind.Ending && position in it && it.start !in done }
+
     /** The range that the player prompts for at this position, if any. */
     fun current(ranges: List<SkipRange>, position: Long): SkipRange? = ranges.firstOrNull { position in it }
 

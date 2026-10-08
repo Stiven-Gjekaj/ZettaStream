@@ -41,6 +41,7 @@ data class ViewerSettings(
     val subtitleFont: SubtitleFont = SubtitleFont.Default,
     val subtitleEdge: SubtitleEdge = SubtitleEdge.Outline,
     val autoplayNext: Boolean = true,
+    val autoSkipIntro: Boolean = false,
     val confirmChannel: Boolean = true,
     val showTorrents: Boolean = true,
     val directFirst: Boolean = false,
