@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <!-- ZettaStream adaptive icon: foreground layer. The mark spans 26.4..81.6 by 28.7..79.3 and stays inside the 66x66 safe zone (21..87). -->
+  <defs>
+    <linearGradient id="stream" x1="0" y1="0" x2="48" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9d7dff"/>
+      <stop offset="0.5" stop-color="#7c5cff"/>
+      <stop offset="1" stop-color="#4fd1ff"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(26.4 28.7) scale(1.15)">
+    <path d="M0 0H48V12L20 32H48V44H0V32L28 12H0Z" fill="#000000" opacity="0.35" transform="translate(0 2)"/>
+    <path d="M0 0H48V12L20 32H48V44H0V32L28 12H0Z" fill="url(#stream)"/>
+  </g>
+</svg>
