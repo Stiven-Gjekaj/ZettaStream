@@ -99,4 +99,17 @@ class AddonRepositoryTest {
         repository.addons.first { !it.loading }
         assertEquals(before + 1, server.requestCount)
     }
+
+    @Test
+    fun aListOfStreamsStaysForAShortTimeOnly() = runTest {
+        var now = 0L
+        val repository = AddonRepository(AddonClient(OkHttpClient()), MutableStateFlow(emptyList()), backgroundScope, null, clock = { now })
+        val groups = listOf(StreamGroup(Addon("https://a.test/manifest.json", Manifest(id = "a", name = "A")), listOf(Stream(url = "https://a.test/1.mp4"))))
+        repository.keepStreams("series", "tt1:1:1", true, groups)
+        assertEquals(groups, repository.cachedStreams("series", "tt1:1:1", true))
+        assertEquals(null, repository.cachedStreams("series", "tt1:1:1", false))
+        now = AddonRepository.STREAM_KEEP
+        assertEquals(null, repository.cachedStreams("series", "tt1:1:1", true))
+    }
 }
+

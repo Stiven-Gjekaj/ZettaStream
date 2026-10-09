@@ -47,6 +47,7 @@ class AddonRepository(
     sources: StateFlow<List<Source>>,
     scope: CoroutineScope,
     private val fallbackSubtitlesUrl: String? = OPENSUBTITLES,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private var fallback: Addon? = null
     private val state = MutableStateFlow(AddonState(loading = true))
@@ -127,6 +128,20 @@ class AddonRepository(
      * Asks each addon for streams. Each group comes when its addon answers.
      * Torrent streams come too when [withTorrents] is true.
      */
+    private val streamCache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, List<StreamGroup>>>()
+
+    /**
+     * The last full list of streams for a video, so that Back from the player shows
+     * the same list at once. A stream link can expire, so the list is kept for
+     * [STREAM_KEEP] only.
+     */
+    fun cachedStreams(type: String, videoId: String, withTorrents: Boolean): List<StreamGroup>? =
+        streamCache["$type|$videoId|$withTorrents"]?.takeIf { clock() - it.first < STREAM_KEEP }?.second
+
+    fun keepStreams(type: String, videoId: String, withTorrents: Boolean, groups: List<StreamGroup>) {
+        streamCache["$type|$videoId|$withTorrents"] = clock() to groups
+    }
+
     fun streams(type: String, videoId: String, withTorrents: Boolean = false): Flow<StreamGroup> = channelFlow {
         state.value.addons.filter { it.supports("stream", type, videoId) }.forEach { addon ->
             launch {
@@ -169,6 +184,9 @@ class AddonRepository(
     companion object {
         /** The official OpenSubtitles addon of Stremio. */
         const val OPENSUBTITLES = "https://opensubtitles-v3.strem.io/manifest.json"
+
+        /** How long a list of streams stays in memory: 15 minutes. */
+        const val STREAM_KEEP = 15 * 60_000L
     }
 }
 
