@@ -291,6 +291,13 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         c.scope.launch { c.library.saveProgress(playback.videoId, playback.meta, playback.label, p, d) }
     }
 
+    // A stream that played at once has no list under it. Then the list takes the place of the player.
+    fun chooseSource() {
+        saveProgress()
+        val below = app.stack.getOrNull(app.stack.lastIndex - 1)
+        if (playback !is VideoPlayback || (below is Screen.Streams && below.videoId == playback.videoId)) app.back {}
+        else app.replace(Screen.Streams(playback.meta, playback.videoId, playback.label, playback.episodes))
+    }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -503,7 +510,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         }
         if (playback is VideoPlayback) {
             rows += OptionRow("Speed", if (speed == 1f) "Normal" else "${speed}x", { setSpeed(-1) }, { setSpeed(1) })
-            rows += OptionRow("Source", "Choose another source", onSelect = { saveProgress(); app.back {} })
+            rows += OptionRow("Source", "Choose another source", onSelect = { chooseSource() })
         }
         return rows
     }
@@ -594,7 +601,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             RemoteAction.AudioTrack -> cycleTrack(C.TRACK_TYPE_AUDIO)
             RemoteAction.SkipIntro -> if (!isLive) skip()
             RemoteAction.Info -> show()
-            RemoteAction.Sources -> { saveProgress(); app.back {} }
+            RemoteAction.Sources -> chooseSource()
             else -> RemoteKeys.percentOf(action)?.let { pct ->
                 if (!isLive && player.duration > 0) { player.seekTo(player.duration * pct / 100); show("$pct%") }
             }

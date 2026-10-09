@@ -60,6 +60,7 @@ import io.github.stivengjekaj.zettastream.library.LibraryData
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
+import io.github.stivengjekaj.zettastream.ui.isAnime
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
@@ -115,8 +116,10 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
 
     fun play(video: Video?) {
         val base = m?.toPreview() ?: preview
-        if (video == null) app.open(Screen.Streams(base, base.id, base.name, emptyList()))
-        else app.open(Screen.Streams(base, video.id, episodeLabel(video), allEpisodes))
+        // An anime plays the best stream at once. The list of streams stays one key away.
+        val auto = isAnime(base)
+        if (video == null) app.open(Screen.Streams(base, base.id, base.name, emptyList(), autoPlay = auto))
+        else app.open(Screen.Streams(base, video.id, episodeLabel(video), allEpisodes, autoPlay = auto))
     }
 
     DisposableEffect(m, focusedVideo, target) {

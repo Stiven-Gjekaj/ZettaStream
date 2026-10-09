@@ -73,7 +73,14 @@ sealed interface Screen {
     data object Library : Screen
     data object Settings : Screen
     data class Detail(val preview: MetaPreview) : Screen
-    data class Streams(val meta: MetaPreview, val videoId: String, val label: String, val episodes: List<Video>) : Screen
+    /** With [autoPlay], the screen plays the best stream when the addons answer. */
+    data class Streams(
+        val meta: MetaPreview,
+        val videoId: String,
+        val label: String,
+        val episodes: List<Video>,
+        val autoPlay: Boolean = false,
+    ) : Screen
     data class Player(val playback: Playback) : Screen
     data object Sources : Screen
     data object KeyTest : Screen
@@ -201,6 +208,10 @@ fun typeKey(type: String): String = when (val t = type.trim().lowercase()) {
     "show", "shows", "tvshow" -> "series"
     else -> t
 }
+
+/** An anime has the type "anime", or an ID from an anime database. */
+fun isAnime(meta: MetaPreview): Boolean =
+    typeKey(meta.type) == "anime" || meta.id.split(':', '-', '_').first().lowercase() in setOf("kitsu", "mal", "anilist", "anidb")
 
 fun typeLabel(type: String?): String = when (type?.let(::typeKey)) {
     null -> "All"
