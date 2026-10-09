@@ -83,6 +83,8 @@ import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
+import io.github.stivengjekaj.zettastream.net.MediaKind
+import io.github.stivengjekaj.zettastream.net.MediaKinds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -235,12 +237,14 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         if (text != null) message = text
     }
 
-    fun load(url: String, headers: Map<String, String>, subtitles: List<Subtitle>, startAt: Long) {
+    suspend fun load(url: String, headers: Map<String, String>, subtitles: List<Subtitle>, startAt: Long) {
         error = null
+        // Many HLS links do not end in .m3u8. Read as a file, such a link does not play.
+        val kind = MediaKinds.detect(c.videoHttp, url, headers)
         val dataSource = OkHttpDataSource.Factory(c.videoHttp).setDefaultRequestProperties(headers)
         val item = MediaItem.Builder()
             .setUri(url)
-            .apply { if (url.substringBefore('?').lowercase().endsWith(".m3u8")) setMimeType(MimeTypes.APPLICATION_M3U8) }
+            .apply { if (kind == MediaKind.Hls) setMimeType(MimeTypes.APPLICATION_M3U8) }
             .setSubtitleConfigurations(subtitleLabels(subtitles).map { (sub, label) ->
                 MediaItem.SubtitleConfiguration.Builder(sub.url.toUri())
                     .setMimeType(subtitleMime(sub))
