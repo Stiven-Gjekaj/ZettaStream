@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,12 +116,15 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
         onDispose { app.screenActions = emptyMap() }
     }
     val playable = groups.filter { it.streams.isNotEmpty() }
-    val sections = StreamOrder.sections(groups, viewer.directFirst)
+    // An addon can give more than 1000 torrents. The list is made one time for each answer, not for each key press.
+    val sections = remember(groups.size, viewer.directFirst) { StreamOrder.sections(groups.toList(), viewer.directFirst) }
     fun rowKey(section: String, listed: ListedStream) =
         section + "|" + listed.addon.manifestUrl + "|" + (listed.stream.url ?: listed.stream.infoHash + ":" + listed.stream.fileIdx)
-    val keys = sections.flatMap { sec -> sec.streams.map { rowKey(sec.title, it) } }
+    val keys = remember(sections) { sections.flatMap { sec -> sec.streams.map { rowKey(sec.title, it) } }.toSet() }
+    // The row of the last visit, read without a subscription, so that a focus move does not make the list again.
+    val returnRow = remember { Snapshot.withoutReadObservation { lastRow } }
     // The focus goes to the row of the last visit, or else to the first stream.
-    val focusKey = lastRow?.takeIf { it in keys } ?: sections.firstOrNull()?.let { sec -> sec.streams.firstOrNull()?.let { rowKey(sec.title, it) } }
+    val focusKey = returnRow?.takeIf { it in keys } ?: sections.firstOrNull()?.let { sec -> sec.streams.firstOrNull()?.let { rowKey(sec.title, it) } }
     // The list adds a row one frame after it shows, so wait for one frame.
     val listState = rememberLazyListState()
     // The place of a row in the list: the header item, then a heading and the rows of each section.
