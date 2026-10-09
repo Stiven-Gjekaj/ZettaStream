@@ -6,9 +6,14 @@ link to a web page that is not a video, to test the player error.
 The emulator reaches it at http://10.0.2.2:7799/manifest.json.
 
 Run: python3 tools/dev/test_addon.py
+Add a number of seconds, such as 8, to make each stream answer wait that long.
 """
 import http.server
 import json
+import sys
+import time
+
+DELAY = float(sys.argv[1]) if len(sys.argv) > 1 else 0
 
 MANIFEST = {
     "id": "test.zetta", "name": "Test streams", "version": "1.0.0",
@@ -37,6 +42,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.path.endswith("/manifest.json"):
             body = MANIFEST
         elif self.path.startswith("/stream/"):
+            time.sleep(DELAY)
             body = STREAMS
         else:
             body = None
