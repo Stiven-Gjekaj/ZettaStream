@@ -63,8 +63,8 @@ tab bar and touch controls.
 - Torrent streams, played while they download, with no seeding after
 - Seasons and episodes, with the next episode to watch
 - A countdown to the next episode, from the same source and quality
-- An anime episode plays the best 1080p stream at once. Press a key to
-  choose from the list
+- Play starts the best 1080p stream at once, and shows which source plays.
+  When a stream fails, the next best one starts. Yellow shows the list
 - All the text of each stream shows next to it
 - Continue watching, a watchlist, and watched marks, on the device only
 - Subtitles from the stream and from subtitle addons
