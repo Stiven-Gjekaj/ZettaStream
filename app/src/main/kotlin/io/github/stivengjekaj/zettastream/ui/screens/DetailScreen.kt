@@ -60,7 +60,6 @@ import io.github.stivengjekaj.zettastream.library.LibraryData
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
-import io.github.stivengjekaj.zettastream.ui.isAnime
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
@@ -114,12 +113,13 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
     val episodes = m?.videos?.filter { it.season == selectedSeason }?.sortedBy { it.episode ?: 0 }.orEmpty()
     val allEpisodes = m?.videos?.sortedWith(compareBy({ seasonKey(it.season) }, { it.episode ?: 0 })).orEmpty()
 
-    fun play(video: Video?) {
+    // Play starts the best stream at once. Yellow shows the list of streams.
+    fun play(video: Video?, choose: Boolean = false) {
         val base = m?.toPreview() ?: preview
-        // An anime plays the best stream at once. The list of streams stays one key away.
-        val auto = isAnime(base)
-        if (video == null) app.open(Screen.Streams(base, base.id, base.name, emptyList(), autoPlay = auto))
-        else app.open(Screen.Streams(base, video.id, episodeLabel(video), allEpisodes, autoPlay = auto))
+        val id = video?.id ?: base.id
+        val label = video?.let(::episodeLabel) ?: base.name
+        val episodes = if (video == null) emptyList() else allEpisodes
+        app.open(if (choose) Screen.Streams(base, id, label, episodes) else Screen.AutoPlay(base, id, label, episodes))
     }
 
     DisposableEffect(m, focusedVideo, target) {
@@ -129,7 +129,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                 val id = focusedVideo?.id ?: if (isSeries) null else preview.id
                 if (id != null) scope.launch { c.library.toggleWatched(id) }
             },
-            RemoteAction.Sources to { play(focusedVideo ?: target) },
+            RemoteAction.Sources to { play(focusedVideo ?: target, choose = true) },
             RemoteAction.Info to {},
         )
         onDispose { app.screenActions = emptyMap() }

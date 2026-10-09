@@ -58,7 +58,7 @@ import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.VideoPlayback
-import io.github.stivengjekaj.zettastream.ui.torrentSource
+import io.github.stivengjekaj.zettastream.ui.videoPlayback
 import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
@@ -69,9 +69,6 @@ import io.github.stivengjekaj.zettastream.ui.theme.Danger
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
-
-/** The longest time that an anime waits for slow addons before it plays the best stream. */
-private const val AUTO_WAIT = 10_000L
 
 /** Writes a count with the correct form of the word: 1 stream, 2 streams. */
 fun count(n: Int, word: String): String = "$n $word" + if (n == 1) "" else "s"
@@ -100,8 +97,6 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
     var focused by remember(screen.videoId) { mutableStateOf(false) }
     // The row that had the focus. Back from the player gives it the focus again.
     var lastRow by rememberSaveable(screen.videoId) { mutableStateOf<String?>(null) }
-    // Saved, so that Back from the player shows the list and does not play again.
-    var auto by rememberSaveable(screen.videoId) { mutableStateOf(screen.autoPlay) }
 
     LaunchedEffect(screen.videoId, reloads) {
         val withTorrents = c.settings.settings.value.showTorrents
@@ -149,48 +144,13 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
         }
     }
 
-    fun play(stream: Stream, addonUrl: String, info: StreamInfo) {
-        // A stream that plays at once takes the place of this list, so Back goes to the episodes.
-        val go: (Screen) -> Unit = if (auto) app::replace else app::open
-        auto = false
-        go(
-            Screen.Player(
-                VideoPlayback(
-                    meta = screen.meta,
-                    videoId = screen.videoId,
-                    label = screen.label,
-                    url = stream.url.orEmpty(),
-                    headers = stream.requestHeaders,
-                    subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
-                    episodes = screen.episodes,
-                    addonUrl = addonUrl,
-                    bingeGroup = stream.behaviorHints?.bingeGroup,
-                    streamName = stream.name,
-                    streamInfo = info,
-                    torrent = stream.torrentSource(),
-                ),
-            ),
-        )
-    }
-
-    // Wait for all addons, or for AUTO_WAIT, then play the best stream.
-    LaunchedEffect(screen.videoId, auto) {
-        if (!auto) return@LaunchedEffect
-        fun best() = StreamOrder.best(groups.toList(), preferDirect = c.settings.settings.value.directFirst)
-        withTimeoutOrNull(AUTO_WAIT) { snapshotFlow { done }.first { it } }
-        // With no stream yet, wait for the slow addons too.
-        if (best() == null) snapshotFlow { done }.first { it }
-        val best = best()
-        if (best == null) auto = false else play(best.stream, best.addon.manifestUrl, best.info)
+    fun play(listed: ListedStream) {
+        app.open(Screen.Player(videoPlayback(screen.meta, screen.videoId, screen.label, screen.episodes, listed, subtitles)))
     }
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxSize().onPreviewKeyEvent { event ->
-            // A key press means that the viewer chooses the stream.
-            if (auto && event.type == KeyEventType.KeyDown) auto = false
-            false
-        },
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(Sizes.gutter(tv)),
     ) {
         item {
@@ -201,15 +161,6 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 else "Asking ${count(asked, "addon")} for streams",
                 color = TextSecondary, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp),
             )
-            if (auto) {
-                val target = StreamOrder.best(groups.toList(), viewer.directFirst)
-                Text(
-                    "Playing the best ${StreamOrder.TARGET_RESOLUTION}p stream when the addons answer" +
-                        (target?.let { ": " + (it.stream.name?.replace('\n', ' ') ?: it.addon.name) } ?: "") +
-                        ". " + if (tv) "Press a key to choose yourself." else "Tap a stream to choose yourself.",
-                    color = TextPrimary, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp),
-                )
-            }
             if (!done) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
             Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ZButton(onClick = { reloads++ }, tv = tv) { Text("Reload streams") }
@@ -260,7 +211,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                     .focusRing(shape, scaleTo = 1.02f)
                     .clip(shape)
                     .background(SurfaceHigh)
-                    .clickable { play(stream, listed.addon.manifestUrl, listed.info) }
+                    .clickable { play(listed) }
                     .padding(14.dp)
                 val summary: @Composable () -> Unit = {
                     Row(verticalAlignment = Alignment.CenterVertically) {

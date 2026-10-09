@@ -8,9 +8,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import io.github.stivengjekaj.zettastream.AppContainer
+import io.github.stivengjekaj.zettastream.addon.ListedStream
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.addon.Stream
 import io.github.stivengjekaj.zettastream.addon.StreamInfo
+import io.github.stivengjekaj.zettastream.addon.StreamOrder
 import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.Video
 import io.github.stivengjekaj.zettastream.iptv.Channel
@@ -37,7 +39,37 @@ data class VideoPlayback(
     val streamInfo: StreamInfo? = null,
     /** A torrent stream: the engine gives the local URL when the player starts. */
     val torrent: TorrentSource? = null,
+    /** A short name of the stream, which the player shows at the start. */
+    val sourceLabel: String? = null,
+    /** The next best streams, in order. The player tries them when this stream fails at the start. */
+    val fallbacks: List<ListedStream> = emptyList(),
 ) : Playback
+
+/** Makes the playback of one stream from the list. */
+fun videoPlayback(
+    meta: MetaPreview,
+    videoId: String,
+    label: String,
+    episodes: List<Video>,
+    listed: ListedStream,
+    subtitles: List<Subtitle>,
+    fallbacks: List<ListedStream> = emptyList(),
+): VideoPlayback = VideoPlayback(
+    meta = meta,
+    videoId = videoId,
+    label = label,
+    url = listed.stream.url.orEmpty(),
+    headers = listed.stream.requestHeaders,
+    subtitles = (listed.stream.subtitles + subtitles).distinctBy { it.url },
+    episodes = episodes,
+    addonUrl = listed.addon.manifestUrl,
+    bingeGroup = listed.stream.behaviorHints?.bingeGroup,
+    streamName = listed.stream.name,
+    streamInfo = listed.info,
+    torrent = listed.stream.torrentSource(),
+    sourceLabel = StreamOrder.shortLabel(listed),
+    fallbacks = fallbacks,
+)
 
 data class TorrentSource(
     val infoHash: String,
@@ -73,14 +105,9 @@ sealed interface Screen {
     data object Library : Screen
     data object Settings : Screen
     data class Detail(val preview: MetaPreview) : Screen
-    /** With [autoPlay], the screen plays the best stream when the addons answer. */
-    data class Streams(
-        val meta: MetaPreview,
-        val videoId: String,
-        val label: String,
-        val episodes: List<Video>,
-        val autoPlay: Boolean = false,
-    ) : Screen
+    data class Streams(val meta: MetaPreview, val videoId: String, val label: String, val episodes: List<Video>) : Screen
+    /** Finds the best stream of a video, then plays it. Play on a title opens this screen. */
+    data class AutoPlay(val meta: MetaPreview, val videoId: String, val label: String, val episodes: List<Video>) : Screen
     data class Player(val playback: Playback) : Screen
     data object Sources : Screen
     data object KeyTest : Screen
@@ -208,10 +235,6 @@ fun typeKey(type: String): String = when (val t = type.trim().lowercase()) {
     "show", "shows", "tvshow" -> "series"
     else -> t
 }
-
-/** An anime has the type "anime", or an ID from an anime database. */
-fun isAnime(meta: MetaPreview): Boolean =
-    typeKey(meta.type) == "anime" || meta.id.split(':', '-', '_').first().lowercase() in setOf("kitsu", "mal", "anilist", "anidb")
 
 fun typeLabel(type: String?): String = when (type?.let(::typeKey)) {
     null -> "All"

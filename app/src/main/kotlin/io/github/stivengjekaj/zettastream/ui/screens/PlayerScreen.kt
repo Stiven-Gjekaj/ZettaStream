@@ -83,6 +83,9 @@ import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
+import io.github.stivengjekaj.zettastream.addon.ListedStream
+import io.github.stivengjekaj.zettastream.addon.StreamOrder
+import io.github.stivengjekaj.zettastream.ui.videoPlayback
 import io.github.stivengjekaj.zettastream.net.MediaKind
 import io.github.stivengjekaj.zettastream.net.MediaKinds
 import kotlinx.coroutines.delay
@@ -96,6 +99,7 @@ private const val SEEK_FAST = 30_000L
 private const val CONFIRM_WINDOW = 3_000L
 private const val COUNTDOWN = 10_000L
 private const val LOAD_RETRIES = 6
+private const val LABEL_TIME = 8_000L
 
 /**
  * Gives each part of the video more tries than the default. When one part of
@@ -210,6 +214,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     val autoSkipped = remember { mutableSetOf<Long>() }
     var countdownEnds by remember { mutableStateOf<Long?>(null) }
     var retries by remember { mutableIntStateOf(0) }
+    // True after the first frame plays. Before it, a failed stream gives its place to the next best one.
+    var everReady by remember { mutableStateOf(false) }
+    val labelUntil = remember { System.currentTimeMillis() + LABEL_TIME }
     var countdownCancelled by remember { mutableStateOf(false) }
     var countdownLeft by remember { mutableIntStateOf(0) }
     var optionsRow by remember { mutableIntStateOf(0) }
@@ -230,6 +237,16 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             val (now, next) = live.guide.nowAndNext(ch.tvgId, System.currentTimeMillis())
             subtitle = listOfNotNull(now?.let { "Now: ${it.title}" }, next?.let { "Next: ${it.title}" }).joinToString("   ")
         }
+    }
+
+    /** Plays the next best stream in the place of this one. False when no stream is left. */
+    fun tryNext(): Boolean {
+        val p = playback as? VideoPlayback ?: return false
+        val next = p.fallbacks.firstOrNull() ?: return false
+        val following = videoPlayback(p.meta, p.videoId, p.label, p.episodes, next, p.subtitles, p.fallbacks.drop(1))
+        app.toast = "That stream did not start. Trying ${following.sourceLabel}"
+        app.replace(Screen.Player(following))
+        return true
     }
 
     fun show(text: String? = null) {
@@ -280,7 +297,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                         if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "torrent url=$it")
                         load(it, emptyMap(), playback.subtitles, startAt)
                     }
-                        .onFailure { error = "This torrent does not start (${it.message}). Press Yellow or Back to choose another source." }
+                        .onFailure { if (!tryNext()) error = "This torrent does not start (${it.message}). Press Yellow or Back to choose another source." }
                 }
             }
             is LivePlayback -> playback.channels[channelIndex].let { load(it.url, it.headers, emptyList(), 0) }
@@ -388,7 +405,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 saveProgress()
                 val label = episodeLabel(target)
                 show("Loading $label")
-                val streamsScreen = Screen.Streams(playback.meta, target.id, label, playback.episodes)
+                val streamsScreen = Screen.AutoPlay(playback.meta, target.id, label, playback.episodes)
                 val addonUrl = playback.addonUrl
                 if (addonUrl == null) { app.replace(streamsScreen); return }
                 // Play the next episode from the same source, with no stop at the list of streams.
@@ -410,6 +427,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                                 bingeGroup = stream.behaviorHints?.bingeGroup ?: playback.bingeGroup,
                                 streamName = stream.name ?: playback.streamName,
                                 streamInfo = StreamInfo.of(stream),
+                                sourceLabel = c.addons.addons.value.addons.firstOrNull { it.manifestUrl == addonUrl }
+                                    ?.let { StreamOrder.shortLabel(ListedStream(it, stream, StreamInfo.of(stream))) },
+                                fallbacks = emptyList(),
                             ),
                         ),
                     )
@@ -618,6 +638,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         val listener = object : Player.Listener {
             override fun onPlayerError(e: PlaybackException) {
                 if (BuildConfig.DEBUG) android.util.Log.w("ZPlayer", "error ${e.errorCodeName} at ${player.currentPosition}", e)
+                if (!everReady && tryNext()) return
                 if (playback is VideoPlayback && PlayerErrors.shouldRetry(e.errorCode, retries)) {
                     retries++
                     show("Reconnecting")
@@ -632,7 +653,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             override fun onPlaybackStateChanged(state: Int) {
                 if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "state=$state pos=${player.currentPosition} buf=${player.bufferedPosition} dur=${player.duration}")
                 buffering = state == Player.STATE_BUFFERING
-                if (state == Player.STATE_READY) retries = 0
+                if (state == Player.STATE_READY) { retries = 0; everReady = true }
                 if (state == Player.STATE_ENDED && playback is VideoPlayback) {
                     saveProgress()
                     if (c.settings.settings.value.autoplayNext && !countdownCancelled) {
@@ -679,6 +700,15 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             },
             modifier = Modifier.fillMaxSize(),
         )
+        // The stream that plays: at the start, and each time the overlay shows.
+        val sourceLabel = (playback as? VideoPlayback)?.sourceLabel
+        if (sourceLabel != null && (now < labelUntil || overlay)) {
+            Text(
+                sourceLabel, color = TextPrimary, fontSize = if (app.isTv) 16.sp else 13.sp,
+                modifier = Modifier.align(Alignment.TopStart).padding(24.dp).clip(Corner)
+                    .background(Color.Black.copy(alpha = 0.6f)).padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+        }
         if (buffering && error == null) {
             Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(color = Accent)
