@@ -12,6 +12,18 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.6.0 (2026-10-09)
+
+- Play on a movie or an episode starts the best stream at once: 1080p first,
+  direct links or torrents as "Direct links first" sets. The top left shows
+  which source plays: its name, resolution, and size.
+- When a stream fails at the start, the next best stream starts by itself.
+- HLS links that do not end in .m3u8, such as many CNCVerse links, play. They
+  gave "None of the available extractors" before.
+- The list of streams no longer lags with addons that give many torrents.
+- Yellow shows the list of streams, on the episodes and while a stream
+  starts.
+
 ## 0.5.0 (2026-10-09)
 
 - An anime episode plays the best stream at once: 1080p first, then the
