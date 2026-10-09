@@ -394,3 +394,33 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   of the addons, so that it does not hold a second copy of each image.
 - A link that gives a web page shows a clear message in the player, and not
   only an error code.
+
+## 2026-10-09: Play the best anime stream at once
+
+- When the viewer opens an anime episode, the app plays the best stream when
+  the addons answer, or after 10 seconds. A key press shows the list instead.
+- The best stream is 1080p. With no 1080p stream, the nearest lower
+  resolution comes next, then a higher one. At the same resolution, the
+  setting "Direct links first" chooses the kind: on prefers direct links, off
+  prefers torrents. A torrent with fewer than 3 seeders comes last.
+- An anime has the type "anime" or an ID from Kitsu, MyAnimeList, AniList, or
+  AniDB.
+- After a stream that played at once, Back goes to the episodes. After a
+  stream that the viewer chose, Back goes to the same row of the list.
+- The list of streams of a video stays in memory for 15 minutes, so that Back
+  does not ask the addons again.
+
+## 2026-10-09: All the text of a stream
+
+- Each row shows the title, the description, and the file name from the
+  addon. On a TV, this text fills the right side of the row. The focused row
+  shows all of it.
+
+## 2026-10-09: Streams that drop
+
+- A network error reconnects at the same position, up to 3 times in a row.
+- Each part of a stream gets 6 tries. When a part of an HLS stream fails two
+  times, the player takes it from a lower quality for one minute.
+- The player reads video with no HTTP cache, so that video data does not push
+  the answers of the addons out of the cache.
+- When a stream still fails, the message shows the reason from the server.
