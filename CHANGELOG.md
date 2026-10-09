@@ -12,6 +12,22 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.5.0 (2026-10-09)
+
+- An anime episode plays the best stream at once: 1080p first, then the
+  nearest quality. "Direct links first" in Settings chooses direct links or
+  torrents. Press a key while the addons answer to choose from the list.
+- Back after a stream that played at once goes to the episodes. Back after a
+  stream that you chose goes to the same row of the list, and the list does
+  not load again.
+- Each stream shows all its text from the addon. On a TV, the text fills the
+  right side of the row.
+- A stream that drops reconnects at the same position. A part that fails
+  comes from a lower quality. If the stream still fails, the message shows
+  the reason.
+- A long title no longer covers its second line.
+- A screen that you open again starts fresh.
+
 ## 0.4.0 (2026-10-09)
 
 ### Streams
