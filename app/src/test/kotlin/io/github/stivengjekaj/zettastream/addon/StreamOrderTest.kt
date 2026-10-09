@@ -70,5 +70,27 @@ class StreamOrderTest {
     fun noStreamGivesNothing() {
         assertEquals(null, StreamOrder.best(emptyList(), preferDirect = true))
     }
+
+    @Test
+    fun rankedPutsEveryStreamInTheOrderOfBest() {
+        val groups = listOf(StreamGroup(addon("A"), listOf(named("720p", false), named("1080p", false), named("2160p", false))))
+        assertEquals(listOf("1080p", "720p", "2160p"), StreamOrder.ranked(groups, preferDirect = true).map { it.stream.name })
+    }
+
+    @Test
+    fun anIdealStreamIs1080pOfThePreferredKind() {
+        val direct = ListedStream(addon("A"), named("1080p web", false), StreamInfo.of(named("1080p web", false)))
+        assertEquals(true, StreamOrder.isIdeal(direct, preferDirect = true))
+        assertEquals(false, StreamOrder.isIdeal(direct, preferDirect = false))
+    }
+
+    @Test
+    fun theShortLabelKeepsTheNameTheResolutionAndTheSize() {
+        val stream = Stream(url = "https://cdn.test/1.m3u8", name = "🎬MultiMoviesProvider 🧊 1080p • CNCVerse Bridge", title = "1.4 GB")
+        val listed = ListedStream(addon("CNCVerse"), stream, StreamInfo.of(stream))
+        assertEquals("MultiMoviesProvider · 1080p · 1.4 GB", StreamOrder.shortLabel(listed))
+        val torrent = Stream(infoHash = "c".repeat(40), name = "Torrentio\n1080p")
+        assertEquals("Torrentio · Torrent · 1080p", StreamOrder.shortLabel(ListedStream(addon("T"), torrent, StreamInfo.of(torrent))))
+    }
 }
 

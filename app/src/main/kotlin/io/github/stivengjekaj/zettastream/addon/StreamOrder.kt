@@ -45,15 +45,43 @@ object StreamOrder {
      * the other streams of its resolution. Then torrents sort by seeders, and
      * direct links keep the order of the source list.
      */
-    fun best(groups: List<StreamGroup>, preferDirect: Boolean): ListedStream? {
+    fun best(groups: List<StreamGroup>, preferDirect: Boolean): ListedStream? = ranked(groups, preferDirect).firstOrNull()
+
+    /** All streams, best first, in the order that [best] uses. The player tries the next one when a stream fails. */
+    fun ranked(groups: List<StreamGroup>, preferDirect: Boolean): List<ListedStream> {
         val all = groups.flatMap { g -> g.streams.map { ListedStream(g.addon, it, StreamInfo.of(it)) } }
-        return all.withIndex().minWithOrNull(
+        return all.withIndex().sortedWith(
             compareBy<IndexedValue<ListedStream>> { resolutionRank(it.value.info.resolution) }
                 .thenBy { val s = it.value; s.stream.isTorrent && (s.info.seeders ?: 0) < FEW_SEEDERS }
                 .thenBy { it.value.stream.isTorrent == preferDirect }
                 .thenByDescending { if (it.value.stream.isTorrent) it.value.info.seeders ?: 0 else 0 }
                 .thenBy { it.index },
-        )?.value
+        ).map { it.value }
+    }
+
+    /** True for a stream that [best] cannot beat: 1080p, of the preferred kind, and not a torrent with almost no seeders. */
+    fun isIdeal(listed: ListedStream, preferDirect: Boolean): Boolean =
+        listed.info.resolution == TARGET_RESOLUTION && listed.stream.isTorrent != preferDirect &&
+            !(listed.stream.isTorrent && (listed.info.seeders ?: 0) < FEW_SEEDERS)
+
+    /**
+     * A short name for the stream that plays, such as "MultiMoviesProvider · 1080p · 1.4 GB".
+     * The first line of the stream name loses its emoji and its repeated resolution.
+     */
+    fun shortLabel(listed: ListedStream): String {
+        val first = listed.stream.name?.lineSequence()?.firstOrNull().orEmpty()
+        val name = first.split('•', '|').first()
+            .replace(Regex("[^\\p{L}\\p{N} .,:+&'()\\[\\]-]"), " ")
+            .replace(Regex("\\b(2160|1080|720|480)p\\b", RegexOption.IGNORE_CASE), " ")
+            .replace(Regex("\\s+"), " ").trim().take(32)
+            .ifEmpty { listed.addon.name }
+        val parts = listOfNotNull(
+            name,
+            if (listed.stream.isTorrent) "Torrent" else null,
+            listed.info.resolution?.let { if (it >= 2160) "4K" else "${it}p" },
+            listed.info.sizeBytes?.let { StreamInfo.formatSize(it) },
+        )
+        return parts.joinToString(" · ")
     }
 
     /** 0 for 1080p. Lower resolutions rank before higher ones. An unknown resolution ranks last. */
