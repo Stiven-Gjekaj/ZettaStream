@@ -7,6 +7,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
@@ -42,8 +43,12 @@ val Mono = FontFamily(
     mono(FontWeight.Bold),
 )
 
+private val LINE_HEIGHT = 1.3.em
+
 private fun Typography.withFont(family: FontFamily): Typography {
-    fun TextStyle.f() = copy(fontFamily = family)
+    // A line height in sp stays the same when a screen sets a larger font, so a long title
+    // that wraps covers its own second line. A height in em follows the font size.
+    fun TextStyle.f() = copy(fontFamily = family, lineHeight = LINE_HEIGHT)
     return copy(
         displayLarge = displayLarge.f(), displayMedium = displayMedium.f(), displaySmall = displaySmall.f(),
         headlineLarge = headlineLarge.f(), headlineMedium = headlineMedium.f(), headlineSmall = headlineSmall.f(),
