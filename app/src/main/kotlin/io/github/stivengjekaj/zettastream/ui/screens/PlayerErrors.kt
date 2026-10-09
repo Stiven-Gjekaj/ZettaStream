@@ -4,6 +4,16 @@ import androidx.media3.common.PlaybackException
 
 /** Tells the viewer in plain words why a stream does not play. */
 object PlayerErrors {
+    /** The number of reconnects in a row, with no playback between them. */
+    const val MAX_RETRIES = 3
+
+    /**
+     * A network error reconnects at the same position, because a slow server
+     * often drops one request. Other errors do not change when the player tries
+     * again.
+     */
+    fun shouldRetry(code: Int, retries: Int): Boolean = code in 2000..2999 && retries < MAX_RETRIES
+
     fun describe(code: Int, codeName: String): String = when (code) {
         PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
         PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,

@@ -57,6 +57,8 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
+import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import androidx.media3.ui.PlayerView
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.Subtitle
@@ -91,6 +93,25 @@ private const val SEEK_STEP = 10_000L
 private const val SEEK_FAST = 30_000L
 private const val CONFIRM_WINDOW = 3_000L
 private const val COUNTDOWN = 10_000L
+private const val LOAD_RETRIES = 6
+
+/**
+ * Gives each part of the video more tries than the default. When one part of
+ * an HLS stream fails two times, the player takes that part from a lower
+ * quality for one minute, and does not stop.
+ */
+@UnstableApi
+private object LowerQualityOnError : DefaultLoadErrorHandlingPolicy(LOAD_RETRIES) {
+    override fun getFallbackSelectionFor(
+        options: LoadErrorHandlingPolicy.FallbackOptions,
+        info: LoadErrorHandlingPolicy.LoadErrorInfo,
+    ): LoadErrorHandlingPolicy.FallbackSelection? {
+        super.getFallbackSelectionFor(options, info)?.let { return it }
+        return if (info.errorCount >= 2 && options.isFallbackAvailable(LoadErrorHandlingPolicy.FALLBACK_TYPE_TRACK)) {
+            LoadErrorHandlingPolicy.FallbackSelection(LoadErrorHandlingPolicy.FALLBACK_TYPE_TRACK, 60_000)
+        } else null
+    }
+}
 /** A key held this long is a long press, also on a remote that does not mark long presses. */
 private const val LONG_PRESS_MS = 500L
 
@@ -186,6 +207,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var skips by remember { mutableStateOf(emptyList<SkipRange>()) }
     val autoSkipped = remember { mutableSetOf<Long>() }
     var countdownEnds by remember { mutableStateOf<Long?>(null) }
+    var retries by remember { mutableIntStateOf(0) }
     var countdownCancelled by remember { mutableStateOf(false) }
     var countdownLeft by remember { mutableIntStateOf(0) }
     var optionsRow by remember { mutableIntStateOf(0) }
@@ -215,7 +237,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
 
     fun load(url: String, headers: Map<String, String>, subtitles: List<Subtitle>, startAt: Long) {
         error = null
-        val dataSource = OkHttpDataSource.Factory(c.http).setDefaultRequestProperties(headers)
+        val dataSource = OkHttpDataSource.Factory(c.videoHttp).setDefaultRequestProperties(headers)
         val item = MediaItem.Builder()
             .setUri(url)
             .apply { if (url.substringBefore('?').lowercase().endsWith(".m3u8")) setMimeType(MimeTypes.APPLICATION_M3U8) }
@@ -227,7 +249,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     .build()
             })
             .build()
-        player.setMediaSource(DefaultMediaSourceFactory(dataSource).createMediaSource(item))
+        // A slow server drops some requests. Each part of the video gets more tries than the default 3.
+        val sources = DefaultMediaSourceFactory(dataSource).setLoadErrorHandlingPolicy(LowerQualityOnError)
+        player.setMediaSource(sources.createMediaSource(item))
         if (startAt > 0) player.seekTo(startAt)
         player.prepare()
     }
@@ -266,6 +290,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         val p = player.currentPosition
         c.scope.launch { c.library.saveProgress(playback.videoId, playback.meta, playback.label, p, d) }
     }
+
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -581,12 +606,22 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onPlayerError(e: PlaybackException) {
-                error = PlayerErrors.describe(e.errorCode, e.errorCodeName) + " " +
+                if (BuildConfig.DEBUG) android.util.Log.w("ZPlayer", "error ${e.errorCodeName} at ${player.currentPosition}", e)
+                if (playback is VideoPlayback && PlayerErrors.shouldRetry(e.errorCode, retries)) {
+                    retries++
+                    show("Reconnecting")
+                    player.prepare()
+                    return
+                }
+                // The reason from the server or the network, such as "HTTP 403", helps to find the fault.
+                val reason = generateSequence<Throwable>(e) { it.cause }.mapNotNull { it.message }.lastOrNull()?.take(80)
+                error = PlayerErrors.describe(e.errorCode, e.errorCodeName) + (reason?.let { " ($it)" } ?: "") + " " +
                     if (playback is LivePlayback) "Press Channel up or down for another channel." else "Press Yellow or Back to choose another source."
             }
             override fun onPlaybackStateChanged(state: Int) {
                 if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "state=$state pos=${player.currentPosition} buf=${player.bufferedPosition} dur=${player.duration}")
                 buffering = state == Player.STATE_BUFFERING
+                if (state == Player.STATE_READY) retries = 0
                 if (state == Player.STATE_ENDED && playback is VideoPlayback) {
                     saveProgress()
                     if (c.settings.settings.value.autoplayNext && !countdownCancelled) {

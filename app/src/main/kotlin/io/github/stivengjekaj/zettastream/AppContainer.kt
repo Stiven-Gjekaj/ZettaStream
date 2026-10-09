@@ -26,6 +26,8 @@ class AppContainer(app: Application) {
     val http = Http.client(app.cacheDir)
     // Coil keeps the images in its own disk cache. The HTTP cache does not keep a second copy.
     val imageHttp = http.newBuilder().cache(null).build()
+    // Video data is large and is read once. It must not push the answers of the addons out of the cache.
+    val videoHttp = http.newBuilder().cache(null).build()
     val sources = SourceStore(File(app.filesDir, "sources.txt"))
     val addons = AddonRepository(AddonClient(http), sources.sources, scope)
     val live = LiveRepository(http, sources.sources, scope)
