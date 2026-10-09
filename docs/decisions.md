@@ -424,3 +424,23 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - The player reads video with no HTTP cache, so that video data does not push
   the answers of the addons out of the cache.
 - When a stream still fails, the message shows the reason from the server.
+
+## 2026-10-09: Play starts a stream at once
+
+- This choice replaces "Play the best anime stream at once" for the way that
+  a stream starts.
+- Play on any movie or episode opens the player at once. The app asks each
+  addon and plays the best stream: an ideal stream after 2.5 seconds, any
+  stream after 8 seconds, or the best one when all addons answered.
+- The player shows a short name of the stream at the top left for 8
+  seconds, and each time the overlay shows: the name, the resolution, and the
+  size.
+- When the stream fails before its first frame, the player tries the next
+  best stream, up to 5 of them.
+- Yellow on the episodes, or while the app finds a stream, shows the list of
+  streams.
+- The player reads the first bytes of a link that does not show its kind. An
+  HLS link that does not end in .m3u8 then plays as HLS.
+- The list of streams is made one time for each answer of an addon. Before,
+  each key press made it again, which took about 60 ms for 3000 streams on a
+  computer, and more on a TV.
