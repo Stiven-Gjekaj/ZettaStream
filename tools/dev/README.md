@@ -6,6 +6,7 @@ part of the app.
 | File | Use |
 | ---- | --- |
 | `test_addon.py` | A Stremio addon that gives a public HLS test stream, a legal test torrent, and a link to a web page that is not a video. The emulator reaches it at `http://10.0.2.2:7799/manifest.json`. |
+| `check_sources.py` | Checks each line of a source list: manifests, catalogs, streams, stream links, playlists, and guides. Give it the path of the list. |
 | `tap.py` | Taps a view by its text, through `adb`. `~text` matches a part of the text. `above` taps 150 px above the text, for example on a poster. |
 
 A tap puts the emulator in touch mode, and in touch mode no item has the
