@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -118,6 +119,14 @@ private fun Root(app: AppState, finish: () -> Unit) {
 
     val screen = app.current
     val states = rememberSaveableStateHolder()
+    // A screen that left the stack loses its saved state. When it opens again, it starts fresh.
+    val savedKeys = remember { mutableSetOf<String>() }
+    SideEffect {
+        val onStack = app.stack.map { it.toString() }.toSet()
+        (savedKeys - onStack).forEach(states::removeState)
+        savedKeys.retainAll(onStack)
+        savedKeys += onStack
+    }
     val fullScreen = screen is Screen.Player
     Box(Modifier.fillMaxSize().background(Background)) {
         Column(Modifier.fillMaxSize().then(if (fullScreen || app.isTv) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
