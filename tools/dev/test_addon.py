@@ -3,7 +3,8 @@
 It gives four streams for each movie and series ID: a public HLS test stream
 from Mux, the same stream at a link that does not end in .m3u8 (as many proxy
 links do), the Big Buck Bunny torrent (Blender Foundation, CC BY 3.0), and a
-link to a web page that is not a video, to test the player error.
+link to a web page that is not a video. It says 1080p, so that it ranks first
+and the player must try the next stream.
 The emulator reaches it at http://10.0.2.2:7799/manifest.json.
 
 Run: python3 tools/dev/test_addon.py
@@ -35,7 +36,7 @@ STREAMS = {"streams": [
     {"url": "http://10.0.2.2:7799/proxy/master.txt",
      "name": "HLS at a .txt link\n720p", "title": "The Mux stream, served at a link with no .m3u8 ending"},
     {"url": "http://10.0.2.2:7799/page.html",
-     "name": "Web page\nNot a video", "title": "A link that gives HTML"},
+     "name": "Web page 1080p\nNot a video", "title": "A link that gives HTML"},
 ]}
 
 
