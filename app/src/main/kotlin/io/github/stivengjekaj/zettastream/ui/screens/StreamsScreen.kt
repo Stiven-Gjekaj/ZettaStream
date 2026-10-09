@@ -21,6 +21,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -251,18 +252,17 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 var rowFocused by remember { mutableStateOf(false) }
                 val key = rowKey(section.title, listed)
                 val shape = Corner
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 5.dp)
-                        .then(if (key == focusKey) Modifier.focusRequester(firstFocus) else Modifier)
-                        .onFocusChanged { rowFocused = it.isFocused; if (it.isFocused) lastRow = key }
-                        .focusRing(shape, scaleTo = 1.02f)
-                        .clip(shape)
-                        .background(SurfaceHigh)
-                        .clickable { play(stream, listed.addon.manifestUrl, listed.info) }
-                        .padding(14.dp),
-                ) {
+                val rowModifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 5.dp)
+                    .then(if (key == focusKey) Modifier.focusRequester(firstFocus) else Modifier)
+                    .onFocusChanged { rowFocused = it.isFocused; if (it.isFocused) lastRow = key }
+                    .focusRing(shape, scaleTo = 1.02f)
+                    .clip(shape)
+                    .background(SurfaceHigh)
+                    .clickable { play(stream, listed.addon.manifestUrl, listed.info) }
+                    .padding(14.dp)
+                val summary: @Composable () -> Unit = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (stream.isTorrent) Badge("TORRENT", strong = true)
                         ScrollingText(
@@ -272,13 +272,34 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                     }
                     val badges = listed.info.badges
                     if (badges.isNotEmpty()) {
-                        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) { badges.forEach { Badge(it) } }
+                        FlowRow(
+                            Modifier.padding(top = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) { badges.forEach { Badge(it) } }
                     }
-                    if (stream.details.isNotBlank()) {
-                        Text(stream.details, color = TextSecondary, fontSize = 13.sp, maxLines = 3, overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(top = 4.dp))
+                    Text(listed.addon.name, color = TextSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+                }
+                // All the text of the addon shows. The focused row shows it in full.
+                val details: @Composable (Modifier) -> Unit = { modifier ->
+                    if (stream.details.isNotEmpty()) {
+                        Text(
+                            stream.details, color = TextSecondary, fontSize = if (tv) 14.sp else 13.sp,
+                            maxLines = if (rowFocused) Int.MAX_VALUE else 4, overflow = TextOverflow.Ellipsis, modifier = modifier,
+                        )
                     }
-                    if (viewer.directFirst) Text(listed.addon.name, color = TextSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
+                }
+                if (tv) {
+                    // On a TV, the details fill the space on the right of the row.
+                    Row(rowModifier, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                        Column(Modifier.weight(0.42f)) { summary() }
+                        details(Modifier.weight(0.58f))
+                    }
+                } else {
+                    Column(rowModifier) {
+                        summary()
+                        details(Modifier.padding(top = 6.dp))
+                    }
                 }
             }
         }

@@ -47,4 +47,16 @@ class StreamInfoTest {
         val other = StreamInfo.parse("[Other] Show - 06 (720p) x264 Dual Audio")
         assertTrue(StreamInfo.similarity(current, same) > StreamInfo.similarity(current, other))
     }
+
+    @Test
+    fun theDetailsHoldEachTextOneTime() {
+        val stream = Stream(
+            url = "https://a.test/1.mkv",
+            title = "Show.S01E01.1080p.mkv\n1.4 GB",
+            description = "English subtitles",
+            behaviorHints = StreamHints(filename = "Show.S01E01.1080p.mkv"),
+        )
+        assertEquals("Show.S01E01.1080p.mkv\n1.4 GB\nEnglish subtitles", stream.details)
+    }
 }
+

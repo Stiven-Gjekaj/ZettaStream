@@ -116,10 +116,13 @@ data class Stream(
     val requestHeaders: Map<String, String>
         get() = behaviorHints?.proxyHeaders?.request.orEmpty()
 
-    /** The text that tells the user what this stream is. */
+    /** All text that tells the user what this stream is: the title, the description, and the file name, each one time. */
     val details: String
-        get() = listOfNotNull(title, description, behaviorHints?.filename)
-            .firstOrNull { it.isNotBlank() }.orEmpty()
+        get() {
+            val texts = listOfNotNull(title, description, behaviorHints?.filename).map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+            // A text that is a part of a longer one, such as a file name in the title, shows only once.
+            return texts.filter { text -> texts.none { it != text && text in it } }.joinToString("\n")
+        }
 }
 
 @Serializable
