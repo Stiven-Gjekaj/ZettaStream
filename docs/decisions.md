@@ -444,3 +444,30 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - The list of streams is made one time for each answer of an addon. Before,
   each key press made it again, which took about 60 ms for 3000 streams on a
   computer, and more on a TV.
+
+## 2026-10-12: Torrents that stream
+
+- When the app chooses a torrent, a file that is too large to stream comes
+  after a smaller one of the same resolution. The limit is 6 GB for a film
+  and 2.5 GB for an episode, about 7 Mbit/s. A larger file needs more speed
+  than most peers give, and the player stops again and again.
+- The 4 MB after the read position download first. The rest of the window,
+  and the head and the tail of the file, download only with spare speed.
+  Before, about 135 pieces had the same priority, and the next piece came
+  late.
+- The window ahead is about 1/30 of the file, from 24 MB to 96 MB.
+- One torrent gets the information and then the data, so the peers are found
+  one time.
+- The player shows the downloaded size of the file, such as "180 MB of
+  1.5 GB". Before, the percent counted only the pieces that the engine asked
+  for, not the file.
+
+## 2026-10-12: Subtitles and links
+
+- Each subtitle addon gets 4 seconds. A slow addon no longer hides the
+  subtitles of the others.
+- The player names the languages in the codes of OpenSubtitles, such as
+  "pob" and "alb". The language of the viewer comes first, with at most 3
+  tracks of each language.
+- The player plays DASH links. A link that the player cannot read moves to
+  the next stream, and does not stop the app.
