@@ -326,6 +326,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             duration = player.duration
             delay(500)
             if (player.isPlaying && System.currentTimeMillis() % 10_000 < 500) saveProgress()
+            if (BuildConfig.DEBUG && System.currentTimeMillis() % 10_000 < 500) android.util.Log.d("ZPlayer", "tick pos=${player.currentPosition} buf=${player.bufferedPosition} playing=${player.isPlaying}")
         }
     }
 

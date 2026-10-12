@@ -75,6 +75,7 @@ class TorrentFile(
         if (focusPiece >= 0 && readPiece >= focusPiece && readPiece - focusPiece < ahead / 4) return
         focusPiece = readPiece
         val wanted = TorrentMath.wanted(firstPiece, lastPiece, readPiece, ahead, edge)
+        if (io.github.stivengjekaj.zettastream.BuildConfig.DEBUG) android.util.Log.d("ZTorrent", "focus read=$readPiece pieces=$firstPiece..$lastPiece ahead=$ahead edge=$edge pieceLength=${info.pieceLength()}")
         val priorities = Array(info.numPieces()) { if (it in wanted) Priority.TOP_PRIORITY else Priority.IGNORE }
         runCatching { handle.prioritizePieces(priorities) }
     }

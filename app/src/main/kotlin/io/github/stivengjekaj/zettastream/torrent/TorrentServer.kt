@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream.torrent
 
+import io.github.stivengjekaj.zettastream.BuildConfig
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -106,6 +108,7 @@ class TorrentServer(private val scope: CoroutineScope) {
                     t.focus(piece)
                     t.urgent(piece, AHEAD, DEADLINE_STEP)
                 }
+                if (BuildConfig.DEBUG && !t.handle.havePiece(piece)) android.util.Log.d("ZTorrent", "wait piece=$piece pos=$position range=${bytes.first}-${bytes.last} pieceLength=$pieceLength")
                 while (!t.handle.havePiece(piece)) {
                     if (files[hash] == null) throw IOException("The torrent is closed")
                     // After a seek, this piece can stay ignored. Stop when the player left.
