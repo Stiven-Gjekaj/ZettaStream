@@ -26,6 +26,8 @@ class MediaKindTest {
         assertEquals(MediaKind.Hls, MediaKinds.fromUrl("https://cdn.test/a/master.m3u8?token=1"))
         assertEquals(MediaKind.File, MediaKinds.fromUrl("http://127.0.0.1:4000/abc/Big%20Buck%20Bunny.mp4"))
         assertNull(MediaKinds.fromUrl("https://cdn.test/a/,l,n,h,.urlset/master.txt"))
+        assertEquals(MediaKind.Dash, MediaKinds.fromUrl("https://cdn.test/v/manifest.mpd?token=1"))
+        assertEquals(MediaKind.Dash, MediaKinds.fromUrl("https://cdn.test/v/master?format=mpd-time-csf"))
     }
 
     @Test
@@ -33,6 +35,7 @@ class MediaKindTest {
         assertEquals(MediaKind.Hls, MediaKinds.fromAnswer("application/vnd.apple.mpegurl", ByteArray(0)))
         assertEquals(MediaKind.Hls, MediaKinds.fromAnswer("text/plain", "#EXTM3U\n#EXT-X-VERSION:3".toByteArray()))
         assertEquals(MediaKind.File, MediaKinds.fromAnswer("video/mp4", ByteArray(4)))
+        assertEquals(MediaKind.Dash, MediaKinds.fromAnswer("text/xml", "<?xml version=\"1.0\"?><MPD xmlns=\"urn:mpeg:dash\">".toByteArray()))
         assertNull(MediaKinds.fromAnswer("text/html", "<html>".toByteArray()))
     }
 

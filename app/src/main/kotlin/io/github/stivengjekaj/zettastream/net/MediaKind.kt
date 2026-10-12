@@ -7,7 +7,7 @@ import okhttp3.Request
 import java.net.URLDecoder
 
 /** The kind of a stream link, which tells the player how to read it. */
-enum class MediaKind { Hls, File }
+enum class MediaKind { Hls, Dash, File }
 
 object MediaKinds {
     private val BYTE_ORDER_MARK = Char(0xFEFF)
@@ -23,8 +23,10 @@ object MediaKinds {
         val path = text.substringBefore('?').substringBefore('#')
         return when {
             path.endsWith(".m3u8") || path.endsWith(".m3u") -> MediaKind.Hls
+            path.endsWith(".mpd") -> MediaKind.Dash
             fileEndings.any { path.endsWith(it) } -> MediaKind.File
             ".m3u8" in text -> MediaKind.Hls
+            ".mpd" in text || "format=mpd" in text -> MediaKind.Dash
             else -> null
         }
     }
@@ -35,6 +37,7 @@ object MediaKinds {
         val head = String(start, Charsets.UTF_8).trimStart(BYTE_ORDER_MARK, ' ', '\r', '\n', '\t')
         return when {
             "mpegurl" in type || head.startsWith("#EXTM3U") -> MediaKind.Hls
+            "dash+xml" in type || (head.startsWith("<?xml") || head.startsWith("<MPD")) && "<MPD" in head -> MediaKind.Dash
             type.startsWith("video/") || type.startsWith("audio/") || "octet-stream" in type -> MediaKind.File
             else -> null
         }

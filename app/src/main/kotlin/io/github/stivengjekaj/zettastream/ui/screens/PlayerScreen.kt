@@ -261,7 +261,14 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         val dataSource = OkHttpDataSource.Factory(c.videoHttp).setDefaultRequestProperties(headers)
         val item = MediaItem.Builder()
             .setUri(url)
-            .apply { if (kind == MediaKind.Hls) setMimeType(MimeTypes.APPLICATION_M3U8) }
+            // The kind decides the reader. Without it, the player guesses from the link and can pick a reader that is not there.
+            .setMimeType(
+                when (kind) {
+                    MediaKind.Hls -> MimeTypes.APPLICATION_M3U8
+                    MediaKind.Dash -> MimeTypes.APPLICATION_MPD
+                    MediaKind.File -> "application/octet-stream"
+                },
+            )
             .setSubtitleConfigurations(subtitleLabels(subtitles).map { (sub, label) ->
                 MediaItem.SubtitleConfiguration.Builder(sub.url.toUri())
                     .setMimeType(subtitleMime(sub))
@@ -272,7 +279,13 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             .build()
         // A slow server drops some requests. Each part of the video gets more tries than the default 3.
         val sources = DefaultMediaSourceFactory(dataSource).setLoadErrorHandlingPolicy(LowerQualityOnError)
-        player.setMediaSource(sources.createMediaSource(item))
+        // A link that the player cannot read must not stop the app. It counts as a stream that does not start.
+        val source = runCatching { sources.createMediaSource(item) }.getOrElse {
+            if (BuildConfig.DEBUG) android.util.Log.w("ZPlayer", "cannot read $url", it)
+            if (!tryNext()) error = "This stream does not play (${it.javaClass.simpleName}). Press Yellow or Back to choose another source."
+            return
+        }
+        player.setMediaSource(source)
         if (startAt > 0) player.seekTo(startAt)
         player.prepare()
     }
