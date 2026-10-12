@@ -87,6 +87,38 @@ object TorrentMath {
         return (head + tail + window).toSet()
     }
 
+    /** A piece that the player needs now. */
+    const val PRIORITY_NOW = 7
+    /** A piece that the player needs later. It downloads only with spare speed. */
+    const val PRIORITY_LATER = 1
+
+    /**
+     * Gives a priority to each piece of the torrent. The pieces right after
+     * [readPiece] are needed now. The rest of the window ahead, and the head and
+     * the tail of the file, download only with spare speed. All other pieces do
+     * not download. With one priority for all wanted pieces, the next piece
+     * shares the speed with a hundred others and comes late.
+     */
+    fun priorities(numPieces: Int, firstPiece: Int, lastPiece: Int, readPiece: Int, nowPieces: Int, aheadPieces: Int, edgePieces: Int): IntArray {
+        val out = IntArray(numPieces)
+        wanted(firstPiece, lastPiece, readPiece, aheadPieces, edgePieces).forEach { if (it in 0 until numPieces) out[it] = PRIORITY_LATER }
+        val start = readPiece.coerceIn(firstPiece, lastPiece)
+        for (p in start until minOf(lastPiece + 1, start + nowPieces)) if (p in 0 until numPieces) out[p] = PRIORITY_NOW
+        return out
+    }
+
+    /** The bytes that the player needs now, after the read position. */
+    const val NOW_BYTES = 4L * 1024 * 1024
+
+    /**
+     * The bytes to download ahead of the play position: about 1/30 of the file,
+     * which is about three minutes of a film, from 24 MB to 96 MB. A fixed large
+     * window downloads much that a viewer who stops early never needs.
+     */
+    fun windowBytes(fileSize: Long): Long = (fileSize / 30).coerceIn(24L * MB, 96L * MB)
+
+    private const val MB = 1024L * 1024
+
     /** The number of pieces in [bytes], at least one. */
     fun piecesFor(bytes: Long, pieceLength: Int): Int = maxOf(1, ((bytes + pieceLength - 1) / pieceLength).toInt())
 

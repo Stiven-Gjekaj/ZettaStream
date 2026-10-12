@@ -36,8 +36,9 @@ class TorrentFile(
     val size: Long = info.files().fileSize(index)
     val firstPiece: Int = info.mapFile(index, 0, 1).piece()
     val lastPiece: Int = info.mapFile(index, maxOf(0, size - 1), 1).piece()
-    private val ahead = TorrentMath.piecesFor(WINDOW_BYTES, info.pieceLength())
+    private val ahead = TorrentMath.piecesFor(TorrentMath.windowBytes(size), info.pieceLength())
     private val edge = TorrentMath.piecesFor(EDGE_BYTES, info.pieceLength())
+    private val now = TorrentMath.piecesFor(TorrentMath.NOW_BYTES, info.pieceLength())
     @Volatile private var focusPiece = -1
     private val deadlines = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
 
@@ -61,34 +62,33 @@ class TorrentFile(
      * file. The player then asks for the position where it starts, which can
      * be far from the head when it resumes.
      */
-    fun prime() {
-        val wanted = TorrentMath.wanted(firstPiece, lastPiece, firstPiece, 0, edge)
-        runCatching { handle.prioritizePieces(Array(info.numPieces()) { if (it in wanted) Priority.TOP_PRIORITY else Priority.IGNORE }) }
-    }
+    fun prime() = apply(firstPiece, ahead = 0)
 
     /**
-     * Downloads only the head, the tail, and a window ahead of [readPiece].
-     * It changes the priorities again only when the read position moved a
-     * quarter of the window, because each change costs work in libtorrent.
+     * Downloads the pieces after [readPiece] first, then the window ahead and
+     * the head and the tail with spare speed. The server calls this one time
+     * for each new piece that the player reads.
      */
     fun focus(readPiece: Int) {
-        if (focusPiece >= 0 && readPiece >= focusPiece && readPiece - focusPiece < ahead / 4) return
+        if (readPiece == focusPiece) return
         focusPiece = readPiece
-        val wanted = TorrentMath.wanted(firstPiece, lastPiece, readPiece, ahead, edge)
+        apply(readPiece, ahead)
         if (io.github.stivengjekaj.zettastream.BuildConfig.DEBUG) android.util.Log.d("ZTorrent", "focus read=$readPiece pieces=$firstPiece..$lastPiece ahead=$ahead edge=$edge pieceLength=${info.pieceLength()}")
-        val priorities = Array(info.numPieces()) { if (it in wanted) Priority.TOP_PRIORITY else Priority.IGNORE }
-        runCatching { handle.prioritizePieces(priorities) }
+    }
+
+    private fun apply(readPiece: Int, ahead: Int) {
+        val levels = TorrentMath.priorities(info.numPieces(), firstPiece, lastPiece, readPiece, now, ahead, edge)
+        runCatching { handle.prioritizePieces(Array(levels.size) { Priority.fromSwig(levels[it]) }) }
     }
 
     companion object {
-        /** About two to five minutes of video at the bitrates of most releases. */
-        const val WINDOW_BYTES = 96L * 1024 * 1024
         /** The head and the tail hold the index that a player reads before it plays. */
         const val EDGE_BYTES = 8L * 1024 * 1024
     }
 }
 
-data class TorrentState(val peers: Int, val downloadRate: Int, val progress: Float)
+/** [fileDone] counts the downloaded bytes of the file that plays, not of the parts that the engine asks for. */
+data class TorrentState(val peers: Int, val downloadRate: Int, val fileDone: Long, val fileSize: Long)
 
 /**
  * Downloads a torrent in order and serves the chosen file on a local HTTP
@@ -189,7 +189,8 @@ class TorrentEngine(
     fun state(infoHash: String): TorrentState? {
         val t = open[infoHash.lowercase()] ?: return null
         val s = runCatching { t.handle.status() }.getOrNull() ?: return null
-        return TorrentState(s.numPeers(), s.downloadRate(), s.progress())
+        val done = runCatching { t.handle.fileProgress()[t.index] }.getOrDefault(0L)
+        return TorrentState(s.numPeers(), s.downloadRate(), done, t.size)
     }
 
     /** Stops the torrent and deletes its files. The app does not seed after playback. */

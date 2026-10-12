@@ -85,6 +85,22 @@ class TorrentMathTest {
     }
 
     @Test
+    fun onlyThePiecesAfterTheReadPositionAreNeededNow() {
+        val levels = TorrentMath.priorities(numPieces = 100, firstPiece = 0, lastPiece = 99, readPiece = 40, nowPieces = 3, aheadPieces = 10, edgePieces = 2)
+        assertEquals(listOf(40, 41, 42), levels.indices.filter { levels[it] == TorrentMath.PRIORITY_NOW })
+        assertEquals(listOf(0, 1) + (43..50) + listOf(98, 99), levels.indices.filter { levels[it] == TorrentMath.PRIORITY_LATER })
+        assertEquals(0, levels[60])
+    }
+
+    @Test
+    fun theWindowFollowsTheSizeOfTheFile() {
+        val mb = 1024L * 1024
+        assertEquals(24 * mb, TorrentMath.windowBytes(300 * mb))
+        assertEquals(1_626_000_000L / 30, TorrentMath.windowBytes(1_626_000_000L))
+        assertEquals(96 * mb, TorrentMath.windowBytes(20_000 * mb))
+    }
+
+    @Test
     fun piecesForRoundsUp() {
         assertEquals(3, TorrentMath.piecesFor(2_500_000, 1_000_000))
         assertEquals(1, TorrentMath.piecesFor(0, 1_000_000))

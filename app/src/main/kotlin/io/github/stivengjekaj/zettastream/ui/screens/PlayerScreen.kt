@@ -379,7 +379,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         val hash = (playback as? VideoPlayback)?.torrent?.infoHash ?: return@LaunchedEffect
         while (true) {
             withContext(Dispatchers.IO) { c.torrents.state(hash) }?.let { st ->
-                torrentText = "Torrent: ${st.peers} peers, %.1f MB/s, %d%% of the file".format(st.downloadRate / 1_000_000f, (st.progress * 100).toInt())
+                torrentText = "Torrent: ${st.peers} peers, %.1f MB/s, %s of %s".format(
+                    st.downloadRate / 1_000_000f, StreamInfo.formatSize(st.fileDone), StreamInfo.formatSize(st.fileSize),
+                )
             }
             delay(1000)
         }
