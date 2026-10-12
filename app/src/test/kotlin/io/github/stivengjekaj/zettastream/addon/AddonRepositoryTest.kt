@@ -1,6 +1,11 @@
 package io.github.stivengjekaj.zettastream.addon
 
 import io.github.stivengjekaj.zettastream.source.SourceList
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import org.junit.Assert.assertTrue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
@@ -26,6 +31,9 @@ class AddonRepositoryTest {
                 "/good/stream/movie/tt2.json" -> ok("""{"streams":[{"url":"https://a.test/1.mp4"},{"infoHash":"abcdef0123456789abcdef0123456789abcdef01","fileIdx":2,"sources":["tracker:udp://t.test:1/announce"]}]}""")
                 "/subs/manifest.json" -> ok("""{"id":"s","name":"Subs","types":["movie"],"idPrefixes":["tt"],"resources":["subtitles"],"catalogs":[]}""")
                 "/subs/subtitles/movie/tt1.json" -> ok("""{"subtitles":[{"id":"1","url":"https://s.test/1.srt","lang":"eng"}]}""")
+                "/slow/manifest.json" -> ok("""{"id":"w","name":"Slow","types":["movie"],"idPrefixes":["tt"],"resources":["subtitles"],"catalogs":[]}""")
+                "/slow/subtitles/movie/tt1.json" -> MockResponse.Builder().body("""{"subtitles":[{"id":"2","url":"https://s.test/2.srt","lang":"eng"}]}""")
+                    .headersDelay(5, java.util.concurrent.TimeUnit.SECONDS).build()
                 else -> MockResponse.Builder().code(404).build()
             }
         }
@@ -110,6 +118,18 @@ class AddonRepositoryTest {
         assertEquals(null, repository.cachedStreams("series", "tt1:1:1", false))
         now = AddonRepository.STREAM_KEEP
         assertEquals(null, repository.cachedStreams("series", "tt1:1:1", true))
+    }
+
+    @Test
+    fun aSlowSubtitleAddonDoesNotHoldBackTheOthers() = runBlocking {
+        val sources = MutableStateFlow(SourceList.parse("${server.url("/subs/manifest.json")}\n${server.url("/slow/manifest.json")}"))
+        val scope = CoroutineScope(Dispatchers.Default)
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, scope, null, subtitleWait = 1_000)
+        repository.addons.first { !it.loading && it.addons.size == 2 }
+        val start = System.currentTimeMillis()
+        assertEquals(listOf("https://s.test/1.srt"), repository.subtitles("movie", "tt1").map { it.url })
+        assertTrue(System.currentTimeMillis() - start < 3_000)
+        scope.cancel()
     }
 }
 

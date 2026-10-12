@@ -94,7 +94,7 @@ fun AutoPlayScreen(app: AppState, screen: Screen.AutoPlay) {
         }
         val ranked = StreamOrder.ranked(groups.toList(), settings.directFirst, maxBytes)
         if (ranked.isEmpty()) { failed = true; return@LaunchedEffect }
-        val subs = withTimeoutOrNull(2_000) { subtitles.await() }.orEmpty()
+        val subs = withTimeoutOrNull(4_500) { subtitles.await() }.orEmpty()
         app.replace(
             Screen.Player(
                 videoPlayback(

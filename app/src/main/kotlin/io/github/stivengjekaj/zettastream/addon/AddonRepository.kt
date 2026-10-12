@@ -5,6 +5,9 @@ import io.github.stivengjekaj.zettastream.source.SourceKind
 import io.github.stivengjekaj.zettastream.ui.typeKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +51,7 @@ class AddonRepository(
     scope: CoroutineScope,
     private val fallbackSubtitlesUrl: String? = OPENSUBTITLES,
     private val clock: () -> Long = System::currentTimeMillis,
+    private val subtitleWait: Long = 4_000,
 ) {
     private var fallback: Addon? = null
     private val state = MutableStateFlow(AddonState(loading = true))
@@ -167,12 +171,17 @@ class AddonRepository(
     /**
      * Asks each subtitle addon. When no installed addon gives subtitles for
      * this video, the app asks OpenSubtitles, which is free and needs no key.
+     * Each addon gets [subtitleWait] milliseconds. A slow addon does not hold
+     * back the subtitles of the others.
      */
     suspend fun subtitles(type: String, videoId: String): List<Subtitle> = coroutineScope {
         val installed = state.value.addons.filter { it.supports("subtitles", type, videoId) }
         val addons = installed.ifEmpty { listOfNotNull(fallbackAddon()?.takeIf { it.supports("subtitles", type, videoId) }) }
         addons.map { addon ->
-            async { runCatching { client.subtitles(addon, type, videoId) }.getOrDefault(emptyList()) }
+            async {
+                // The wait runs on real time, also in a test with virtual time.
+                withContext(Dispatchers.IO) { withTimeoutOrNull(subtitleWait) { runCatching { client.subtitles(addon, type, videoId) }.getOrNull() } }.orEmpty()
+            }
         }.awaitAll().flatten().distinctBy { it.url }
     }
 
