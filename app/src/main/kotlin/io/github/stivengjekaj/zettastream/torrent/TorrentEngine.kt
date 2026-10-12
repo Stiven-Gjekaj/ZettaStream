@@ -158,23 +158,32 @@ class TorrentEngine(
         // close() pauses the session when the last torrent closes. A paused session starts no new torrent.
         session.resume()
         session.applySettings(settingsPack())
-        val bytes = session.fetchMagnet(TorrentMath.magnet(hash, sources, name), METADATA_TIMEOUT, dir)
-            ?: throw IOException("No peer sent the torrent information in ${METADATA_TIMEOUT} seconds")
-        val info = TorrentInfo(bytes)
+        // One torrent gets the metadata and then the data, so the peers that it finds keep sending.
+        // No file downloads before the app chooses one.
+        session.download(TorrentMath.magnet(hash, sources, name), dir, TorrentFlags.SEQUENTIAL_DOWNLOAD.or_(TorrentFlags.DEFAULT_DONT_DOWNLOAD))
+        var handle: TorrentHandle? = null
+        val deadline = System.currentTimeMillis() + METADATA_TIMEOUT * 1000L
+        while (System.currentTimeMillis() < deadline && isActive) {
+            val found = handle ?: session.find(Sha1Hash.parseHex(hash))?.also { handle = it }
+            if (found != null && runCatching { found.status().hasMetadata() }.getOrDefault(false)) break
+            Thread.sleep(200)
+        }
+        val h = handle
+        val info = h?.takeIf { runCatching { it.status().hasMetadata() }.getOrDefault(false) }?.torrentFile()
+        if (h == null || info == null) {
+            h?.let { runCatching { session.remove(it, SessionHandle.DELETE_FILES) } }
+            if (!isActive) throw CancellationException("The player closed")
+            throw IOException("No peer sent the torrent information in $METADATA_TIMEOUT seconds")
+        }
         val files = info.files()
         val names = (0 until files.numFiles()).map { files.fileName(it) }
         val sizes = (0 until files.numFiles()).map { files.fileSize(it) }
         val index = TorrentMath.chooseFile(names, sizes, fileIdx, filename, season, episode)
-        if (index < 0) throw IOException("The torrent has no file")
-        val priorities = Array(files.numFiles()) { if (it == index) Priority.TOP_PRIORITY else Priority.IGNORE }
-        session.download(info, dir, null, priorities, null, TorrentFlags.SEQUENTIAL_DOWNLOAD)
-        var handle: TorrentHandle? = null
-        repeat(50) {
-            handle = session.find(Sha1Hash.parseHex(hash)) ?: session.find(info.infoHash())
-            if (handle != null) return@repeat
-            Thread.sleep(100)
+        if (index < 0) {
+            runCatching { session.remove(h, SessionHandle.DELETE_FILES) }
+            throw IOException("The torrent has no file")
         }
-        val h = handle ?: throw IOException("The torrent did not start")
+        h.prioritizeFiles(Array(files.numFiles()) { if (it == index) Priority.TOP_PRIORITY else Priority.IGNORE })
         val torrent = TorrentFile(h, info, index, File(dir, files.filePath(index)))
         // The viewer can leave while the peers are found. Then nothing closes this torrent, so remove it here.
         if (!isActive) {
