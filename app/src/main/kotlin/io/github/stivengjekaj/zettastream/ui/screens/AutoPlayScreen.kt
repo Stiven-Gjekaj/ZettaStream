@@ -68,6 +68,7 @@ fun AutoPlayScreen(app: AppState, screen: Screen.AutoPlay) {
 
     LaunchedEffect(screen.videoId) {
         val settings = c.settings.settings.value
+        val maxBytes = StreamOrder.streamableBytes(type)
         val subtitles = async { runCatching { c.addons.subtitles(type, screen.videoId) }.getOrDefault(emptyList<Subtitle>()) }
         val groups = mutableListOf<StreamGroup>()
         var done = false
@@ -86,12 +87,12 @@ fun AutoPlayScreen(app: AppState, screen: Screen.AutoPlay) {
         val start = System.currentTimeMillis()
         while (!done) {
             val waited = System.currentTimeMillis() - start
-            val best = StreamOrder.best(groups.toList(), settings.directFirst)
-            if (best != null && StreamOrder.isIdeal(best, settings.directFirst) && waited >= IDEAL_WAIT) break
+            val best = StreamOrder.best(groups.toList(), settings.directFirst, maxBytes)
+            if (best != null && StreamOrder.isIdeal(best, settings.directFirst, maxBytes) && waited >= IDEAL_WAIT) break
             if (best != null && waited >= MAX_WAIT) break
             delay(250)
         }
-        val ranked = StreamOrder.ranked(groups.toList(), settings.directFirst)
+        val ranked = StreamOrder.ranked(groups.toList(), settings.directFirst, maxBytes)
         if (ranked.isEmpty()) { failed = true; return@LaunchedEffect }
         val subs = withTimeoutOrNull(2_000) { subtitles.await() }.orEmpty()
         app.replace(

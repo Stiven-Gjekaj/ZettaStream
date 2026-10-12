@@ -45,13 +45,28 @@ object StreamOrder {
      * the other streams of its resolution. Then torrents sort by seeders, and
      * direct links keep the order of the source list.
      */
-    fun best(groups: List<StreamGroup>, preferDirect: Boolean): ListedStream? = ranked(groups, preferDirect).firstOrNull()
+    fun best(groups: List<StreamGroup>, preferDirect: Boolean, maxTorrentBytes: Long? = null): ListedStream? =
+        ranked(groups, preferDirect, maxTorrentBytes).firstOrNull()
+
+    /**
+     * The largest torrent that streams well: about 7 Mbit/s for a two hour film
+     * or a 45 minute episode. A larger file needs more speed than most peers give,
+     * and the player stops again and again.
+     */
+    fun streamableBytes(type: String): Long =
+        if (type.trim().lowercase() in setOf("movie", "movies", "film")) 6L * GB else 5L * GB / 2
+
+    private const val GB = 1024L * 1024 * 1024
+
+    private fun tooBig(listed: ListedStream, maxTorrentBytes: Long?): Boolean =
+        maxTorrentBytes != null && listed.stream.isTorrent && (listed.info.sizeBytes ?: 0) > maxTorrentBytes
 
     /** All streams, best first, in the order that [best] uses. The player tries the next one when a stream fails. */
-    fun ranked(groups: List<StreamGroup>, preferDirect: Boolean): List<ListedStream> {
+    fun ranked(groups: List<StreamGroup>, preferDirect: Boolean, maxTorrentBytes: Long? = null): List<ListedStream> {
         val all = groups.flatMap { g -> g.streams.map { ListedStream(g.addon, it, StreamInfo.of(it)) } }
         return all.withIndex().sortedWith(
             compareBy<IndexedValue<ListedStream>> { resolutionRank(it.value.info.resolution) }
+                .thenBy { tooBig(it.value, maxTorrentBytes) }
                 .thenBy { val s = it.value; s.stream.isTorrent && (s.info.seeders ?: 0) < FEW_SEEDERS }
                 .thenBy { it.value.stream.isTorrent == preferDirect }
                 .thenByDescending { if (it.value.stream.isTorrent) it.value.info.seeders ?: 0 else 0 }
@@ -60,8 +75,8 @@ object StreamOrder {
     }
 
     /** True for a stream that [best] cannot beat: 1080p, of the preferred kind, and not a torrent with almost no seeders. */
-    fun isIdeal(listed: ListedStream, preferDirect: Boolean): Boolean =
-        listed.info.resolution == TARGET_RESOLUTION && listed.stream.isTorrent != preferDirect &&
+    fun isIdeal(listed: ListedStream, preferDirect: Boolean, maxTorrentBytes: Long? = null): Boolean =
+        listed.info.resolution == TARGET_RESOLUTION && listed.stream.isTorrent != preferDirect && !tooBig(listed, maxTorrentBytes) &&
             !(listed.stream.isTorrent && (listed.info.seeders ?: 0) < FEW_SEEDERS)
 
     /**

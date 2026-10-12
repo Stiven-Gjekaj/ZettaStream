@@ -92,5 +92,21 @@ class StreamOrderTest {
         val torrent = Stream(infoHash = "c".repeat(40), name = "Torrentio\n1080p")
         assertEquals("Torrentio · Torrent · 1080p", StreamOrder.shortLabel(ListedStream(addon("T"), torrent, StreamInfo.of(torrent))))
     }
+
+    private fun sized(name: String, gb: Double, seeds: Int) =
+        Stream(infoHash = name.padEnd(40, 'x').take(40), name = "$name 1080p", title = "👤 $seeds 💾 $gb GB")
+
+    @Test
+    fun aTorrentTooLargeToStreamComesAfterASmallerOne() {
+        val groups = listOf(StreamGroup(addon("A"), listOf(sized("bluray", 9.85, 71), sized("yts", 1.51, 40))))
+        val max = StreamOrder.streamableBytes("movie")
+        assertEquals("yts 1080p", StreamOrder.best(groups, preferDirect = false, maxTorrentBytes = max)?.stream?.name)
+        assertEquals("bluray 1080p", StreamOrder.best(groups, preferDirect = false)?.stream?.name)
+    }
+
+    @Test
+    fun anEpisodeHasASmallerLimitThanAFilm() {
+        assertEquals(true, StreamOrder.streamableBytes("series") < StreamOrder.streamableBytes("movie"))
+    }
 }
 
