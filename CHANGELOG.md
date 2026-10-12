@@ -12,6 +12,31 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.7.0 (2026-10-12)
+
+### Torrents
+
+- The app prefers a torrent that is small enough to stream: at most 6 GB for
+  a film and 2.5 GB for an episode. Very large files were the main cause of
+  the stops.
+- The next pieces download first. The rest of the window downloads with
+  spare speed, and the window follows the file size.
+- The torrent information and the data come from one torrent, so the peers
+  are found one time.
+- The player shows the downloaded size of the file, not a percent of the
+  wanted pieces.
+
+### Subtitles
+
+- OpenSubtitles works again. A slow subtitle addon, such as CNCVerse, held
+  back all subtitles for up to 23 seconds.
+- Languages such as "pob" and "alb" show their names. Your language comes
+  first, with at most 3 tracks of each language.
+
+### Fixes
+
+- A DASH link no longer closes the app. DASH links play.
+
 ## 0.6.0 (2026-10-09)
 
 - Play on a movie or an episode starts the best stream at once: 1080p first,
