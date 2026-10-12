@@ -152,11 +152,42 @@ fun loadControl(isTorrent: Boolean): DefaultLoadControl = DefaultLoadControl.Bui
 /** The name of a language code such as "eng" or "sq". An unknown code stays as it is. */
 fun languageName(code: String): String {
     if (code.isBlank()) return "Subtitle"
-    // Subtitle addons often give three-letter codes such as "sqi", which Java does not read directly.
-    val tag = ThreeLetterCodes[code.lowercase()] ?: code
-    val locale = Locale.forLanguageTag(tag)
+    val locale = Locale.forLanguageTag(languageTag(code))
     val name = locale.getDisplayLanguage(Locale.ENGLISH)
-    return if (name.isBlank() || name.equals(locale.language, ignoreCase = true)) code else name
+    if (name.isBlank() || name.equals(locale.language, ignoreCase = true)) return code
+    return if (locale.country.isNotEmpty() || locale.script.isNotEmpty()) locale.getDisplayName(Locale.ENGLISH) else name
+}
+
+/**
+ * Gives a standard language tag. Subtitle addons often give three-letter
+ * codes such as "sqi", and OpenSubtitles has its own codes such as "pob".
+ */
+fun languageTag(code: String): String {
+    val lower = code.trim().lowercase()
+    return OpenSubtitlesCodes[lower] ?: ThreeLetterCodes[lower] ?: code.trim()
+}
+
+private val OpenSubtitlesCodes = mapOf(
+    "pob" to "pt-BR", "pom" to "pt-MZ", "zht" to "zh-Hant", "zhe" to "zh", "spn" to "es-419", "scc" to "sr", "mne" to "sr-ME",
+    // The older bibliographic codes, which Java does not read.
+    "alb" to "sq", "arm" to "hy", "baq" to "eu", "bur" to "my", "chi" to "zh", "cze" to "cs", "dut" to "nl", "fre" to "fr",
+    "geo" to "ka", "ger" to "de", "gre" to "el", "ice" to "is", "mac" to "mk", "mao" to "mi", "may" to "ms", "per" to "fa",
+    "rum" to "ro", "slo" to "sk", "tib" to "bo", "wel" to "cy",
+)
+
+/** The most tracks of one language that the player lists. OpenSubtitles can give 70 tracks for one film. */
+const val TRACKS_PER_LANGUAGE = 3
+
+/**
+ * Puts the subtitles of [preferred] first, then the other languages in the order
+ * of the addons, with at most [TRACKS_PER_LANGUAGE] tracks of each language.
+ */
+fun arrangeSubtitles(subtitles: List<Subtitle>, preferred: String): List<Subtitle> {
+    fun primary(code: String) = Locale.forLanguageTag(languageTag(code)).language.ifEmpty { code.lowercase() }
+    val byLanguage = subtitles.groupBy { primary(it.lang) }
+    val want = primary(preferred)
+    val order = byLanguage.keys.sortedBy { if (preferred.isNotBlank() && it == want) 0 else 1 }
+    return order.flatMap { byLanguage.getValue(it).take(TRACKS_PER_LANGUAGE) }
 }
 
 private val ThreeLetterCodes: Map<String, String> by lazy {
@@ -269,10 +300,10 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     MediaKind.File -> "application/octet-stream"
                 },
             )
-            .setSubtitleConfigurations(subtitleLabels(subtitles).map { (sub, label) ->
+            .setSubtitleConfigurations(subtitleLabels(arrangeSubtitles(subtitles, c.settings.settings.value.subtitleLanguage)).map { (sub, label) ->
                 MediaItem.SubtitleConfiguration.Builder(sub.url.toUri())
                     .setMimeType(subtitleMime(sub))
-                    .setLanguage(sub.lang.ifBlank { null })
+                    .setLanguage(sub.lang.ifBlank { null }?.let(::languageTag))
                     .setLabel(label)
                     .build()
             })
