@@ -275,6 +275,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var everReady by remember { mutableStateOf(false) }
     // The saved position. Another source can be shorter, so the player checks it when the length is known.
     var resumeAt by remember { mutableLongStateOf(0L) }
+    // The furthest position where the stream stopped with an error.
+    var faultAt by remember { mutableLongStateOf(0L) }
     val labelUntil = remember { System.currentTimeMillis() + LABEL_TIME }
     var countdownCancelled by remember { mutableStateOf(false) }
     var countdownLeft by remember { mutableIntStateOf(0) }
@@ -302,13 +304,13 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     fun healthKey(p: VideoPlayback) = StreamHealth.key(p.addonUrl, p.url, p.torrent?.infoHash, p.torrent?.fileIdx)
 
     /** Marks this stream as one that did not start, then plays the next best one. */
-    fun tryNext(): Boolean {
+    fun tryNext(midStream: Boolean = false): Boolean {
         val p = playback as? VideoPlayback ?: return false
         c.scope.launch { c.health.failed(healthKey(p), p.addonUrl.orEmpty()) }
         val next = p.fallbacks.firstOrNull() ?: return false
         val following = videoPlayback(p.meta, p.videoId, p.label, p.episodes, next, p.subtitles, p.fallbacks.drop(1))
-        Diagnostics.log("Player", "${p.sourceLabel} did not start, next: ${following.sourceLabel}")
-        app.toast = "That stream did not start. Trying ${following.sourceLabel}"
+        Diagnostics.log("Player", "${p.sourceLabel} ${if (midStream) "stopped" else "did not start"}, next: ${following.sourceLabel}")
+        app.toast = if (midStream) "That stream stopped. Going on with ${following.sourceLabel}" else "That stream did not start. Trying ${following.sourceLabel}"
         app.replace(Screen.Player(following))
         return true
     }
@@ -406,6 +408,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             duration = player.duration
             delay(500)
             if (player.isPlaying && System.currentTimeMillis() % 10_000 < 500) saveProgress()
+            if (retries > 0 && player.currentPosition > faultAt + PlayerErrors.RECOVERED_MS) retries = 0
         }
     }
 
@@ -749,7 +752,23 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             override fun onPlayerError(e: PlaybackException) {
                 Diagnostics.log("Player", "error ${e.errorCodeName} at ${player.currentPosition} of ${player.duration}", generateSequence<Throwable>(e) { it.cause }.last())
                 if (!everReady && tryNext()) return
-                if (playback is VideoPlayback && PlayerErrors.shouldRetry(e.errorCode, retries)) {
+                if (playback is VideoPlayback && everReady) {
+                    val at = player.currentPosition
+                    faultAt = maxOf(faultAt, at)
+                    when (PlayerErrors.midStream(e.errorCode, retries, playback.fallbacks.isNotEmpty())) {
+                        PlayerErrors.MidStream.Reconnect -> { retries++; show("Reconnecting"); player.prepare(); return }
+                        PlayerErrors.MidStream.SkipAhead -> {
+                            retries++
+                            show("Skipping damaged data")
+                            player.seekTo(at + PlayerErrors.SKIP_MS)
+                            player.prepare()
+                            return
+                        }
+                        // The progress is saved first, so the next source starts at the same position.
+                        PlayerErrors.MidStream.NextSource -> { saveProgress(); if (tryNext(midStream = true)) return }
+                        PlayerErrors.MidStream.Stop -> Unit
+                    }
+                } else if (playback is VideoPlayback && PlayerErrors.shouldRetry(e.errorCode, retries)) {
                     retries++
                     show("Reconnecting")
                     player.prepare()
@@ -757,7 +776,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 }
                 // The reason from the server or the network, such as "HTTP 403", helps to find the fault.
                 val reason = generateSequence<Throwable>(e) { it.cause }.mapNotNull { it.message }.lastOrNull()?.take(80)
-                error = PlayerErrors.describe(e.errorCode, e.errorCodeName) + (reason?.let { " ($it)" } ?: "") + " " +
+                error = (if (everReady) PlayerErrors.describeMidStream(e.errorCode, e.errorCodeName) else PlayerErrors.describe(e.errorCode, e.errorCodeName)) + (reason?.let { " ($it)" } ?: "") + " " +
                     if (playback is LivePlayback) "Press Channel up or down for another channel." else "Press Yellow or Back to choose another source."
             }
             override fun onPlaybackStateChanged(state: Int) {
@@ -771,7 +790,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 buffering = state == Player.STATE_BUFFERING
                 if (state == Player.STATE_READY) {
                     if (!everReady && playback is VideoPlayback) c.scope.launch { c.health.played(healthKey(playback), playback.addonUrl.orEmpty()) }
-                    retries = 0
+                    // A reconnect that is ready for a moment and fails at the same place is not a recovery.
+                    // The count of tries goes back to 0 only after good playback past the fault.
+                    if (!everReady) retries = 0
                     everReady = true
                 }
                 if (state == Player.STATE_ENDED && playback is VideoPlayback) {

@@ -14,6 +14,44 @@ object PlayerErrors {
      */
     fun shouldRetry(code: Int, retries: Int): Boolean = code in 2000..2999 && retries < MAX_RETRIES
 
+    /** What the player does when a stream that played stops with an error. */
+    enum class MidStream { Reconnect, SkipAhead, NextSource, Stop }
+
+    /** Good playback this far past a fault ends the count of tries. */
+    const val RECOVERED_MS = 30_000L
+
+    /** The jump past damaged data in the middle of a video. */
+    const val SKIP_MS = 5_000L
+
+    /**
+     * A stream that played and then stops: first the player reconnects at the same position.
+     * Damaged data stops it again at the same place, so the second try jumps [SKIP_MS] ahead.
+     * Then the next source continues at the same position. A device that cannot decode the
+     * video does not change with a new try, so it goes to the next source at once.
+     */
+    fun midStream(code: Int, retries: Int, hasNextSource: Boolean): MidStream {
+        val decoder = code in DECODER_ERRORS
+        return when {
+            !decoder && retries == 0 -> MidStream.Reconnect
+            !decoder && retries == 1 && code in 3000..3999 -> MidStream.SkipAhead
+            !decoder && retries < MAX_RETRIES && code in 2000..2999 -> MidStream.Reconnect
+            hasNextSource -> MidStream.NextSource
+            else -> MidStream.Stop
+        }
+    }
+
+    private val DECODER_ERRORS = setOf(
+        PlaybackException.ERROR_CODE_DECODER_INIT_FAILED,
+        PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
+        PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+    )
+
+    /** The message for a stream that played and then stopped. */
+    fun describeMidStream(code: Int, codeName: String): String = when (code) {
+        in 3000..3999 -> "The stream sent damaged video data."
+        else -> describe(code, codeName)
+    }
+
     fun describe(code: Int, codeName: String): String = when (code) {
         PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
         PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,

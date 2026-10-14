@@ -30,4 +30,23 @@ class PlayerErrorsTest {
     fun aFormatErrorDoesNotReconnect() {
         assertFalse(PlayerErrors.shouldRetry(PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED, 0))
     }
+
+    @Test
+    fun damagedDataReconnectsThenSkipsThenGoesToTheNextSource() {
+        val damaged = PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED
+        assertEquals(PlayerErrors.MidStream.Reconnect, PlayerErrors.midStream(damaged, 0, hasNextSource = true))
+        assertEquals(PlayerErrors.MidStream.SkipAhead, PlayerErrors.midStream(damaged, 1, hasNextSource = true))
+        assertEquals(PlayerErrors.MidStream.NextSource, PlayerErrors.midStream(damaged, 2, hasNextSource = true))
+        assertEquals(PlayerErrors.MidStream.Stop, PlayerErrors.midStream(damaged, 2, hasNextSource = false))
+    }
+
+    @Test
+    fun aNetworkErrorReconnectsThreeTimesAndADecoderErrorChangesTheSource() {
+        val network = PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
+        assertEquals(PlayerErrors.MidStream.Reconnect, PlayerErrors.midStream(network, 2, hasNextSource = true))
+        assertEquals(PlayerErrors.MidStream.NextSource, PlayerErrors.midStream(network, 3, hasNextSource = true))
+        val decoder = PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED
+        assertEquals(PlayerErrors.MidStream.NextSource, PlayerErrors.midStream(decoder, 0, hasNextSource = true))
+        assertEquals(PlayerErrors.MidStream.Stop, PlayerErrors.midStream(decoder, 0, hasNextSource = false))
+    }
 }
