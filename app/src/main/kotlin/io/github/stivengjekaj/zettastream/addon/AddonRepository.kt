@@ -103,21 +103,32 @@ class AddonRepository(
     suspend fun catalog(row: CatalogRow): List<MetaPreview> =
         client.catalog(row.addon, row.catalog, row.extras).also { catalogCache[row.key] = it }
 
-    /** Searches each catalog that supports a search. Results come as they arrive. */
+    /**
+     * Searches each catalog that supports a search. Results come as they arrive, as one list
+     * where each title shows one time and the best match comes first. The same search within
+     * [SEARCH_KEEP] answers from memory.
+     */
     fun search(query: String): Flow<List<MetaPreview>> = channelFlow {
-        val found = mutableListOf<MetaPreview>()
+        val key = SearchRank.normalize(query)
+        searchCache[key]?.takeIf { System.currentTimeMillis() - it.first < SEARCH_KEEP }?.let { send(it.second); return@channelFlow }
         val catalogs = state.value.addons.flatMap { a -> a.manifest.catalogs.filter { it.supportsSearch }.map { a to it } }
-        catalogs.map { (addon, catalog) ->
+        // One answer for each catalog, in the order of the source list, so the order does not depend on speed.
+        val answers = arrayOfNulls<List<MetaPreview>>(catalogs.size)
+        catalogs.mapIndexed { i, (addon, catalog) ->
             launch {
                 val metas = runCatching { client.catalog(addon, catalog, mapOf("search" to query)) }.getOrDefault(emptyList())
-                synchronized(found) {
-                    found += metas.filter { m -> found.none { it.id == m.id } }
-                    trySend(found.toList())
+                synchronized(answers) {
+                    answers[i] = metas
+                    trySend(SearchRank.merge(query, answers.filterNotNull()))
                 }
             }
         }.forEach { it.join() }
-        send(found.toList())
+        val all = SearchRank.merge(query, answers.filterNotNull())
+        if (catalogs.isNotEmpty()) searchCache[key] = System.currentTimeMillis() to all
+        send(all)
     }
+
+    private val searchCache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, List<MetaPreview>>>()
 
     /** Gets the full details from the first addon that has them. */
     suspend fun meta(preview: MetaPreview): Meta {
@@ -235,3 +246,6 @@ fun pickSameSource(
             .thenByDescending { s -> pool.indexOf(s) },
     )
 }
+
+/** How long the app keeps the results of a search. */
+private const val SEARCH_KEEP = 10 * 60 * 1000L
