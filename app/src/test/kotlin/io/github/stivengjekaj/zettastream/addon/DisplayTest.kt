@@ -75,4 +75,20 @@ class DisplayTest {
         assertEquals(false, Display.isPlaceholder(Meta("tt1", "series", videos = listOf(Video("tt1:1:1")))))
         assertEquals(false, Display.isPlaceholder(Meta("tt2", "movie", videos = listOf(Video("tt2:a:b:c")))))
     }
+
+    @Test
+    fun theTrailerComesFromEitherForm() {
+        val json = kotlinx.serialization.json.Json
+        fun list(text: String) = json.parseToJsonElement(text) as kotlinx.serialization.json.JsonArray
+        assertEquals("PLl99DlL6b4", Display.trailer(Meta("tt1", "movie", trailerStreams = list("""[{"title":"A","ytId":"PLl99DlL6b4"}]"""))))
+        assertEquals("LHtdKWJdif4", Display.trailer(Meta("k", "series", trailers = list("""[{"source":"LHtdKWJdif4","type":"Trailer"}]"""))))
+        assertEquals(null, Display.trailer(Meta("k", "series", trailers = list("""[{"source":"x y","type":"Trailer"}]"""))))
+        assertEquals(null, Display.trailer(Meta("k", "series", trailers = list("""[{"source":"LHtdKWJdif4","type":"Clip"}]"""))))
+    }
+
+    @Test
+    fun peopleCanBeTextsOrObjects() {
+        val list = kotlinx.serialization.json.Json.parseToJsonElement("""["Tim Robbins", {"name":"Morgan Freeman"}, "", 3, "Tim Robbins"]""") as kotlinx.serialization.json.JsonArray
+        assertEquals(listOf("Tim Robbins", "Morgan Freeman", "3"), Display.people(list))
+    }
 }

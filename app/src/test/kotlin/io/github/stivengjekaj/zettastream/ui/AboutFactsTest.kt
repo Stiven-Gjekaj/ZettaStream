@@ -25,7 +25,8 @@ class AboutFactsTest {
 
     @Test
     fun aFilmShowsNoEpisodesAndAMissingFactDoesNotShow() {
-        val meta = Meta(id = "tt2", type = "movie", name = "Film", runtime = "118 min", aliases = listOf("Film", "Le Film"), videos = listOf(Video("tt2")))
-        assertEquals(listOf("Type" to "Movie", "Runtime" to "118 min", "Other names" to "Le Film"), aboutFacts(meta))
+        val people = kotlinx.serialization.json.Json.parseToJsonElement("""["Ann", "Bo"]""") as kotlinx.serialization.json.JsonArray
+        val meta = Meta(id = "tt2", type = "movie", name = "Film", runtime = "118 min", aliases = listOf("Film", "Le Film"), videos = listOf(Video("tt2")), cast = people)
+        assertEquals(listOf("Type" to "Movie", "Runtime" to "118 min", "Cast" to "Ann, Bo", "Other names" to "Le Film"), aboutFacts(meta))
     }
 }

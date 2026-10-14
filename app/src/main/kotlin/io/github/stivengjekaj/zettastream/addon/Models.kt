@@ -2,6 +2,10 @@ package io.github.stivengjekaj.zettastream.addon
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 /** One title in a catalog. This is the short form of [Meta]. */
 @Serializable
@@ -39,6 +43,11 @@ data class Meta(
     val aliases: List<String> = emptyList(),
     @SerialName("imdb_id") val imdbId: String? = null,
     val videos: List<Video> = emptyList(),
+    // Addons write these in different forms, so they stay raw JSON. See Display.trailer and Display.people.
+    val cast: List<JsonElement> = emptyList(),
+    val director: List<JsonElement> = emptyList(),
+    val trailers: List<JsonElement> = emptyList(),
+    val trailerStreams: List<JsonElement> = emptyList(),
 ) {
     fun toPreview() = MetaPreview(
         id = id, type = type, name = name, poster = poster, background = background,
@@ -209,6 +218,26 @@ object Display {
      */
     fun isPlaceholder(meta: Meta): Boolean =
         meta.type != "movie" && meta.videos.size == 1 && meta.videos.single().id.split(':').size >= 4
+
+    /**
+     * The YouTube ID of the trailer. Cinemeta gives `trailerStreams` with `ytId`, and other
+     * addons give `trailers` with `source` and `type`.
+     */
+    fun trailer(meta: Meta): String? {
+        fun field(e: JsonElement, name: String) = ((e as? JsonObject)?.get(name) as? JsonPrimitive)?.contentOrNull
+        val ids = meta.trailerStreams.mapNotNull { field(it, "ytId") } +
+            meta.trailers.filter { (field(it, "type") ?: "Trailer").equals("Trailer", ignoreCase = true) }.mapNotNull { field(it, "source") }
+        return ids.firstOrNull { it.matches(Regex("[A-Za-z0-9_-]{6,20}")) }
+    }
+
+    /** The names in a list of people. A name can be a text or an object with a name. */
+    fun people(list: List<JsonElement>, limit: Int = 6): List<String> = list.mapNotNull { e ->
+        when (e) {
+            is JsonPrimitive -> e.contentOrNull
+            is JsonObject -> (e["name"] as? JsonPrimitive)?.contentOrNull
+            else -> null
+        }?.trim()?.takeIf { it.isNotEmpty() }
+    }.distinct().take(limit)
 
     fun preview(m: MetaPreview): MetaPreview = m.copy(name = englishName(m.name, m.aliases))
 

@@ -306,6 +306,8 @@ fun aboutFacts(m: Meta): List<Pair<String, String>> {
         m.runtime?.let { "Runtime" to it },
         Display.rating(m.imdbRating)?.let { "IMDb" to "$it / 10" },
         m.genres.takeIf { it.isNotEmpty() }?.let { "Genres" to it.joinToString(", ") },
+        Display.people(m.director, 3).takeIf { it.isNotEmpty() }?.let { "Director" to it.joinToString(", ") },
+        Display.people(m.cast).takeIf { it.isNotEmpty() }?.let { "Cast" to it.joinToString(", ") },
         seasons.takeIf { it > 0 && m.type != "movie" }?.let { "Seasons" to it.toString() },
         m.videos.size.takeIf { it > 0 && m.type != "movie" }?.let { "Episodes" to it.toString() },
         m.aliases.filter { it != m.name }.take(2).takeIf { it.isNotEmpty() }?.let { "Other names" to it.joinToString(", ") },
