@@ -12,6 +12,19 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.8.0 (2026-10-14)
+
+- OpenSubtitles gives subtitles for anime from Kitsu. The app asks with the
+  IMDb form of the episode.
+- A stream that did not start is chosen last for one day, and the list marks
+  it "DID NOT START".
+- The next episode is found a minute before the countdown, so it starts at
+  once.
+- A saved position past the end of a shorter source starts from the
+  beginning, and the video is not marked as watched.
+- The phone page in Settings, Sources has a diagnostics link with the last
+  events of the TV, for a fault report.
+
 ## 0.7.0 (2026-10-12)
 
 ### Torrents
