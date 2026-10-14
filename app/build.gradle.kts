@@ -66,6 +66,8 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    // Installs the startup profile in src/main/baseline-prof.txt on devices that do not get it from a store.
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
