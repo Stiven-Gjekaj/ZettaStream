@@ -45,8 +45,13 @@ class BackupTest {
 
     @Test
     fun anotherFileIsRefusedAndChangesNothing() = runBlocking {
-        val backup = device("one")
-        assertTrue(backup.restore("""{"app":"Other"}""").isFailure)
-        assertTrue(backup.restore("not json").isFailure)
+        val dir = folder.newFolder("one")
+        val library = Library(dir.resolve("library.json"))
+        library.toggleWatchlist(MetaPreview(id = "tt1", type = "movie", name = "One"))
+        val backup = Backup(library, SettingsStore(dir.resolve("settings.json")), SourceStore(dir.resolve("sources.txt")))
+        for (file in listOf("""{"app":"Other"}""", "not json", "{}", "[]", """{"library":{}}""", """{"app":"ZettaStream"}""")) {
+            assertTrue(file, backup.restore(file).isFailure)
+        }
+        assertEquals(listOf("tt1"), library.data.value.watchlist.map { it.id })
     }
 }

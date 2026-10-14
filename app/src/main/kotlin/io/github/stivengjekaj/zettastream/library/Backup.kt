@@ -6,6 +6,9 @@ import io.github.stivengjekaj.zettastream.source.SourceList
 import io.github.stivengjekaj.zettastream.source.SourceStore
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 /** All that the viewer keeps on the device, in one file. */
 @Serializable
@@ -32,8 +35,12 @@ class Backup(private val library: Library, private val settings: SettingsStore, 
 
     /** Replaces the data on the device with [text]. Gives a short report, or an error for a file that is not a backup. */
     suspend fun restore(text: String): Result<String> = runCatching {
-        val data = json.decodeFromString(BackupData.serializer(), text)
-        require(data.app == "ZettaStream") { "This file is not a ZettaStream backup" }
+        // The file must name the app and hold a library. Any other JSON file, such as {}, changes nothing.
+        val root = json.parseToJsonElement(text) as? JsonObject
+        require(root != null && (root["app"] as? JsonPrimitive)?.contentOrNull == "ZettaStream" && root["library"] is JsonObject) {
+            "This file is not a ZettaStream backup"
+        }
+        val data = json.decodeFromJsonElement(BackupData.serializer(), root)
         library.replace(data.library)
         data.settings?.let { restored -> settings.update { restored } }
         data.sources?.let { sources.replace(it) }
