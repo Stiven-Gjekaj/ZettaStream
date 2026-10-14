@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The app installs its own updates. Android asks the viewer one time, and again for each update. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- The app operates on a TV with no touch screen, and on a phone. -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -30,5 +32,7 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".update.UpdateReceiver" android:exported="false" />
     </application>
 </manifest>

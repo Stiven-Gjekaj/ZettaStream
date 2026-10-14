@@ -16,6 +16,7 @@ import io.github.stivengjekaj.zettastream.skip.SkipTimes
 import io.github.stivengjekaj.zettastream.torrent.TorrentEngine
 import io.github.stivengjekaj.zettastream.source.SourceStore
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
+import io.github.stivengjekaj.zettastream.update.UpdateInstaller
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,6 +35,7 @@ class AppContainer(app: Application) {
     val live = LiveRepository(http, sources.sources, scope)
     val library = Library(File(app.filesDir, "library.json"))
     val updates = UpdateChecker(http)
+    val installer = UpdateInstaller(app, http)
     val skipTimes = SkipTimes(http)
     val settings = SettingsStore(File(app.filesDir, "settings.json"))
     val health = StreamHealth(File(app.filesDir, "health.json"))
