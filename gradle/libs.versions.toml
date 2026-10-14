@@ -15,6 +15,10 @@ zxing = "3.5.4"
 junit = "4.13.2"
 kxml = "2.3.0"
 libtorrent4j = "2.1.0-39"
+profileinstaller = "1.4.1"
+benchmark = "1.5.0"
+uiautomator = "2.4.0"
+testExtJunit = "1.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,9 +48,14 @@ kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml" }
 libtorrent4j = { group = "org.libtorrent4j", name = "libtorrent4j", version.ref = "libtorrent4j" }
 libtorrent4j-arm = { group = "org.libtorrent4j", name = "libtorrent4j-android-arm", version.ref = "libtorrent4j" }
 libtorrent4j-arm64 = { group = "org.libtorrent4j", name = "libtorrent4j-android-arm64", version.ref = "libtorrent4j" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "testExtJunit" }
 libtorrent4j-x64 = { group = "org.libtorrent4j", name = "libtorrent4j-android-x86_64", version.ref = "libtorrent4j" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-test = { id = "com.android.test", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

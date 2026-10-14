@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ZettaStream"
 include(":app")
+include(":baselineprofile")
