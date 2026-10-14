@@ -122,7 +122,11 @@ fun HomeScreen(app: AppState) {
                     takeFocus = !bannerFocused,
                     onFocusTaken = { bannerFocused = true },
                     // The whole banner shows when one of its buttons has the focus, not only its lower part.
-                    onFocused = { scope.launch { withFrameNanos { }; list.animateScrollToItem(0) } },
+                    // Red and Info act on the title of the banner, as on a card.
+                    onFocused = { meta ->
+                        app.focusedMeta = meta
+                        scope.launch { withFrameNanos { }; list.animateScrollToItem(0) }
+                    },
                     onCoverLoaded = { coverReady = true },
                 )
             }

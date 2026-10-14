@@ -76,7 +76,7 @@ fun HeroBanner(
     onWatchlist: (MetaPreview) -> Unit,
     takeFocus: Boolean = false,
     onFocusTaken: () -> Unit = {},
-    onFocused: () -> Unit = {},
+    onFocused: (MetaPreview) -> Unit = {},
     onCoverLoaded: () -> Unit = {},
 ) {
     if (items.isEmpty()) return
@@ -127,7 +127,7 @@ fun HeroBanner(
                 Text(it, color = TextPrimary.copy(alpha = 0.85f), fontSize = if (tv) 16.sp else 14.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
             Row(
-                Modifier.onFocusChanged { focused = it.hasFocus; if (it.hasFocus) onFocused() },
+                Modifier.onFocusChanged { focused = it.hasFocus; if (it.hasFocus) onFocused(meta) },
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
