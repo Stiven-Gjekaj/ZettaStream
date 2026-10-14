@@ -28,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -53,12 +54,19 @@ import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
 
+/**
+ * The pictures are portraits, with the face a little above the middle. The top of the picture
+ * cuts off the chin, and the middle cuts off the top of the head, so the circle takes a part
+ * between them.
+ */
+private val FaceAlignment = BiasAlignment(0f, -0.3f)
+
 /** A round picture of a profile. With no picture, it shows the first letter of the name. */
 @Composable
 fun ProfileCircle(name: String, avatar: String?, size: Dp, modifier: Modifier = Modifier) {
     Box(modifier.size(size).clip(CircleShape).background(SurfaceHigh), contentAlignment = Alignment.Center) {
         Text(name.take(1).uppercase(), color = TextPrimary, fontSize = (size.value * 0.42f).sp, fontWeight = FontWeight.Bold)
-        if (avatar != null) AsyncImage(avatar, name, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize())
+        if (avatar != null) AsyncImage(avatar, name, contentScale = ContentScale.Crop, alignment = FaceAlignment, modifier = Modifier.fillMaxSize())
     }
 }
 
