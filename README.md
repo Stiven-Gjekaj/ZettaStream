@@ -89,6 +89,7 @@ tab bar and touch controls.
 - Channel buttons for the next episode or the next channel
 - A white ring that follows the edge of the focused item
 - Add sources from a phone with a QR code
+- A diagnostics page on the phone shows the last events of the TV
 - A test screen that shows each button of your remote
 
 </td>
