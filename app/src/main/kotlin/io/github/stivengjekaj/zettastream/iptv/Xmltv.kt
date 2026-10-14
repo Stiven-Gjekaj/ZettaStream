@@ -18,8 +18,21 @@ data class Programme(
 
 /** The programmes of each channel, in the order of their start times. */
 class Guide(private val byChannel: Map<String, List<Programme>>) {
-    fun programmes(channelId: String?): List<Programme> =
-        channelId?.let { byChannel[Xmltv.channelKey(it)] }.orEmpty()
+    // The keys of the guide for each short key, such as "cnnus@east" and "cnnus@west" for "cnnus".
+    private val byShortKey = byChannel.keys.sorted().groupBy { it.substringBefore('@') }
+
+    /**
+     * The programmes of a channel. The same form, with its `@` part, comes first. Then a
+     * channel in another form gets the one feed with no `@` part, or else the first feed.
+     * Two feeds such as East and West never mix.
+     */
+    fun programmes(channelId: String?): List<Programme> {
+        if (channelId == null) return emptyList()
+        byChannel[Xmltv.fullKey(channelId)]?.let { return it }
+        val short = Xmltv.channelKey(channelId)
+        val keys = byShortKey[short] ?: return emptyList()
+        return byChannel[keys.firstOrNull { it == short } ?: keys.first()].orEmpty()
+    }
 
     /** Finds the programme that is on now and the one after it. */
     fun nowAndNext(channelId: String?, now: Long): Pair<Programme?, Programme?> {
@@ -54,6 +67,9 @@ object Xmltv {
      */
     fun channelKey(id: String): String = id.substringBefore('@').lowercase().filter { it.isLetterOrDigit() }
 
+    /** The key with its `@` part, such as `news24al@sd`. It keeps two feeds of one channel apart. */
+    fun fullKey(id: String): String = channelKey(id) + id.substringAfter('@', "").lowercase().filter { it.isLetterOrDigit() }.let { if (it.isEmpty()) "" else "@$it" }
+
     fun parse(input: InputStream, channelIds: Set<String>?, from: Long, to: Long): Guide {
         val wanted = channelIds?.map(::channelKey)?.toSet()
         val parser = XmlPullParserFactory.newInstance().newPullParser()
@@ -81,8 +97,8 @@ object Xmltv {
                 }
             } else if (event == XmlPullParser.END_TAG && parser.name == "programme") {
                 val id = channel
-                val key = id?.let(::channelKey)
-                if (id != null && key != null && (wanted == null || key in wanted) && stop > from && start < to && start > 0) {
+                val key = id?.let(::fullKey)
+                if (id != null && key != null && (wanted == null || channelKey(id) in wanted) && stop > from && start < to && start > 0) {
                     result.getOrPut(key) { mutableListOf() } += Programme(id, title.orEmpty(), start, stop, description)
                 }
                 channel = null

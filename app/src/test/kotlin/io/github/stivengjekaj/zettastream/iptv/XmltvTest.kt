@@ -67,5 +67,19 @@ class XmltvTest {
         assertEquals(listOf("Lajme"), guide.programmes("News24.al@SD").map { it.title })
         assertEquals("news24al", Xmltv.channelKey("News.24.al"))
     }
-}
 
+    @Test
+    fun twoFeedsOfOneChannelDoNotMix() {
+        val text = """
+            <tv>
+              <programme start="20261008100000 +0000" stop="20261008110000 +0000" channel="CNN.us@East"><title>East</title></programme>
+              <programme start="20261008100000 +0000" stop="20261008110000 +0000" channel="CNN.us@West"><title>West</title></programme>
+            </tv>
+        """.trimIndent()
+        val guide = Xmltv.parse(text.byteInputStream(), null, ms("2026-10-08T00:00:00Z"), ms("2026-10-09T00:00:00Z"))
+        assertEquals(listOf("East"), guide.programmes("CNN.us@East").map { it.title })
+        assertEquals(listOf("West"), guide.programmes("cnn.us@WEST").map { it.title })
+        assertEquals(listOf("East"), guide.programmes("CNN.us").map { it.title })
+        assertEquals(emptyList<Programme>(), guide.programmes("BBC.uk"))
+    }
+}
