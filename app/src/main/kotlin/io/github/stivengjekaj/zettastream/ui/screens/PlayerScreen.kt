@@ -89,6 +89,7 @@ import io.github.stivengjekaj.zettastream.addon.ListedStream
 import io.github.stivengjekaj.zettastream.addon.StreamHealth
 import io.github.stivengjekaj.zettastream.addon.StreamOrder
 import io.github.stivengjekaj.zettastream.ui.videoPlayback
+import io.github.stivengjekaj.zettastream.diag.Diagnostics
 import io.github.stivengjekaj.zettastream.library.Resume
 import io.github.stivengjekaj.zettastream.net.MediaKind
 import io.github.stivengjekaj.zettastream.net.MediaKinds
@@ -288,6 +289,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         c.scope.launch { c.health.failed(healthKey(p), p.addonUrl.orEmpty()) }
         val next = p.fallbacks.firstOrNull() ?: return false
         val following = videoPlayback(p.meta, p.videoId, p.label, p.episodes, next, p.subtitles, p.fallbacks.drop(1))
+        Diagnostics.log("Player", "${p.sourceLabel} did not start, next: ${following.sourceLabel}")
         app.toast = "That stream did not start. Trying ${following.sourceLabel}"
         app.replace(Screen.Player(following))
         return true
@@ -302,6 +304,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         error = null
         // Many HLS links do not end in .m3u8. Read as a file, such a link does not play.
         val kind = MediaKinds.detect(c.videoHttp, url, headers)
+        Diagnostics.log("Player", "load ${(playback as? VideoPlayback)?.sourceLabel ?: "channel"} as $kind from ${url.substringBefore('?').take(100)}, start at $startAt")
         val dataSource = OkHttpDataSource.Factory(c.videoHttp).setDefaultRequestProperties(headers)
         val item = MediaItem.Builder()
             .setUri(url)
@@ -325,7 +328,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         val sources = DefaultMediaSourceFactory(dataSource).setLoadErrorHandlingPolicy(LowerQualityOnError)
         // A link that the player cannot read must not stop the app. It counts as a stream that does not start.
         val source = runCatching { sources.createMediaSource(item) }.getOrElse {
-            if (BuildConfig.DEBUG) android.util.Log.w("ZPlayer", "cannot read $url", it)
+            Diagnostics.log("Player", "cannot read ${url.take(120)}", it)
             if (!tryNext()) error = "This stream does not play (${it.javaClass.simpleName}). Press Yellow or Back to choose another source."
             return
         }
@@ -352,7 +355,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                         c.torrents.open(torrent.infoHash, torrent.sources, torrent.fileIdx, torrent.name, torrent.filename, season, episode)
                     }
                     local.onSuccess {
-                        if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "torrent url=$it")
+                        Diagnostics.log("Player", "torrent url=$it")
                         load(it, emptyMap(), playback.subtitles, startAt)
                     }
                         .onFailure { if (!tryNext()) error = "This torrent does not start (${it.message}). Press Yellow or Back to choose another source." }
@@ -553,7 +556,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         if (!nextDue || preparedNext != null) return@LaunchedEffect
         val target = p.episodes.getOrNull(p.episodes.indexOfFirst { it.id == p.videoId } + 1) ?: return@LaunchedEffect
         preparedNext = target.id to runCatching { sameSourcePlayback(target, episodeLabel(target)) }.getOrNull()
-        if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "prepared next ${target.id}: ${preparedNext?.second?.sourceLabel}")
+        Diagnostics.log("Player", "prepared next ${target.id}: ${preparedNext?.second?.sourceLabel ?: "no match, the app will search"}")
     }
 
     LaunchedEffect(countdownEnds) {
@@ -716,7 +719,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onPlayerError(e: PlaybackException) {
-                if (BuildConfig.DEBUG) android.util.Log.w("ZPlayer", "error ${e.errorCodeName} at ${player.currentPosition}", e)
+                Diagnostics.log("Player", "error ${e.errorCodeName} at ${player.currentPosition} of ${player.duration}", generateSequence<Throwable>(e) { it.cause }.last())
                 if (!everReady && tryNext()) return
                 if (playback is VideoPlayback && PlayerErrors.shouldRetry(e.errorCode, retries)) {
                     retries++
@@ -730,7 +733,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     if (playback is LivePlayback) "Press Channel up or down for another channel." else "Press Yellow or Back to choose another source."
             }
             override fun onPlaybackStateChanged(state: Int) {
-                if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "state=$state pos=${player.currentPosition} buf=${player.bufferedPosition} dur=${player.duration}")
+                Diagnostics.log("Player", "state=$state pos=${player.currentPosition} buf=${player.bufferedPosition} dur=${player.duration}")
                 // A saved position past the end of this source starts the video from the beginning.
                 if (!everReady && resumeAt > 0 && player.duration > 0 && !Resume.fits(resumeAt, player.duration)) {
                     resumeAt = 0

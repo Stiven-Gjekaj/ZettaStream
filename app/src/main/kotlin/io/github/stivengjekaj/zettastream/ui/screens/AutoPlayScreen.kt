@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import io.github.stivengjekaj.zettastream.diag.Diagnostics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -94,6 +95,7 @@ fun AutoPlayScreen(app: AppState, screen: Screen.AutoPlay) {
             delay(250)
         }
         val ranked = StreamOrder.ranked(groups.toList(), settings.directFirst, maxBytes, c.health)
+        Diagnostics.log("AutoPlay", "${screen.videoId}: ${ranked.size} streams after ${System.currentTimeMillis() - start} ms, best ${ranked.firstOrNull()?.let(StreamOrder::shortLabel) ?: "none"}")
         if (ranked.isEmpty()) { failed = true; return@LaunchedEffect }
         val subs = withTimeoutOrNull(4_500) { subtitles.await() }.orEmpty()
         app.replace(

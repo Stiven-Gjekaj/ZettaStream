@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.addon
 
+import io.github.stivengjekaj.zettastream.diag.Diagnostics
 import io.github.stivengjekaj.zettastream.source.Source
 import io.github.stivengjekaj.zettastream.source.SourceKind
 import io.github.stivengjekaj.zettastream.ui.typeKey
@@ -149,6 +150,7 @@ class AddonRepository(
     fun streams(type: String, videoId: String, withTorrents: Boolean = false): Flow<StreamGroup> = channelFlow {
         state.value.addons.filter { it.supports("stream", type, videoId) }.forEach { addon ->
             launch {
+                val start = System.currentTimeMillis()
                 val group = runCatching { client.streams(addon, type, videoId) }.fold(
                     onSuccess = { all ->
                         val playable = all.filter { it.isPlayable(withTorrents) }
@@ -157,6 +159,8 @@ class AddonRepository(
                     },
                     onFailure = { StreamGroup(addon, error = it.message ?: it.javaClass.simpleName) },
                 )
+                val took = System.currentTimeMillis() - start
+                Diagnostics.log("Addon", "${addon.name}: ${group.error?.let { "no answer, $it" } ?: "${group.streams.size} streams"} for $videoId in $took ms")
                 send(group)
             }
         }

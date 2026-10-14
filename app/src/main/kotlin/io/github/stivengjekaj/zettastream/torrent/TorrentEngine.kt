@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.torrent
 
+import io.github.stivengjekaj.zettastream.diag.Diagnostics
 import io.github.stivengjekaj.zettastream.settings.ViewerSettings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -73,7 +74,6 @@ class TorrentFile(
         if (readPiece == focusPiece) return
         focusPiece = readPiece
         apply(readPiece, ahead)
-        if (io.github.stivengjekaj.zettastream.BuildConfig.DEBUG) android.util.Log.d("ZTorrent", "focus read=$readPiece pieces=$firstPiece..$lastPiece ahead=$ahead edge=$edge pieceLength=${info.pieceLength()}")
     }
 
     private fun apply(readPiece: Int, ahead: Int) {
@@ -190,6 +190,7 @@ class TorrentEngine(
             runCatching { session.remove(h, SessionHandle.DELETE_FILES) }
             throw CancellationException("The player closed")
         }
+        Diagnostics.log("Torrent", "${torrent.name}: ${torrent.size / 1_048_576} MB, pieces of ${info.pieceLength() / 1024} KB, window ${TorrentMath.windowBytes(torrent.size) / 1_048_576} MB")
         torrent.prime()
         open[hash] = torrent
         server.url(hash, torrent)

@@ -1,6 +1,6 @@
 package io.github.stivengjekaj.zettastream.torrent
 
-import io.github.stivengjekaj.zettastream.BuildConfig
+import io.github.stivengjekaj.zettastream.diag.Diagnostics
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -108,13 +108,15 @@ class TorrentServer(private val scope: CoroutineScope) {
                     t.focus(piece)
                     t.urgent(piece, AHEAD, DEADLINE_STEP)
                 }
-                if (BuildConfig.DEBUG && !t.handle.havePiece(piece)) android.util.Log.d("ZTorrent", "wait piece=$piece pos=$position range=${bytes.first}-${bytes.last} pieceLength=$pieceLength")
+                val waitStart = System.currentTimeMillis()
                 while (!t.handle.havePiece(piece)) {
                     if (files[hash] == null) throw IOException("The torrent is closed")
                     // After a seek, this piece can stay ignored. Stop when the player left.
                     if (gone()) throw IOException("The player closed the connection")
                     Thread.sleep(POLL)
                 }
+                val waited = System.currentTimeMillis() - waitStart
+                if (waited > SLOW_PIECE) Diagnostics.log("Torrent", "piece $piece took $waited ms (read at $position)")
                 val file = raf ?: RandomAccessFile(t.file, "r").also { raf = it }
                 // Send the rest of this piece, or less at the end of the range.
                 val leftInPiece = pieceLength - request.start().toLong()
@@ -136,5 +138,7 @@ class TorrentServer(private val scope: CoroutineScope) {
         const val AHEAD = 12
         const val DEADLINE_STEP = 800
         const val POLL = 50L
+        /** A piece that comes later than this goes into the diagnostics. */
+        const val SLOW_PIECE = 2_000L
     }
 }
