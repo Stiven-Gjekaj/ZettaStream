@@ -299,6 +299,19 @@ cd ZettaStream
 The APK is in `app/build/outputs/apk/debug/`. A tag such as `v0.1.0` makes
 the workflow build a signed APK and attach it to a release.
 
+The app has a startup profile in `app/src/main/baseline-prof.txt`. Android
+compiles this code ahead of time, so the first starts after an install are
+not slow. To record it again after a large change, start an emulator with
+Android 13 or newer and run:
+
+```
+./gradlew :baselineprofile:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.github.stivengjekaj.zettastream.baselineprofile.StartupProfile
+```
+
+Then copy the `StartupProfile_record-startup-prof.txt` file from
+`baselineprofile/build/outputs/connected_android_test_additional_output/`
+to `app/src/main/baseline-prof.txt`.
+
 ## Testing
 
 ```
