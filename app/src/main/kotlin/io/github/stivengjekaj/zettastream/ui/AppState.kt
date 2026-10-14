@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream.ui
 
+import io.github.stivengjekaj.zettastream.ui.components.FocusReturn
+import io.github.stivengjekaj.zettastream.remote.EdgeGuard
+import androidx.compose.ui.focus.FocusRequester
 import android.view.KeyEvent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -143,7 +146,15 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     val stack = mutableStateListOf<Screen>(Screen.Home)
     val current: Screen get() = stack.last()
 
-    var menuOpen by mutableStateOf(false)
+    /** True while an item of the icon bar of the TV has the focus. */
+    var railFocused by mutableStateOf(false)
+    /** The item of the icon bar for the screen that is open. Menu and 0 give it the focus. */
+    var railEntry: FocusRequester? = null
+    /** The screen part next to the icon bar. It gives the focus back to the item that had it. */
+    val content = FocusRequester()
+    val edgeGuard = EdgeGuard()
+    /** True after a choice in the icon bar, so that the new screen takes the focus. */
+    var focusContentSoon = false
     var exitDialog by mutableStateOf(false)
     var homeFilter by mutableStateOf<String?>(null)
     var focusedMeta by mutableStateOf<MetaPreview?>(null)
@@ -159,7 +170,6 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     var focusManager: FocusManager? = null
 
     fun open(screen: Screen) {
-        menuOpen = false
         FocusMemory.leave(current)
         if (screen.isTopLevel) {
             stack.clear()
@@ -177,7 +187,7 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     /** Goes back one step. See the Back button in docs/decisions.md. */
     fun back(finish: () -> Unit) {
         when {
-            menuOpen -> menuOpen = false
+            railFocused -> leaveRail()
             stack.size > 1 -> {
                 stack.removeAt(stack.lastIndex)
                 FocusMemory.returnTo(current)
@@ -188,6 +198,20 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
         }
     }
 
+    /** True while the app itself moves the focus into the icon bar, for Menu or 0. The edge guard does not apply. */
+    var railRequested = false
+
+    fun enterRail() {
+        railRequested = true
+        runCatching { railEntry?.requestFocus() }
+        railRequested = false
+    }
+
+    /** Gives the focus back to the screen, to the item that had it. */
+    fun leaveRail() {
+        if (!FocusReturn.restore()) runCatching { content.requestFocus() }
+    }
+
     /** Handles a key that no part of the interface used. */
     fun onUnhandledKey(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return false
@@ -195,7 +219,7 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
         if (event.repeatCount > 0 && action != RemoteAction.PageDown && action != RemoteAction.PageUp) return true
         screenActions[action]?.let { it(); return true }
         when (action) {
-            RemoteAction.ToggleMenu -> menuOpen = !menuOpen
+            RemoteAction.ToggleMenu -> if (railFocused) leaveRail() else enterRail()
             RemoteAction.Home -> open(Screen.Home)
             RemoteAction.Search -> open(Screen.Search)
             RemoteAction.Library -> open(Screen.Library)

@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream
 
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.foundation.focusGroup
 import android.content.Intent
 import io.github.stivengjekaj.zettastream.tv.DeepLink
 import android.annotation.SuppressLint
@@ -49,7 +52,9 @@ import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.PhoneTabBar
 import io.github.stivengjekaj.zettastream.ui.components.Toast
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
-import io.github.stivengjekaj.zettastream.ui.components.TvSideMenu
+import io.github.stivengjekaj.zettastream.ui.components.FocusReturn
+import io.github.stivengjekaj.zettastream.ui.components.RailWidth
+import io.github.stivengjekaj.zettastream.ui.components.TvRail
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.screens.AutoPlayScreen
 import io.github.stivengjekaj.zettastream.ui.screens.DetailScreen
@@ -143,33 +148,41 @@ private fun Root(app: AppState, finish: () -> Unit) {
         savedKeys += onStack
     }
     val fullScreen = screen is Screen.Player
+    // After a choice in the icon bar, the new screen takes the focus.
+    LaunchedEffect(screen) {
+        if (app.focusContentSoon) {
+            app.focusContentSoon = false
+            // The item that had the focus was on the screen before. Right goes to the new screen.
+            FocusReturn.last = null
+            withFrameNanos { }
+            withFrameNanos { }
+            runCatching { focusManager.moveFocus(FocusDirection.Right) }
+        }
+    }
     Box(Modifier.fillMaxSize().background(Background)) {
         Column(Modifier.fillMaxSize().then(if (fullScreen || app.isTv) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing))) {
             // A new key for each screen, so that a player for the next episode starts fresh.
             // Each screen keeps its scroll positions while it is on the stack, so Back returns to the same place.
-            Box(Modifier.weight(1f)) {
+            // On a TV, the screen starts after the icon bar. It remembers the item that had the focus, so
+            // Right from the bar goes back to it. Each Left press tells the bar if it can take the focus.
+            val rail = app.isTv && !fullScreen
+            Box(
+                Modifier.weight(1f)
+                    .then(if (rail) Modifier.padding(start = RailWidth) else Modifier)
+                    .focusRequester(app.content)
+                    .focusRestorer()
+                    .focusGroup()
+                    .onPreviewKeyEvent { event ->
+                        val key = event.nativeKeyEvent
+                        if (rail && key.action == KeyEvent.ACTION_DOWN && key.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) app.edgeGuard.onLeft(key.repeatCount > 0)
+                        false
+                    },
+            ) {
                 key(screen) { states.SaveableStateProvider(screen.toString()) { Content(app, screen) } }
             }
             if (!app.isTv && screen.isTopLevel) PhoneTabBar(screen) { app.open(it) }
         }
-        if (app.isTv && screen.isTopLevel && !app.menuOpen) {
-            // A remote with no Menu key and no number keys reaches the menu with Up and this button.
-            ZButton(
-                onClick = { app.menuOpen = true }, tv = true,
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 20.dp, end = 32.dp)
-                    // The button is above the content, so the search by position finds nothing.
-                    // Down and Left go to the first item of the screen.
-                    .onPreviewKeyEvent { event ->
-                        val key = event.nativeKeyEvent
-                        val away = key.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || key.keyCode == KeyEvent.KEYCODE_DPAD_LEFT
-                        if (away && key.action == KeyEvent.ACTION_DOWN) focusManager.moveFocus(FocusDirection.Next)
-                        away
-                    },
-            ) { Text("Menu") }
-        }
-        if (app.isTv && !fullScreen) {
-            TvSideMenu(app.menuOpen, screen, onSelect = { app.open(it) })
-        }
+        if (app.isTv && !fullScreen) TvRail(app, screen)
         Toast(app.toast, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
     }
 

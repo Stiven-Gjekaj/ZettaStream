@@ -1,10 +1,15 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
+import io.github.stivengjekaj.zettastream.ui.AppState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.focusGroup
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,12 +18,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LiveTv
@@ -31,7 +34,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,61 +65,71 @@ val NavItems = listOf(
     NavItem(Screen.Live, "Live TV", Icons.Rounded.LiveTv, "5"),
 )
 
-/** The side menu on the TV. It is hidden until the user opens it. */
+/** The width of the icon bar. The screens on a TV start after it. */
+val RailWidth = 76.dp
+private val RailOpenWidth = 240.dp
+
+/**
+ * The icon bar on the left of a TV screen, after Miruro 2.0. It shows the
+ * labels while one of its items has the focus. Left goes into it only with a
+ * new press (see [io.github.stivengjekaj.zettastream.remote.EdgeGuard]).
+ * Right, Back, Menu, and 0 go back to the item that had the focus.
+ */
 @Composable
-fun TvSideMenu(open: Boolean, current: Screen, onSelect: (Screen) -> Unit) {
-    AnimatedVisibility(open, enter = fadeIn(), exit = fadeOut()) {
-        Box(
-            Modifier.fillMaxSize().background(
-                Brush.horizontalGradient(listOf(Background.copy(alpha = 0.95f), Background.copy(alpha = 0.6f), Color.Transparent)),
-            ),
-        )
-    }
-    AnimatedVisibility(open, enter = slideInHorizontally { -it }, exit = slideOutHorizontally { -it }) {
-        val selected = remember { FocusRequester() }
-        val items = remember { List(NavItems.size) { FocusRequester() } }
-        Column(
-            Modifier
-                .fillMaxHeight()
-                .width(280.dp)
-                .background(Background.copy(alpha = 0.98f))
-                .padding(vertical = 48.dp, horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text("ZettaStream", color = TextPrimary, fontSize = 26.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 12.dp, bottom = 24.dp))
-            NavItems.forEachIndexed { index, item ->
-                val active = item.screen == current
-                val shape = Corner
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .focusRequester(items[index])
-                        .then(if (active) Modifier.focusRequester(selected) else Modifier)
-                        // The focus stays in the menu. Only Back, Menu, or 0 closes it.
-                        .focusProperties {
-                            up = if (index > 0) items[index - 1] else FocusRequester.Cancel
-                            down = if (index < items.lastIndex) items[index + 1] else FocusRequester.Cancel
-                            left = FocusRequester.Cancel
-                            right = FocusRequester.Cancel
-                        }
-                        .focusRing(shape, scaleTo = 1.03f)
-                        .clip(shape)
-                        .background(if (active) SurfaceHigh else Color.Transparent)
-                        .clickable { onSelect(item.screen) }
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(item.icon, null, tint = if (active) Accent else TextSecondary, modifier = Modifier.size(26.dp))
+fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
+    val open = app.railFocused
+    val items = remember { List(NavItems.size) { FocusRequester() } }
+    val selectedIndex = NavItems.indexOfFirst { it.screen == current }.coerceAtLeast(0)
+    app.railEntry = items[selectedIndex]
+    val width by animateDpAsState(if (open) RailOpenWidth else RailWidth, label = "rail")
+    Column(
+        modifier
+            .fillMaxHeight()
+            .width(width)
+            .background(
+                if (open) Brush.horizontalGradient(listOf(Background, Background.copy(alpha = 0.96f)))
+                else Brush.horizontalGradient(listOf(Background, Background)),
+            )
+            .onFocusChanged { app.railFocused = it.hasFocus }
+            .focusProperties {
+                // Left from a row goes in only with a new press, to the item of the screen that is open.
+                onEnter = { if (!app.railRequested && !app.edgeGuard.allowed) cancelFocusChange() else if (!app.railRequested) items[selectedIndex].requestFocus() }
+            }
+            .focusGroup()
+            .padding(vertical = 24.dp, horizontal = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text("Z", color = TextPrimary, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 14.dp, bottom = 20.dp))
+        val (bottom, top) = NavItems.withIndex().partition { it.value.screen == Screen.Settings }
+        (top + listOf(null) + bottom).forEach { entry ->
+            if (entry == null) { Spacer(Modifier.weight(1f)); return@forEach }
+            val (index, item) = entry
+            val active = item.screen == current
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .focusRequester(items[index])
+                    .focusProperties {
+                        up = if (index > 0) items[index - 1] else FocusRequester.Cancel
+                        down = if (index < items.lastIndex) items[index + 1] else FocusRequester.Cancel
+                        // Right goes back to the item of the screen that had the focus.
+                        right = FocusReturn.last ?: FocusRequester.Default
+                    }
+                    .focusRing(Corner, scaleTo = 1.04f, rememberForReturn = false)
+                    .clip(Corner)
+                    .background(if (active) Accent else Color.Transparent)
+                    .clickable { app.open(item.screen); app.focusContentSoon = true }
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(item.icon, item.label, tint = if (active) OnAccent else TextSecondary, modifier = Modifier.size(24.dp))
+                if (open) {
                     Spacer(Modifier.width(16.dp))
-                    Text(item.label, color = TextPrimary, fontSize = 19.sp, modifier = Modifier.weight(1f))
-                    Text(item.key, color = TextSecondary, fontSize = 14.sp)
+                    Text(item.label, color = if (active) OnAccent else TextPrimary, fontSize = 18.sp, maxLines = 1, modifier = Modifier.weight(1f))
+                    Text(item.key, color = if (active) OnAccent.copy(alpha = 0.6f) else TextSecondary, fontSize = 13.sp)
                 }
             }
-            Spacer(Modifier.weight(1f))
-            Text("Back, Menu, or 0: close", color = TextSecondary, fontSize = 13.sp, modifier = Modifier.padding(start = 12.dp))
         }
-        LaunchedEffect(Unit) { runCatching { selected.requestFocus() } }
     }
 }
 
