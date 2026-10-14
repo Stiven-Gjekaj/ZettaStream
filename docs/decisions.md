@@ -664,3 +664,19 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   `4` opens Live TV and `5` opens Settings, in the order of the icon bar,
   where Settings is at the bottom. The phone tab bar has the same order.
 
+## 2026-10-15: Search results
+
+- Each addon answers in its own list. The app makes one list in the order of
+  the source list, so the order does not depend on which addon is fast.
+- Two entries are one title when they have the same ID, the same IMDb ID, or
+  the same name, kind (film, or series and anime), and first year. The entry
+  with an IMDb ID stays, because most stream addons know it. The facts that
+  only the other entry has, such as a poster, go into it.
+- An entry with no year is never joined by its name only, because two
+  different titles can have one name.
+- The best match comes first: the same name, then a name that starts with
+  the search, then a name with all the words, then a name that contains the
+  search. Accents, case, and signs do not count. A title that more addons
+  give comes first among equal matches.
+- The same search within 10 minutes answers from memory.
+
