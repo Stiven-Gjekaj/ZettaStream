@@ -593,3 +593,12 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - When two channels in a playlist have the same ID, such as an HD and an SD
   copy, each one is kept by its link. Then each copy is a favourite alone.
 
+## 2026-10-14: Version numbers
+
+- 1.0.0 is the first stable release.
+- From 1.0.0, a fix raises the patch number, such as 1.0.1.
+- A new function raises the minor number, such as 1.1.0.
+- A change that an older version cannot read, such as a new form of the
+  backup or of the source list, raises the major number.
+- A test release has a label, such as `1.1.0-rc1`. See "Test versions".
+
