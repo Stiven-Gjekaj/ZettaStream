@@ -62,7 +62,13 @@ A key goes through two steps in `MainActivity.dispatchKeyEvent`:
 1. The player and the remote control test take every key first.
 2. Compose gets the key. A key that Compose does not use goes to
    `AppState.onUnhandledKey`, which runs the action from `RemoteKeys`. Menu
-   and `0` open the side menu there.
+   and `0` move the focus into the icon bar there, or out of it.
+
+Each Left press also goes to `EdgeGuard` before Compose moves the focus. The
+icon bar takes the focus only after a new Left press. `FocusReturn` keeps the
+last item of the screen that had the focus, so Right from the bar goes back
+to it. `FocusMemory` keeps the focused card of each screen, so Back returns
+to it.
 
 A screen can give its own action to a colour button through
 `AppState.screenActions`. The title screen does this for Red, Green, and

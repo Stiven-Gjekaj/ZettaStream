@@ -567,3 +567,22 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   less than 0.4 seconds before, or a held Left, stops at the edge. Right goes
   back to the item that had the focus. Right, Back, Menu, and `0` leave the
   bar. The bar does not keep the focus.
+- A number key opens its screen and gives the focus to the screen, as a
+  choice in the icon bar does.
+- On a TV, the first button of the Home banner has the focus when the app
+  starts. Back returns the focus to the button or the card that had it.
+- Each card shows the kind and the year under the name, such as
+  "Movie · 2026", and the IMDb rating on the art when the addon gives one.
+- The title page shows the art at the top, the poster, the logo or the name,
+  facts in small frames, the buttons, a grid of episode cards with an "EP"
+  mark, and an About table. Down from the buttons goes to the episode that
+  Watch starts.
+- A chosen chip is white. Only the focused button or row is white on a TV.
+
+## 2026-10-14: Test versions
+
+- A test release has a label after the version, such as `1.0.0-rc1`. It comes
+  before `1.0.0` and after `0.11.2`. `rc10` comes after `rc2`.
+- GitHub does not give a pre-release as the latest release, so the app does
+  not offer a test version as an update.
+

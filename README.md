@@ -45,9 +45,24 @@ The app comes with no sources. You add your own list one time, and on a TV you
 do not type it with the remote control: you scan a QR code with your phone and
 paste the list there.
 
-It is made for a remote control first. A side menu stays hidden until you need
-it, and each button on the remote has a job. On a phone, the same app has a
-tab bar and touch controls.
+It is made for a remote control first. A slim bar of icons stays at the left
+of the TV screen, and each button on the remote has a job. On a phone, the
+same app has a tab bar and touch controls.
+
+## Screens
+
+The layout follows Miruro 2.0, in black and white, with the Karla font.
+
+<table>
+<tr>
+<td width="50%"><img src="assets/screens/home.jpg" alt="Home: a large banner of featured titles"></td>
+<td width="50%"><img src="assets/screens/home-rows.jpg" alt="Home: rows of posters with the kind and the year"></td>
+</tr>
+<tr>
+<td width="50%"><img src="assets/screens/title.jpg" alt="A title page with the art, the facts, and the episodes"></td>
+<td width="50%"><img src="assets/screens/live.jpg" alt="Live TV with channel groups"></td>
+</tr>
+</table>
 
 ## Features
 
@@ -82,8 +97,8 @@ tab bar and touch controls.
 
 ### Made for a TV
 
-- A side menu that stays hidden until you press Menu or `0`, or select the
-  Menu button at the top
+- A slim icon bar at the left. Left at the start of a row opens it, but a
+  fast run of Left presses stops at the edge
 - Works with a game controller or a keyboard
 - Turn each home row on or off, with new releases first
 - Number buttons go straight to each screen
@@ -171,8 +186,8 @@ torrent addon's settings also changes its torrents into HTTP links.
 | Button | Anywhere | In the player |
 | ------ | -------- | ------------- |
 | Directions, OK | Move, select | Left and Right: back or forward 10 s. OK: pause |
-| Back | Go back. Close the menu | Leave the player |
-| Menu, `0` | Open or close the menu | Open or close the options |
+| Back | Go back. Leave the icon bar | Leave the player |
+| Menu, `0` | Go into the icon bar, or leave it | Open or close the options |
 | Hold OK | | Open the options |
 | `1` to `5` | Home, Search, Library, Settings, Live TV | `1` to `9`: go to 10% to 90% |
 | Info | Open the focused title | Show the title and the time |
@@ -188,8 +203,8 @@ torrent addon's settings also changes its torrents into HTTP links.
 | OK at a prompt | | Skip the part, or play the next episode now |
 
 A remote with no Menu key and no number keys can still do each action. Press
-Up to reach the Menu button at the top of the screen. In the player, hold OK
-for the options, which also change the episode or the channel.
+Left at the start of a row to reach the icon bar. In the player, hold OK for
+the options, which also change the episode or the channel.
 
 A game controller and a keyboard also work. A or Enter is OK. B or Escape is
 Back. Start, X, or Tab is Menu. Y is Info. L1 and R1 are Channel down and up.
