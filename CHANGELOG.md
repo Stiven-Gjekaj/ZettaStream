@@ -5,12 +5,37 @@
 # Changelog
 
 Every release is written here, newest first. A version is `MAJOR.MINOR.PATCH`.
-While the major number is 0, a change that a user can see raises the minor
-number.
+From 1.0.0, a fix raises the patch number, a new function raises the minor
+number, and a change that breaks the backup or the source list raises the
+major number. See "Version numbers" in the decisions.
 
 A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
+
+## 1.0.0 (2026-10-14)
+
+The first stable release. It holds all the work of 0.1.0 to 0.11.1.
+
+- Stremio addons: rows of posters, search, title pages with seasons and
+  episodes, and streams from all addons at the same time.
+- Play starts the best 1080p stream at once and shows which source plays.
+  When a stream fails, the next best one starts. Yellow shows the list.
+- Torrents play while they download, in order, with no seeding after.
+- Subtitles from the stream, from subtitle addons, and from OpenSubtitles.
+  Viewer settings for the size, the color, the background, and the font.
+- The next episode, from the same source, with a countdown. Skip the intro of
+  an anime episode from AniSkip.
+- Live TV from M3U playlists, with now and next, a guide grid, and favourite
+  channels.
+- Continue watching, a watchlist, watched marks, and the Play next row of the
+  TV. A backup and a restore from the phone page.
+- Made for a remote control: an icon bar, number keys, colour keys, and a
+  remote control test. A game controller and a keyboard also work.
+- Add sources from a phone with a QR code. A diagnostics page on the phone.
+- Updates install from inside the app. Voice search. The TV switches to the
+  frame rate of the video.
+- The interface follows Miruro 2.0, in black and white, with the Karla font.
 
 ## 0.11.1 (2026-10-14)
 
