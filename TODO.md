@@ -46,5 +46,7 @@ with the app.
 - [ ] Stop new features. Release the last fixes as 0.11.x. (0.11.0 is out.)
 - [ ] Update the readme with screens of the TV, write the 1.0.0 changelog,
       add the version rule to the decisions, and check the security policy.
+      (Done for 0.11.0: the screens, the version rule, and the policy. The
+      1.0.0 changelog waits for the release.)
 - [ ] Tag v1.0.0, check the APK and its signature, and update to it from
       0.10.0 inside the app.
