@@ -33,8 +33,6 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,6 +68,7 @@ import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.ZChip
 import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
@@ -259,17 +258,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                     TvRow(tv) {
                         LazyRow(Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             items(seasons) { s ->
-                                FilterChip(
-                                    shape = Corner,
-                                    selected = s == selectedSeason,
-                                    onClick = { season = s },
-                                    label = { Text(when (s) { null -> "Other"; 0 -> "Specials"; else -> "Season $s" }) },
-                                    modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Accent, selectedLabelColor = OnAccent,
-                                        containerColor = Surface, labelColor = TextSecondary,
-                                    ),
-                                )
+                                ZChip(when (s) { null -> "Other"; 0 -> "Specials"; else -> "Season $s" }, selected = s == selectedSeason, tv = tv, onClick = { season = s })
                             }
                         }
                     }

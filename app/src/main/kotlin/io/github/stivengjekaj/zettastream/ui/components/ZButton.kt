@@ -1,5 +1,11 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
+import io.github.stivengjekaj.zettastream.ui.theme.Surface
+import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Text
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -44,5 +50,22 @@ fun ZButton(
         border = if (filled) null else BorderStroke(1.dp, Outline),
         modifier = modifier.focusRing(Corner, scaleTo = 1.04f),
         content = content,
+    )
+}
+
+/** A filter chip. The chosen chip is white, as on Miruro 2.0. The others have a thin frame. */
+@Composable
+fun ZChip(text: String, selected: Boolean, tv: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    FilterChip(
+        shape = Corner,
+        selected = selected,
+        onClick = onClick,
+        label = { Text(text, fontSize = if (tv) 15.sp else 14.sp) },
+        modifier = modifier.focusRing(Corner, scaleTo = 1.04f),
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = Accent, selectedLabelColor = OnAccent,
+            containerColor = Surface, labelColor = TextSecondary,
+        ),
+        border = FilterChipDefaults.filterChipBorder(enabled = true, selected = selected, borderColor = Outline, selectedBorderColor = Accent),
     )
 }

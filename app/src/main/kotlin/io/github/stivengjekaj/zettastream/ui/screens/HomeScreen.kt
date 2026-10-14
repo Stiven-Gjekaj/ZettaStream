@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,6 +42,7 @@ import io.github.stivengjekaj.zettastream.ui.components.PosterCard
 import io.github.stivengjekaj.zettastream.ui.components.PosterRow
 import io.github.stivengjekaj.zettastream.ui.components.SectionTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.ZChip
 import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
@@ -124,17 +123,7 @@ fun HomeScreen(app: AppState) {
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         items(listOf<String?>(null) + types) { type ->
-                            FilterChip(
-                                shape = Corner,
-                                selected = app.homeFilter == type,
-                                onClick = { app.homeFilter = type },
-                                label = { Text(typeLabel(type), fontSize = if (tv) 16.sp else 14.sp) },
-                                modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
-                                    containerColor = Surface, labelColor = TextSecondary,
-                                ),
-                            )
+                            ZChip(typeLabel(type), selected = app.homeFilter == type, tv = tv, onClick = { app.homeFilter = type })
                         }
                     }
                 }

@@ -34,8 +34,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,6 +61,7 @@ import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.PageTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
+import io.github.stivengjekaj.zettastream.ui.components.ZChip
 import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
@@ -160,17 +159,7 @@ fun LiveScreen(app: AppState) {
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         items(listOf<String?>(null) + (if (favorites.isNotEmpty()) listOf(FAVORITES) else emptyList()) + groups) { g ->
-                            FilterChip(
-                                shape = Corner,
-                                selected = g == group,
-                                onClick = { group = g },
-                                label = { Text(if (g == FAVORITES) "Favourites" else g ?: "All") },
-                                modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
-                                    containerColor = Surface, labelColor = TextSecondary,
-                                ),
-                            )
+                            ZChip(if (g == FAVORITES) "Favourites" else g ?: "All", selected = g == group, tv = tv, onClick = { group = g })
                         }
                     }
                 }
