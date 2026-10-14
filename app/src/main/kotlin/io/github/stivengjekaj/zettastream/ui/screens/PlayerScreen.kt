@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.Lifecycle
 import io.github.stivengjekaj.zettastream.player.TimingRenderersFactory
 import io.github.stivengjekaj.zettastream.player.Timing
 import androidx.media3.exoplayer.DecoderReuseEvaluation
@@ -814,6 +817,14 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             player.removeListener(listener)
             player.release()
         }
+    }
+
+    // Another app in front pauses the video. The sound must not go on with no picture.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) player.pause() }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 
     // Apply the subtitle style when the view exists and each time the viewer changes it.
