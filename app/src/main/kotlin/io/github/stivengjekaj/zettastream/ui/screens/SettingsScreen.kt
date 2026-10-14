@@ -1,6 +1,17 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
+import io.github.stivengjekaj.zettastream.ui.theme.Accent
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
+import io.github.stivengjekaj.zettastream.ui.theme.Outline
+import io.github.stivengjekaj.zettastream.ui.theme.Surface
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,7 +48,6 @@ import io.github.stivengjekaj.zettastream.ui.components.PageTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
-import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
@@ -46,18 +56,27 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsRow(title: String, detail: String, tv: Boolean, onClick: () -> Unit) {
     val shape = Corner
-    Column(
+    var focused by remember { mutableStateOf(false) }
+    // As with the buttons, only the focused row is white on a TV, so the focus is clear from across the room.
+    val filled = tv && focused
+    Row(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = Sizes.gutter(tv), vertical = 5.dp)
+            .padding(horizontal = Sizes.gutter(tv), vertical = 4.dp)
+            .onFocusChanged { focused = it.isFocused }
             .focusRing(shape, scaleTo = 1.02f)
             .clip(shape)
-            .background(SurfaceHigh)
+            .background(if (filled) Accent else Surface)
+            .border(1.dp, if (filled) Accent else Outline, shape)
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, color = TextPrimary, fontSize = if (tv) 19.sp else 16.sp, fontWeight = FontWeight.SemiBold)
-        Text(detail, color = TextSecondary, fontSize = 14.sp)
+        Column(Modifier.weight(1f)) {
+            Text(title, color = if (filled) OnAccent else TextPrimary, fontSize = if (tv) 19.sp else 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(detail, color = if (filled) OnAccent.copy(alpha = 0.7f) else TextSecondary, fontSize = 14.sp)
+        }
+        Icon(Icons.Rounded.ChevronRight, null, tint = if (filled) OnAccent else TextSecondary)
     }
 }
 
