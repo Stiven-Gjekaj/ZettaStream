@@ -12,6 +12,16 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.9.0 (2026-10-14)
+
+- Install updates from inside the app: Home and Settings show "Install the
+  update" when a new version is out. Android asks one time to allow it.
+- Unfinished titles show in the Play next row of the TV home screen.
+- Voice search: the Voice button, or the Search key of the remote on the
+  search screen.
+- The TV switches to the frame rate of the video, such as 24 Hz for a film.
+  Turn it off in Settings.
+
 ## 0.8.0 (2026-10-14)
 
 - OpenSubtitles gives subtitles for anime from Kitsu. The app asks with the
