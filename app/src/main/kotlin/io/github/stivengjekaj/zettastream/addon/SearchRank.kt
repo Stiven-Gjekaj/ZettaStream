@@ -14,35 +14,57 @@ object SearchRank {
      * [answers] has one list for each addon, in the order of the source list.
      * Two entries are one title when they have the same ID or IMDb ID, or the same
      * name, kind, and first year. The entry with an IMDb ID stays, because most
-     * stream addons know that ID.
+     * stream addons know that ID. Each result is looked up in tables, not compared
+     * with each other result, so a long list stays fast.
      */
     fun merge(query: String, answers: List<List<MetaPreview>>): List<MetaPreview> {
+        val names = HashMap<String, String>()
+        fun norm(text: String) = names.getOrPut(text) { normalize(text) }
         val entries = mutableListOf<Entry>()
-        var order = 0
+        val byId = HashMap<String, Entry>()
+        val byImdb = HashMap<String, Entry>()
+        val byName = HashMap<String, Entry>()
+        fun nameKey(m: MetaPreview) = Display.year(m.releaseInfo)?.let { "${kind(m)}|${norm(m.name)}|$it" }
+        fun index(entry: Entry, m: MetaPreview) {
+            byId[m.id] = entry
+            imdb(m)?.let { byImdb.putIfAbsent(it, entry) }
+            nameKey(m)?.let { byName.putIfAbsent(it, entry) }
+        }
         for (answer in answers) {
             for (meta in answer.distinctBy { it.type + it.id }) {
-                val same = entries.firstOrNull { sameTitle(it.meta, meta) }
+                val i = imdb(meta)
+                val byNameMatch = nameKey(meta)?.let { byName[it] }
+                // A match by name only counts when the IMDb IDs do not say that the titles differ.
+                val same = byId[meta.id] ?: i?.let { byImdb[it] }
+                    ?: byNameMatch?.takeIf { e -> imdb(e.meta).let { it == null || i == null } }
                 if (same == null) {
-                    entries += Entry(meta, 1, order++)
+                    val entry = Entry(meta, 1, entries.size)
+                    entries += entry
+                    index(entry, meta)
                 } else {
                     same.sources++
-                    if (!same.meta.id.startsWith("tt") && imdb(meta) != null && meta.id.startsWith("tt")) same.meta = fill(meta, same.meta)
+                    if (!same.meta.id.startsWith("tt") && meta.id.startsWith("tt")) same.meta = fill(meta, same.meta)
                     else same.meta = fill(same.meta, meta)
+                    index(same, meta)
                 }
             }
         }
-        return entries
-            .sortedWith(compareByDescending<Entry> { score(query, it.meta) }.thenByDescending { it.sources }.thenBy { it.order })
-            .map { it.meta }
+        // The score of each entry is found one time, not in each comparison of the sort.
+        val q = norm(query)
+        val scored = entries.map { it to score(q, it.meta, ::norm) }
+        return scored
+            .sortedWith(compareByDescending<Pair<Entry, Int>> { it.second }.thenByDescending { it.first.sources }.thenBy { it.first.order })
+            .map { it.first.meta }
     }
 
     /** How well the name of [meta] matches [query]: 100 for the same name, then less. */
-    fun score(query: String, meta: MetaPreview): Int {
-        val q = normalize(query)
+    fun score(query: String, meta: MetaPreview): Int = score(normalize(query), meta, ::normalize)
+
+    private fun score(q: String, meta: MetaPreview, norm: (String) -> String): Int {
         if (q.isEmpty()) return 0
         val words = q.split(' ')
         return (listOf(meta.name) + meta.aliases).maxOf { name ->
-            val n = normalize(name)
+            val n = norm(name)
             val nameWords = n.split(' ')
             when {
                 n == q -> 100
@@ -55,18 +77,12 @@ object SearchRank {
         }
     }
 
-    fun normalize(text: String): String =
-        Normalizer.normalize(text, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
-            .lowercase().replace("&", " and ").replace(Regex("[^\\p{L}\\p{N}]+"), " ").trim()
+    private val marks = Regex("\\p{M}+")
+    private val signs = Regex("[^\\p{L}\\p{N}]+")
 
-    private fun sameTitle(a: MetaPreview, b: MetaPreview): Boolean {
-        if (a.id == b.id) return true
-        val ia = imdb(a)
-        val ib = imdb(b)
-        if (ia != null && ib != null) return ia == ib
-        return kind(a) == kind(b) && normalize(a.name) == normalize(b.name) &&
-            Display.year(a.releaseInfo) != null && Display.year(a.releaseInfo) == Display.year(b.releaseInfo)
-    }
+    fun normalize(text: String): String =
+        Normalizer.normalize(text, Normalizer.Form.NFD).replace(marks, "")
+            .lowercase().replace("&", " and ").replace(signs, " ").trim()
 
     private fun imdb(m: MetaPreview): String? = m.id.takeIf { it.startsWith("tt") } ?: m.imdbId?.takeIf { it.startsWith("tt") }
 
