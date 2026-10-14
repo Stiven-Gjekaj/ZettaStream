@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -197,7 +198,8 @@ private fun ChannelRow(channel: Channel, guide: Guide, now: Long, favorite: Bool
             .onFocusChanged { if (it.isFocused) onFocus() }
             .focusRing(shape, scaleTo = 1.02f)
             .clip(shape)
-            .background(SurfaceHigh.copy(alpha = 0.6f))
+            .background(Surface)
+            .border(1.dp, Outline, shape)
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
