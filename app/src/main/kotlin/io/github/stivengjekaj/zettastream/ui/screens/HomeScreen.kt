@@ -75,6 +75,8 @@ fun HomeScreen(app: AppState) {
     fun pick(metas: List<MetaPreview>) = metas.filter { it.background != null }.take(6)
     val cachedFeatured = remember(firstRow?.key) { firstRow?.let { c.addons.cachedCatalog(it) }?.let(::pick).orEmpty() }
     val featured by produceState(cachedFeatured, firstRow?.key) {
+        // A new first row, for example after a filter, starts from its own cached titles.
+        value = cachedFeatured
         val row = firstRow ?: return@produceState
         if (value.isEmpty()) value = pick(runCatching { c.addons.catalog(row) }.getOrDefault(emptyList()))
     }
