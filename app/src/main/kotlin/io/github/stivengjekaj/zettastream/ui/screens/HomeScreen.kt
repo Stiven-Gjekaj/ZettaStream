@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import io.github.stivengjekaj.zettastream.update.UpdateState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,13 +79,7 @@ fun HomeScreen(app: AppState) {
             }
         }
         if (latest != null && UpdateChecker.isNewer(latest, BuildConfig.VERSION_NAME)) {
-            item {
-                Message(
-                    "Version $latest is available",
-                    "Open Downloader and enter the code ${UpdateChecker.DOWNLOADER_CODE}",
-                    tv,
-                )
-            }
+            item { UpdateBanner(app, latest) }
         }
         if (types.size > 1) {
             item {
@@ -180,4 +177,31 @@ private fun CatalogRowView(app: AppState, row: CatalogRow, above: List<CatalogRo
     SectionTitle(row.title, tv, detail = "${typeLabel(row.catalog.type)} from ${row.addon.name}")
     if (list == null) PlaceholderRow(tv)
     else PosterRow(list, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = row.key)
+}
+
+/** Tells that a new version is out, and installs it with one button. */
+@Composable
+fun UpdateBanner(app: AppState, latest: String) {
+    val tv = app.isTv
+    val installer = app.container.installer
+    val state by installer.updates.collectAsState()
+    val scope = rememberCoroutineScope()
+    // The message has its own side space. The button takes the same space.
+    Column {
+        Message("Version $latest is available", updateText(state), tv)
+        ZButton(
+            onClick = { scope.launch { installer.install() } },
+            tv = tv,
+            modifier = Modifier.padding(start = Sizes.gutter(tv), bottom = 8.dp),
+        ) { Text(if (state is UpdateState.NeedsPermission) "Allowed? Install now" else "Install the update") }
+    }
+}
+
+/** The text for each step of an update. */
+fun updateText(state: UpdateState): String = when (state) {
+    UpdateState.Idle -> "Install it here, or open Downloader and enter the code ${UpdateChecker.DOWNLOADER_CODE}"
+    is UpdateState.Downloading -> "Downloading: ${state.percent}%"
+    UpdateState.Installing -> "Android asks you to confirm the update"
+    UpdateState.NeedsPermission -> "Allow ZettaStream to install apps in the screen that opened, then press Back and install again"
+    is UpdateState.Failed -> "The update did not install (${state.reason}). Try again, or use Downloader with the code ${UpdateChecker.DOWNLOADER_CODE}"
 }

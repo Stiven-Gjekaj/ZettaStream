@@ -124,7 +124,15 @@ fun SettingsScreen(app: AppState) {
         item { SettingsRow("Remote control test", "Shows the code of each button that you press", tv) { app.open(Screen.KeyTest) } }
         item { SettingsRow("Clear the watch history", "Removes the progress of each video. The watchlist stays.", tv) { confirmClear = true } }
         item {
-            SettingsRow("Check for updates", update ?: "Version ${BuildConfig.VERSION_NAME}", tv) {
+            val latest = app.latestVersion
+            val newer = latest != null && UpdateChecker.isNewer(latest, BuildConfig.VERSION_NAME)
+            val installState by c.installer.updates.collectAsState()
+            SettingsRow(
+                if (newer) "Install version $latest" else "Check for updates",
+                if (newer) updateText(installState) else update ?: "Version ${BuildConfig.VERSION_NAME}",
+                tv,
+            ) {
+                if (newer) { scope.launch { c.installer.install() }; return@SettingsRow }
                 update = "Checking"
                 scope.launch {
                     val latest = c.updates.latestVersion()
