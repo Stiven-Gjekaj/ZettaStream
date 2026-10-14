@@ -115,6 +115,7 @@ These screens are from the Android TV emulator and a phone emulator.
   watchlist, and settings
 - A "New episodes" row for the shows that you follow
 - A trailer, the cast, and "More like this" on each title page
+- "Explore more" at the end of each row opens all of its titles in a grid
 - On a phone, the video goes on in a small window when you leave the app
 - Live TV from M3U playlists, with now and next from an XMLTV guide,
   favourite channels, and a guide grid
@@ -217,7 +218,7 @@ torrent addon's settings also changes its torrents into HTTP links.
 | Back | Go back. Leave the icon bar | Leave the player |
 | Menu, `0` | Go into the icon bar, or leave it | Open or close the options |
 | Hold OK | | Open the options |
-| `1` to `5` | Home, Search, Library, Settings, Live TV | `1` to `9`: go to 10% to 90% |
+| `1` to `5` | Home, Search, Library, Live TV, Settings | `1` to `9`: go to 10% to 90% |
 | Info | Open the focused title | Show the title and the time |
 | Guide | Live TV | |
 | Red | Add to the watchlist, or remove | |
