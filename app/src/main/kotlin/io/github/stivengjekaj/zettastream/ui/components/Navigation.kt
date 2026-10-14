@@ -1,5 +1,10 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.Key
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
@@ -105,24 +110,30 @@ fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
                 }
             }
             .focusGroup()
+            // Right goes back to the item of the screen that had the focus, or to the screen when that item is gone.
+            .onPreviewKeyEvent {
+                if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) { app.leaveRail(); true } else false
+            }
             .padding(vertical = 24.dp, horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text("Z", color = TextPrimary, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 14.dp, bottom = 20.dp))
-        val (bottom, top) = NavItems.withIndex().partition { it.value.screen == Screen.Settings }
+        // Settings sits at the bottom. Up and Down follow the order on the screen.
+        val (bottom, top) = NavItems.indices.partition { NavItems[it].screen == Screen.Settings }
+        val shown = top + bottom
         (top + listOf(null) + bottom).forEach { entry ->
             if (entry == null) { Spacer(Modifier.weight(1f)); return@forEach }
-            val (index, item) = entry
+            val index = entry
+            val item = NavItems[index]
+            val place = shown.indexOf(index)
             val active = item.screen == current
             Row(
                 Modifier
                     .fillMaxWidth()
                     .focusRequester(items[index])
                     .focusProperties {
-                        up = if (index > 0) items[index - 1] else FocusRequester.Cancel
-                        down = if (index < items.lastIndex) items[index + 1] else FocusRequester.Cancel
-                        // Right goes back to the item of the screen that had the focus.
-                        right = FocusReturn.last ?: FocusRequester.Default
+                        up = if (place > 0) items[shown[place - 1]] else FocusRequester.Cancel
+                        down = if (place < shown.lastIndex) items[shown[place + 1]] else FocusRequester.Cancel
                     }
                     .focusRing(Corner, scaleTo = 1.04f, rememberForReturn = false)
                     .clip(Corner)
