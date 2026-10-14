@@ -76,6 +76,8 @@ fun HeroBanner(
     onWatchlist: (MetaPreview) -> Unit,
     takeFocus: Boolean = false,
     onFocusTaken: () -> Unit = {},
+    onFocused: () -> Unit = {},
+    onCoverLoaded: () -> Unit = {},
 ) {
     if (items.isEmpty()) return
     val buttons = remember { List(3) { FocusRequester() } }
@@ -101,7 +103,10 @@ fun HeroBanner(
     val meta = items[index % items.size]
     Box(Modifier.fillMaxWidth().height(if (tv) 470.dp else 320.dp)) {
         Crossfade(meta, label = "banner") { m ->
-            AsyncImage(m.background ?: m.poster, null, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize())
+            AsyncImage(
+                m.background ?: m.poster, null, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize(),
+                onSuccess = { onCoverLoaded() }, onError = { onCoverLoaded() },
+            )
         }
         // The text stays easy to read on any art.
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Background.copy(alpha = 0.92f), 0.55f to Background.copy(alpha = 0.35f), 1f to Background.copy(alpha = 0f))))
@@ -122,7 +127,7 @@ fun HeroBanner(
                 Text(it, color = TextPrimary.copy(alpha = 0.85f), fontSize = if (tv) 16.sp else 14.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
             Row(
-                Modifier.onFocusChanged { focused = it.hasFocus },
+                Modifier.onFocusChanged { focused = it.hasFocus; if (it.hasFocus) onFocused() },
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

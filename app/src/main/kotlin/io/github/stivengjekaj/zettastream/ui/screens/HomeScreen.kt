@@ -1,5 +1,13 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.draw.alpha
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.ui.components.HeroBanner
 import io.github.stivengjekaj.zettastream.update.UpdateState
@@ -83,8 +91,22 @@ fun HomeScreen(app: AppState) {
 
     // The banner takes the focus one time only. After Back, the focus returns to the item that had it.
     var bannerFocused by rememberSaveable { mutableStateOf(false) }
+    // Home shows when the art of the banner is there, so that the screen does not jump. A slow or
+    // missing picture waits COVER_WAIT at most.
+    var coverReady by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) { delay(COVER_WAIT); coverReady = true }
+    if (sources.isEmpty() || (!addonState.loading && rows.isEmpty())) coverReady = true
+    val list = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
-    LazyColumn(Modifier.fillMaxSize(), state = rememberLazyListState(), contentPadding = PaddingValues(bottom = 48.dp)) {
+    if (!coverReady) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Accent) }
+    }
+    LazyColumn(
+        Modifier.fillMaxSize().alpha(if (coverReady) 1f else 0f),
+        state = list,
+        contentPadding = PaddingValues(bottom = 48.dp),
+    ) {
         if (featured.isNotEmpty()) {
             item(key = "banner") {
                 HeroBanner(
@@ -99,6 +121,9 @@ fun HomeScreen(app: AppState) {
                     onWatchlist = { app.toggleWatchlist(it) },
                     takeFocus = !bannerFocused,
                     onFocusTaken = { bannerFocused = true },
+                    // The whole banner shows when one of its buttons has the focus, not only its lower part.
+                    onFocused = { scope.launch { withFrameNanos { }; list.animateScrollToItem(0) } },
+                    onCoverLoaded = { coverReady = true },
                 )
             }
         } else {
@@ -229,3 +254,6 @@ fun updateText(state: UpdateState): String = when (state) {
     UpdateState.NeedsPermission -> "Allow ZettaStream to install apps in the screen that opened, then press Back and install again"
     is UpdateState.Failed -> "The update did not install (${state.reason}). Try again, or use Downloader with the code ${UpdateChecker.DOWNLOADER_CODE}"
 }
+
+/** The longest wait for the art of the banner before Home shows. */
+private const val COVER_WAIT = 6_000L
