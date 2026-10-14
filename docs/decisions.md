@@ -499,3 +499,37 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - The phone page of Settings, Sources has a link to these events. The page
   needs the token of the QR code, like the source list.
 - Nothing goes to a server, and nothing goes to a file.
+
+## 2026-10-14: Updates inside the app
+
+- When a newer release is out, Home and Settings show "Install the update".
+  The app downloads the APK of the newest release and gives it to the
+  package installer of Android, which asks the viewer to confirm.
+- Android asks one time if ZettaStream can install apps. Android installs an
+  update only when its signature is the same as the signature of the app.
+- The Downloader code stays as a second way.
+
+## 2026-10-14: Play next on the TV home screen
+
+- The titles that the viewer did not finish show in the "Play next" row of
+  the home screen of the TV, at most 10, newest first.
+- A `zettastream://title` link opens the title in the app.
+- When the viewer removes a title from the row, the app does not add it
+  again until the viewer plays it again.
+
+## 2026-10-14: Voice search
+
+- The search screen has a Voice button. On that screen, the Search key of the
+  remote control also starts voice search. The speech service of the device
+  turns the words into text.
+
+## 2026-10-14: Frame rate
+
+- On a TV, the player switches the display to a mode of the same size with
+  the lowest refresh rate that is a whole multiple of the frame rate of the
+  video, such as 24 Hz for a film or 50 Hz for 25 fps. The mode goes back
+  after playback.
+- A video that does not tell its frame rate gets it from the times of its
+  first 48 frames.
+- A setting turns this off. The screen can go black for a second when the
+  mode changes.
