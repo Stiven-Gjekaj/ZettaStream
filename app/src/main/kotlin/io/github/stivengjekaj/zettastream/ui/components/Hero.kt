@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.ui.FocusMemory
-import io.github.stivengjekaj.zettastream.ui.typeLabel
+import io.github.stivengjekaj.zettastream.addon.Display
 import io.github.stivengjekaj.zettastream.ui.theme.Background
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Outline
@@ -113,7 +113,7 @@ fun HeroBanner(
                 Text(meta.name, color = TextPrimary, fontSize = if (tv) 44.sp else 28.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                (listOfNotNull(meta.releaseInfo, typeLabel(meta.type)) + meta.genres.take(3)).forEach { FactChip(it) }
+                (listOfNotNull(Display.year(meta.releaseInfo), Display.kind(meta.type)) + meta.genres.take(3)).forEach { FactChip(it) }
             }
             meta.description?.let {
                 Text(it, color = TextPrimary.copy(alpha = 0.85f), fontSize = if (tv) 16.sp else 14.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
