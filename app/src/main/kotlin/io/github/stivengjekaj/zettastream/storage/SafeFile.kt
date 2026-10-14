@@ -15,6 +15,8 @@ class SafeFile(private val file: File) {
 
     suspend fun write(text: String) = lock.withLock {
         withContext(Dispatchers.IO) {
+            // The folder of a new profile does not exist before its first write.
+            file.parentFile?.mkdirs()
             val temp = File(file.parentFile, file.name + ".tmp")
             temp.writeText(text)
             temp.renameTo(file)

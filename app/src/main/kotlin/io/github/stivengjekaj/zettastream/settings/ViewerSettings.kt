@@ -61,9 +61,9 @@ data class ViewerSettings(
 )
 
 /** Keeps the viewer settings in the private storage of the app. */
-class SettingsStore(private val file: File) {
+class SettingsStore(private var file: File) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
-    private val writer = SafeFile(file)
+    private var writer = SafeFile(file)
     private val state = MutableStateFlow(read())
     val settings: StateFlow<ViewerSettings> = state.asStateFlow()
 
@@ -71,6 +71,13 @@ class SettingsStore(private val file: File) {
         val next = change(state.value)
         state.value = next
         writer.write(json.encodeToString(ViewerSettings.serializer(), next))
+    }
+
+    /** Reads the settings of another profile from [next]. Later changes go to that file. */
+    fun switchTo(next: File) {
+        file = next
+        writer = SafeFile(next)
+        state.value = read()
     }
 
     private fun read(): ViewerSettings = runCatching {

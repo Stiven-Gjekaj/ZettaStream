@@ -35,9 +35,9 @@ data class LibraryData(
 )
 
 /** Keeps the watchlist and the watch history on the device only. */
-class Library(private val file: File, private val clock: () -> Long = System::currentTimeMillis) {
+class Library(private var file: File, private val clock: () -> Long = System::currentTimeMillis) {
     private val json = Json { ignoreUnknownKeys = true }
-    private val writer = SafeFile(file)
+    private var writer = SafeFile(file)
     private val state = MutableStateFlow(read())
     val data: StateFlow<LibraryData> = state.asStateFlow()
 
@@ -74,6 +74,13 @@ class Library(private val file: File, private val clock: () -> Long = System::cu
 
     /** The newest unfinished video of each title, newest first. */
     fun continueWatching(): List<Progress> = continueWatching(state.value)
+
+    /** Reads the library of another profile from [next]. Later changes go to that file. */
+    fun switchTo(next: File) {
+        file = next
+        writer = SafeFile(next)
+        state.value = read()
+    }
 
     /** Replaces the whole library, for a restore from a backup. */
     suspend fun replace(data: LibraryData) = update { data }
