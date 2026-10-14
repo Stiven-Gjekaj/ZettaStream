@@ -154,11 +154,11 @@ fun HeroBanner(
     }
 }
 
-/** A small fact, such as the year or a genre, in a thin frame. */
+/** A small fact, such as the year or a genre, in a thin frame. A dark fill keeps it easy to read on bright art. */
 @Composable
 fun FactChip(text: String) {
     Text(
-        text, color = TextSecondary, fontSize = 13.sp, maxLines = 1,
-        modifier = Modifier.clip(Corner).border(1.dp, Outline, Corner).padding(horizontal = 10.dp, vertical = 4.dp),
+        text, color = TextPrimary.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 1,
+        modifier = Modifier.clip(Corner).background(Background.copy(alpha = 0.6f)).border(1.dp, Outline, Corner).padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
