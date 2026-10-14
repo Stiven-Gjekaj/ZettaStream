@@ -19,7 +19,7 @@ data class Programme(
 /** The programmes of each channel, in the order of their start times. */
 class Guide(private val byChannel: Map<String, List<Programme>>) {
     fun programmes(channelId: String?): List<Programme> =
-        channelId?.let { byChannel[it] }.orEmpty()
+        channelId?.let { byChannel[Xmltv.channelKey(it)] }.orEmpty()
 
     /** Finds the programme that is on now and the one after it. */
     fun nowAndNext(channelId: String?, now: Long): Pair<Programme?, Programme?> {
@@ -48,7 +48,14 @@ object Xmltv {
      * Reads [input]. A guide file can be very large, so this keeps only the
      * channels in [channelIds] and only the programmes between [from] and [to].
      */
+    /**
+     * A playlist and a guide can write one channel in two forms, such as
+     * `News24.al@SD` and `News.24.al`. Both become `news24al`.
+     */
+    fun channelKey(id: String): String = id.substringBefore('@').lowercase().filter { it.isLetterOrDigit() }
+
     fun parse(input: InputStream, channelIds: Set<String>?, from: Long, to: Long): Guide {
+        val wanted = channelIds?.map(::channelKey)?.toSet()
         val parser = XmlPullParserFactory.newInstance().newPullParser()
         parser.setInput(input, null)
         val result = HashMap<String, MutableList<Programme>>()
@@ -74,8 +81,9 @@ object Xmltv {
                 }
             } else if (event == XmlPullParser.END_TAG && parser.name == "programme") {
                 val id = channel
-                if (id != null && (channelIds == null || id in channelIds) && stop > from && start < to && start > 0) {
-                    result.getOrPut(id) { mutableListOf() } += Programme(id, title.orEmpty(), start, stop, description)
+                val key = id?.let(::channelKey)
+                if (id != null && key != null && (wanted == null || key in wanted) && stop > from && start < to && start > 0) {
+                    result.getOrPut(key) { mutableListOf() } += Programme(id, title.orEmpty(), start, stop, description)
                 }
                 channel = null
             }

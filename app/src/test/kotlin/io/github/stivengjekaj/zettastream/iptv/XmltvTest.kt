@@ -57,4 +57,15 @@ class XmltvTest {
         assertNull(earlyNow)
         assertEquals("Morning", earlyNext?.title)
     }
+
+    @Test
+    fun aChannelMatchesInAnotherForm() {
+        val text = """
+            <tv><programme start="20261008100000 +0000" stop="20261008110000 +0000" channel="News.24.al"><title>Lajme</title></programme></tv>
+        """.trimIndent()
+        val guide = Xmltv.parse(text.byteInputStream(), setOf("News24.al@SD"), ms("2026-10-08T00:00:00Z"), ms("2026-10-09T00:00:00Z"))
+        assertEquals(listOf("Lajme"), guide.programmes("News24.al@SD").map { it.title })
+        assertEquals("news24al", Xmltv.channelKey("News.24.al"))
+    }
 }
+
