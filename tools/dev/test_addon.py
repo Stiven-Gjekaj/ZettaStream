@@ -5,6 +5,8 @@ from Mux, the same stream at a link that does not end in .m3u8 (as many proxy
 links do), the Big Buck Bunny torrent (Blender Foundation, CC BY 3.0), and a
 link to a web page that is not a video. It says 1080p, so that it ranks first
 and the player must try the next stream.
+It also gives one English subtitle for each ID. Each cue lasts one second and
+names its own second, such as "Second 12", so a screen shows the subtitle delay.
 The emulator reaches it at http://10.0.2.2:7799/manifest.json.
 
 Run: python3 tools/dev/test_addon.py
@@ -23,7 +25,7 @@ DELAY = float(sys.argv[1]) if len(sys.argv) > 1 else 0
 MANIFEST = {
     "id": "test.zetta", "name": "Test streams", "version": "1.0.0",
     "types": ["movie", "series"], "idPrefixes": ["tt", "kitsu"],
-    "resources": ["stream"], "catalogs": [],
+    "resources": ["stream", "subtitles"], "catalogs": [],
 }
 STREAMS = {"streams": [
     {"url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
@@ -40,6 +42,16 @@ STREAMS = {"streams": [
 ]}
 
 
+SUBTITLES = {"subtitles": [{"id": "test-seconds", "url": "http://10.0.2.2:7799/seconds.srt", "lang": "eng"}]}
+
+
+def seconds_srt(count=3600):
+    """One cue for each second, with the second as its text."""
+    def at(s):
+        return "%02d:%02d:%02d,000" % (s // 3600, s // 60 % 60, s % 60)
+    return "".join("%d\n%s --> %s\nSecond %d\n\n" % (i + 1, at(i), at(i + 1), i) for i in range(count))
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/proxy/master.txt":
@@ -52,6 +64,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(text.encode())
             return
+        if self.path == "/seconds.srt":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/x-subrip")
+            self.end_headers()
+            self.wfile.write(seconds_srt().encode())
+            return
         if self.path == "/page.html":
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
@@ -60,6 +78,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         if self.path.endswith("/manifest.json"):
             body = MANIFEST
+        elif self.path.startswith("/subtitles/"):
+            body = SUBTITLES
         elif self.path.startswith("/stream/"):
             time.sleep(DELAY)
             body = STREAMS
