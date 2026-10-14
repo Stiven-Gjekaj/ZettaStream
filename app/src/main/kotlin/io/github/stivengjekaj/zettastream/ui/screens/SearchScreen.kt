@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
 import androidx.compose.runtime.DisposableEffect
@@ -51,6 +52,7 @@ import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.PosterCard
+import io.github.stivengjekaj.zettastream.ui.components.PageTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
@@ -102,8 +104,9 @@ fun SearchScreen(app: AppState) {
     }
 
     Column(Modifier.fillMaxSize().padding(top = if (tv) 32.dp else 16.dp)) {
+        PageTitle("Search", tv, Modifier.padding(bottom = 8.dp))
         Row(
-            Modifier.fillMaxWidth().padding(start = Sizes.gutter(tv), end = if (tv) 150.dp else Sizes.gutter(tv)),
+            Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -124,7 +127,6 @@ fun SearchScreen(app: AppState) {
                 ),
                 // The field draws its own border when it has the focus, so it has no focus ring.
                 // A text field keeps the Down key, so send it on to the results.
-                // On a TV, the Menu button is at the top right, so the field stops before it.
                 modifier = Modifier.weight(1f).onPreviewKeyEvent {
                     if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
                         keyboard?.hide()
@@ -140,8 +142,17 @@ fun SearchScreen(app: AppState) {
             }
         }
         if (searching) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 8.dp))
-        if (!searching && query.isNotBlank() && results.isEmpty()) {
-            Message("Nothing found", "No catalog with search found \"$query\".", tv)
+        when {
+            !searching && query.isNotBlank() && results.isEmpty() -> Message("Nothing found", "No catalog with search found \"$query\".", tv)
+            query.isBlank() -> Message(
+                "Find a film, a series, or an anime",
+                if (tv) "Type a title and press Search. Or press the Search key of the remote and say the title." else "Type a title and press Search.",
+                tv,
+            )
+            results.isNotEmpty() -> Text(
+                "${count(results.size, "result")} for \"$query\"", color = TextSecondary, fontSize = 14.sp,
+                modifier = Modifier.padding(start = Sizes.gutter(tv), end = Sizes.gutter(tv), top = 12.dp),
+            )
         }
         LazyVerticalGrid(
             columns = GridCells.Adaptive(Sizes.posterWidth(tv) + 8.dp),
