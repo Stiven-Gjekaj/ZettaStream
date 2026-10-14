@@ -12,6 +12,25 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.11.0 (2026-10-14)
+
+- A new interface after Miruro 2.0, in black and white, with the Karla font.
+- A slim icon bar at the left of the TV screen. A fast run of Left presses
+  stops at the edge of a row. A new Left press goes into the bar.
+- Home starts with a large banner of featured titles. Each card shows the
+  kind, the year, and the rating.
+- The title page shows the art, the facts, a grid of episode cards, and an
+  About table.
+- One style for the chips, the settings rows, the channel rows, and the
+  stream rows. Search has a hint and a count of the results.
+- Fixes: the focus after a number key, after Back from a Continue card, and
+  after the start. Up and Down in the icon bar follow the screen.
+- The update keeps running when you leave the screen, and a TV that cannot
+  allow installs shows the Downloader code.
+- A file that is not a backup no longer clears the library.
+- Two feeds of one channel, such as East and West, keep their own guide.
+- The phone page accepts a large body only with the token of the QR code.
+
 ## 0.10.0 (2026-10-14)
 
 - Live TV: Red marks a favourite channel, a "Favourites" chip shows them,

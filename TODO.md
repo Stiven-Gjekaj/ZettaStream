@@ -29,19 +29,21 @@ with the app.
 
 ### Phase 2: hardening
 
-- [ ] Review the code that changed since the last review.
-- [ ] Compare versions such as `1.0.0-rc1` and `1.0.0` correctly, or use
-      0.11.x for test releases.
-- [ ] Measure the size of the release APK and the memory on the TV.
-- [ ] Remove the logs that only debug builds need.
+- [x] Review the code that changed since the last review (0.8.0 to
+      0.11.0). The fixes are in 0.11.0.
+- [x] Compare versions such as `1.0.0-rc1` and `1.0.0` correctly.
+- [x] Measure the size of the release APK and the memory. On the emulator,
+      0.11.0 is 14.1 MB. It uses 58 MB on Home and 146 MB while it plays
+      720p (PSS). Measure again on the TV in phase 1.
+- [x] Remove the logs that only debug builds need.
 
 ### Phase 3: interface overhaul
 
-- [ ] Follow the layout of Miruro 2.0, and keep the black and white colors.
+- [x] Follow the layout of Miruro 2.0, and keep the black and white colors.
 
 ### Phase 4: release
 
-- [ ] Stop new features. Release the last fixes as 0.11.x.
+- [ ] Stop new features. Release the last fixes as 0.11.x. (0.11.0 is out.)
 - [ ] Update the readme with screens of the TV, write the 1.0.0 changelog,
       add the version rule to the decisions, and check the security policy.
 - [ ] Tag v1.0.0, check the APK and its signature, and update to it from
