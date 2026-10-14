@@ -13,6 +13,12 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.1.1 (2026-10-14)
+
+- A startup profile: Android compiles the code for the start and for Home
+  ahead of time.
+- Cards download a smaller poster, and the focus ring does less work.
+
 ## 1.1.0 (2026-10-14)
 
 - Home has a "Your watchlist" row under Continue watching.
