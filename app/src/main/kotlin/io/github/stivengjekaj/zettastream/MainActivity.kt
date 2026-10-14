@@ -154,7 +154,7 @@ private fun Root(app: AppState, finish: () -> Unit) {
     LaunchedEffect(screen) {
         if (app.focusContentSoon) try {
             app.focusContentSoon = false
-            // The item that had the focus was on the screen before. From the icon bar, Right goes to the new screen.
+            // The item that had the focus was on the screen before.
             // When the old item is gone and nothing has the focus, the new screen takes it. A screen that
             // still loads, such as Live TV, has nothing to focus yet, so this tries again until a key press.
             FocusReturn.last = null
@@ -163,8 +163,9 @@ private fun Root(app: AppState, finish: () -> Unit) {
             withFrameNanos { }
             repeat(FOCUS_TRIES) {
                 if (app.contentFocused || app.keyPresses != keys) return@LaunchedEffect
-                if (app.railFocused) runCatching { focusManager.moveFocus(FocusDirection.Right) }
-                else runCatching { app.content.requestFocus() }
+                // A Right move from the bar goes to the item next to it, which can be far down the screen.
+                // The new screen starts at its first item.
+                runCatching { app.content.requestFocus() }
                 delay(FOCUS_RETRY)
             }
         } finally {
