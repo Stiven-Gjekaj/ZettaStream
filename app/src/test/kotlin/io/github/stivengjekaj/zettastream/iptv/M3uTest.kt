@@ -61,4 +61,23 @@ class M3uTest {
         assertEquals("A, B", playlist.channels[0].group)
         assertEquals("Name, with comma", playlist.channels[0].name)
     }
+
+    @Test
+    fun copiesWithOneIdAreFavouritesAlone() {
+        val channels = listOf(
+            Channel("News HD", "https://s.test/hd.m3u8", tvgId = "news.al"),
+            Channel("News SD", "https://s.test/sd.m3u8", tvgId = "news.al"),
+            Channel("Music", "https://s.test/music.m3u8", tvgId = "music.al"),
+            Channel("Plain", "https://s.test/plain.m3u8"),
+        )
+        assertEquals(
+            mapOf(
+                "https://s.test/hd.m3u8" to "https://s.test/hd.m3u8",
+                "https://s.test/sd.m3u8" to "https://s.test/sd.m3u8",
+                "https://s.test/music.m3u8" to "music.al",
+                "https://s.test/plain.m3u8" to "https://s.test/plain.m3u8",
+            ),
+            favoriteKeys(channels),
+        )
+    }
 }

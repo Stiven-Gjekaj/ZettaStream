@@ -18,6 +18,16 @@ data class Channel(
     val key: String get() = tvgId?.takeIf { it.isNotBlank() } ?: url
 }
 
+/**
+ * The favourite key of each channel, by its link. A channel uses its guide ID when no other
+ * channel in the list has the same ID, because the ID stays when the link changes. Copies such
+ * as an HD and an SD channel with one ID use their links, so that each one is a favourite alone.
+ */
+fun favoriteKeys(channels: List<Channel>): Map<String, String> {
+    val shared = channels.mapNotNull { it.tvgId?.takeIf(String::isNotBlank) }.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+    return channels.associate { it.url to (it.tvgId?.takeIf { id -> id.isNotBlank() && id !in shared } ?: it.url) }
+}
+
 data class Playlist(
     val channels: List<Channel>,
     val guideUrls: List<String>,

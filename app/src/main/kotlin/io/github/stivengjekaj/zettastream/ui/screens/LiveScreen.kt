@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import io.github.stivengjekaj.zettastream.iptv.Channel
+import io.github.stivengjekaj.zettastream.iptv.favoriteKeys
 import io.github.stivengjekaj.zettastream.iptv.Guide
 import io.github.stivengjekaj.zettastream.source.SourceKind
 import io.github.stivengjekaj.zettastream.ui.AppState
@@ -97,6 +98,8 @@ fun LiveScreen(app: AppState) {
     var focusedChannel by remember { mutableStateOf<Channel?>(null) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) { c.live.ensureLoaded() }
+    val favoriteKeys = remember(state.channels) { favoriteKeys(state.channels) }
+    fun Channel.favoriteKey() = favoriteKeys[url] ?: key
 
     // Red adds the focused channel to the favourites, or removes it.
     DisposableEffect(Unit) {
@@ -104,7 +107,7 @@ fun LiveScreen(app: AppState) {
             RemoteAction.Watchlist to {
                 focusedChannel?.let { channel ->
                     scope.launch {
-                        val added = c.library.toggleFavoriteChannel(channel.key)
+                        val added = c.library.toggleFavoriteChannel(channel.favoriteKey())
                         app.toast = if (added) "Added to the favourites: ${channel.name}" else "Removed from the favourites: ${channel.name}"
                     }
                 }
@@ -116,10 +119,10 @@ fun LiveScreen(app: AppState) {
 
     val groups = remember(state.channels) { groupsOf(state.channels) }
     // The favourites come first in All, and alone in Favourites.
-    val shown = remember(state.channels, group, favorites) {
+    val shown = remember(state.channels, group, favorites, favoriteKeys) {
         when (group) {
-            FAVORITES -> state.channels.filter { it.key in favorites }
-            null -> state.channels.sortedByDescending { it.key in favorites }
+            FAVORITES -> state.channels.filter { it.favoriteKey() in favorites }
+            null -> state.channels.sortedByDescending { it.favoriteKey() in favorites }
             else -> state.channels.filter { it.group == group }
         }
     }
@@ -171,14 +174,14 @@ fun LiveScreen(app: AppState) {
             items(shown.size, key = { "guide|" + shown[it].url }) { index ->
                 val channel = shown[index]
                 GuideRow(
-                    channel, state.guide, GuideLayout.windowStart(now), now, channel.key in favorites, tv,
+                    channel, state.guide, GuideLayout.windowStart(now), now, channel.favoriteKey() in favorites, tv,
                     onFocus = { focusedChannel = channel },
                 ) { app.open(Screen.Player(LivePlayback(shown, index))) }
             }
         } else {
             items(shown.size, key = { shown[it].url }) { index ->
                 val channel = shown[index]
-                ChannelRow(channel, state.guide, now, channel.key in favorites, tv, onFocus = { focusedChannel = channel }) {
+                ChannelRow(channel, state.guide, now, channel.favoriteKey() in favorites, tv, onFocus = { focusedChannel = channel }) {
                     app.open(Screen.Player(LivePlayback(shown, index)))
                 }
             }
