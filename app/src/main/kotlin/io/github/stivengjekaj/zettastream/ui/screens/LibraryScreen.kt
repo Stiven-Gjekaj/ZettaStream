@@ -63,6 +63,7 @@ fun LibraryScreen(app: AppState) {
                                 onFocus = { app.focusedMeta = p.meta },
                                 progress = if (p.duration > 0) p.position.toFloat() / p.duration else null,
                                 caption = p.label,
+                                focusKey = "library-resume|${p.videoId}",
                             )
                         }
                     }
