@@ -153,6 +153,8 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     /** The screen part next to the icon bar. It gives the focus back to the item that had it. */
     val content = FocusRequester()
     val edgeGuard = EdgeGuard()
+    /** True from a change of screen until the new screen has the focus. The icon bar stays closed. */
+    var screenChanging by mutableStateOf(false)
     /** The number of key presses. A wait for the focus stops when the viewer presses a key. */
     var keyPresses = 0
     /** True while an item of the screen next to the icon bar has the focus. */
@@ -175,8 +177,7 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
 
     fun open(screen: Screen) {
         FocusMemory.leave(current)
-        // A main screen can open from the icon bar or from a number key. In both cases, the new screen takes the focus.
-        if (screen.isTopLevel && isTv) focusContentSoon = true
+        changeScreen()
         if (screen.isTopLevel) {
             stack.clear()
             stack.add(screen)
@@ -187,7 +188,18 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
 
     /** Replaces the current screen, for example to go to the next episode. */
     fun replace(screen: Screen) {
+        changeScreen()
         stack[stack.lastIndex] = screen
+    }
+
+    /**
+     * On a TV, the new screen takes the focus. The item that had the focus goes away with the
+     * old screen, and the focus must not stop in the icon bar on the way.
+     */
+    private fun changeScreen() {
+        if (!isTv) return
+        focusContentSoon = true
+        screenChanging = true
     }
 
     /** Goes back one step. See the Back button in docs/decisions.md. */
@@ -195,6 +207,7 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
         when {
             railFocused -> leaveRail()
             stack.size > 1 -> {
+                changeScreen()
                 stack.removeAt(stack.lastIndex)
                 FocusMemory.returnTo(current)
             }

@@ -83,7 +83,8 @@ private val RailOpenWidth = 240.dp
  */
 @Composable
 fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
-    val open = app.railFocused
+    // While a new screen opens, the focus can pass through the bar. The bar does not open for that.
+    val open = app.railFocused && !app.screenChanging
     val items = remember { List(NavItems.size) { FocusRequester() } }
     val selectedIndex = NavItems.indexOfFirst { it.screen == current }.coerceAtLeast(0)
     app.railEntry = items[selectedIndex]

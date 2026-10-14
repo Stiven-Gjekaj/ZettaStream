@@ -152,7 +152,7 @@ private fun Root(app: AppState, finish: () -> Unit) {
     val fullScreen = screen is Screen.Player
     // After a choice in the icon bar, the new screen takes the focus.
     LaunchedEffect(screen) {
-        if (app.focusContentSoon) {
+        if (app.focusContentSoon) try {
             app.focusContentSoon = false
             // The item that had the focus was on the screen before. From the icon bar, Right goes to the new screen.
             // When the old item is gone and nothing has the focus, the new screen takes it. A screen that
@@ -167,6 +167,8 @@ private fun Root(app: AppState, finish: () -> Unit) {
                 else runCatching { app.content.requestFocus() }
                 delay(FOCUS_RETRY)
             }
+        } finally {
+            app.screenChanging = false
         }
     }
     Box(Modifier.fillMaxSize().background(Background)) {
