@@ -75,6 +75,9 @@ class Library(private val file: File, private val clock: () -> Long = System::cu
     /** The newest unfinished video of each title, newest first. */
     fun continueWatching(): List<Progress> = continueWatching(state.value)
 
+    /** Replaces the whole library, for a restore from a backup. */
+    suspend fun replace(data: LibraryData) = update { data }
+
     suspend fun clearHistory() = update { it.copy(progress = emptyMap(), watched = emptySet()) }
 
     private suspend fun update(change: (LibraryData) -> LibraryData) {
