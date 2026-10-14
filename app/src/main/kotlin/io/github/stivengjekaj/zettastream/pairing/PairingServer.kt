@@ -22,10 +22,17 @@ data class HttpRequest(val method: String, val path: String, val query: Map<Stri
 
 /** Small HTTP helpers for the pairing page. They are separate so that tests can use them. */
 object PairingHttp {
-    /** A backup of a long history can be large. */
+    /** A backup of a long history can be large. Only a request with the token can send one. */
     const val MAX_BODY = 4 * 1024 * 1024
 
-    fun read(input: InputStream): HttpRequest? {
+    /** The largest body of any other request. A source list is much smaller. */
+    const val SMALL_BODY = 256 * 1024
+
+    /**
+     * Reads one request. [maxBody] gives the largest body for the method, the path,
+     * and the query, so that a request without the token cannot make the app keep 4 MB.
+     */
+    fun read(input: InputStream, maxBody: (method: String, path: String, query: Map<String, String>) -> Int = { _, _, _ -> SMALL_BODY }): HttpRequest? {
         val head = StringBuilder()
         while (!head.endsWith("\r\n\r\n")) {
             val b = input.read()
@@ -37,7 +44,10 @@ object PairingHttp {
         if (parts.size < 2) return null
         val length = lines.drop(1).firstOrNull { it.startsWith("Content-Length:", ignoreCase = true) }
             ?.substringAfter(':')?.trim()?.toIntOrNull() ?: 0
-        if (length > MAX_BODY) return null
+        val target = parts[1]
+        val path = target.substringBefore('?')
+        val query = form(target.substringAfter('?', ""))
+        if (length < 0 || length > minOf(maxBody(parts[0], path, query), MAX_BODY)) return null
         val body = ByteArray(length)
         var read = 0
         while (read < length) {
@@ -45,11 +55,10 @@ object PairingHttp {
             if (n < 0) break
             read += n
         }
-        val target = parts[1]
         return HttpRequest(
             method = parts[0],
-            path = target.substringBefore('?'),
-            query = form(target.substringAfter('?', "")),
+            path = path,
+            query = query,
             body = String(body, 0, read, Charsets.UTF_8),
         )
     }
@@ -157,6 +166,7 @@ class PairingServer(
     private var socket: ServerSocket? = null
     private var job: Job? = null
     @Volatile private var token: String = newToken()
+    private val open = java.util.concurrent.atomic.AtomicInteger(0)
 
     /** Starts the server and gives the URL to show in the QR code. */
     fun start(): String? {
@@ -167,8 +177,14 @@ class PairingServer(
         job = scope.launch(Dispatchers.IO) {
             while (isActive) {
                 val client = runCatching { server.accept() }.getOrNull() ?: break
+                // Only a few requests at a time. A device on the network cannot fill the memory with many of them.
+                if (open.incrementAndGet() > MAX_OPEN) {
+                    open.decrementAndGet()
+                    runCatching { client.close() }
+                    continue
+                }
                 // A bad request from a device on the network must not stop the app.
-                launch { runCatching { handle(client) } }
+                launch { try { runCatching { handle(client) } } finally { open.decrementAndGet() } }
             }
         }
         return "http://$address:${server.localPort}/?t=$token"
@@ -182,7 +198,10 @@ class PairingServer(
 
     private fun handle(client: Socket) = client.use { s ->
         s.soTimeout = 15_000
-        val request = PairingHttp.read(BufferedInputStream(s.getInputStream())) ?: return
+        val request = PairingHttp.read(BufferedInputStream(s.getInputStream())) { method, path, query ->
+            val valid = token.isNotEmpty() && query["t"] == token
+            if (valid && method == "POST" && path == "/backup") PairingHttp.MAX_BODY else PairingHttp.SMALL_BODY
+        } ?: return
         val out = s.getOutputStream()
         val valid = token.isNotEmpty() && request.query["t"] == token
         when {
@@ -212,6 +231,9 @@ class PairingServer(
             "ZettaStream ${io.github.stivengjekaj.zettastream.BuildConfig.VERSION_NAME}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}, Android ${android.os.Build.VERSION.RELEASE}"
 
         const val PORT = 8765
+
+        /** The most requests that the server handles at the same time. */
+        const val MAX_OPEN = 4
 
         fun newToken(): String {
             val bytes = ByteArray(9)

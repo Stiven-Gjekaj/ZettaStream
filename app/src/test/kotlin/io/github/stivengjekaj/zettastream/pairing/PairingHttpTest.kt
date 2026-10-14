@@ -26,6 +26,19 @@ class PairingHttpTest {
     @Test
     fun refusesABodyThatIsTooLarge() {
         val raw = "POST / HTTP/1.1\r\nContent-Length: ${PairingHttp.MAX_BODY + 1}\r\n\r\n"
+        assertNull(PairingHttp.read(raw.byteInputStream()) { _, _, _ -> PairingHttp.MAX_BODY })
+    }
+
+    @Test
+    fun onlyAnAllowedRequestCanSendALargeBody() {
+        val length = PairingHttp.SMALL_BODY + 1
+        val head = "POST /backup?t=tok HTTP/1.1\r\nContent-Length: $length\r\n\r\n"
+        val raw = head + "x".repeat(length)
+        val allow = { _: String, path: String, query: Map<String, String> ->
+            if (path == "/backup" && query["t"] == "tok") PairingHttp.MAX_BODY else PairingHttp.SMALL_BODY
+        }
+        assertEquals(length, PairingHttp.read(raw.byteInputStream(), allow)!!.body.length)
+        assertNull(PairingHttp.read(raw.replace("t=tok", "t=bad").byteInputStream(), allow))
         assertNull(PairingHttp.read(raw.byteInputStream()))
     }
 
