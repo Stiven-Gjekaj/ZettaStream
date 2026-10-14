@@ -39,5 +39,23 @@ class DisplayTest {
         assertEquals(null, Display.imdbAlias(meta.copy(id = "tt2560140"), "tt2560140:1:1", episodes))
         assertEquals(null, Display.imdbAlias(meta.copy(imdbId = null), "kitsu:7442:1", episodes))
     }
-}
 
+    @Test
+    fun aCardShowsTheKindAndTheFirstYear() {
+        assertEquals("Movie · 2026", Display.cardFacts("movie", "2026"))
+        assertEquals("Series · 2019", Display.cardFacts("series", "2019–2023"))
+        assertEquals("Anime · 2024", Display.cardFacts("anime", "Oct 2024"))
+        assertEquals("Channel", Display.cardFacts("tv", null))
+        assertEquals("Series", Display.cardFacts("series", "soon"))
+    }
+
+    @Test
+    fun aRatingHasOneDecimalAndOnlyAValidNumberShows() {
+        assertEquals("7.4", Display.rating("7.4"))
+        assertEquals("8.0", Display.rating(" 8 "))
+        assertEquals(null, Display.rating("0"))
+        assertEquals(null, Display.rating("N/A"))
+        assertEquals(null, Display.rating("74"))
+        assertEquals(null, Display.rating(null))
+    }
+}

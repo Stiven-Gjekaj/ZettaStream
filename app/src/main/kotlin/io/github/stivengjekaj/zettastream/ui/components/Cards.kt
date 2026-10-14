@@ -38,7 +38,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import io.github.stivengjekaj.zettastream.addon.Display
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
+import io.github.stivengjekaj.zettastream.ui.theme.Background
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material3.Icon
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
@@ -116,6 +122,16 @@ fun PosterCard(
                     modifier = Modifier.fillMaxSize().then(if (card == CardShape.Square) Modifier.padding(10.dp) else Modifier),
                 )
             }
+            // The rating sits on the art, as on Miruro 2.0.
+            Display.rating(meta.imdbRating)?.let { rating ->
+                Row(
+                    Modifier.align(Alignment.TopEnd).padding(6.dp).clip(Corner).background(Background.copy(alpha = 0.75f)).padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.Star, null, tint = TextPrimary, modifier = Modifier.size(12.dp))
+                    Text(rating, color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 3.dp))
+                }
+            }
             if (progress != null) {
                 LinearProgressIndicator(
                     progress = { progress },
@@ -127,10 +143,12 @@ fun PosterCard(
         }
         // The focused card grows by 5 percent. This space keeps it off the title.
         Spacer(Modifier.height(12.dp))
-        // Two lines, so that a long name stays readable and the cards stay level.
-        ScrollingText(meta.name, active = focused, color = TextPrimary, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2)
-        if (caption != null) {
-            Text(caption, color = TextSecondary, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // One line, as on Miruro 2.0. A long name scrolls when the card has the focus.
+        ScrollingText(meta.name, active = focused, color = TextPrimary, fontSize = 14.sp, lineHeight = 19.sp, maxLines = 1, fontWeight = FontWeight.Medium)
+        // The caption, such as the episode to continue, or else the kind and the year.
+        val facts = caption?.takeIf { it != meta.name } ?: Display.cardFacts(meta.type, meta.releaseInfo).ifEmpty { null }
+        if (facts != null) {
+            Text(facts, color = TextSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

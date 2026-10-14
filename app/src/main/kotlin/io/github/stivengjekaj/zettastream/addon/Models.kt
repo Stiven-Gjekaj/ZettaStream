@@ -173,6 +173,26 @@ object Display {
         return "series" to "$imdb:$season:$episode"
     }
 
+    /** The short facts under a card, such as "Movie · 2026". Empty when the addon gives no facts. */
+    fun cardFacts(type: String, releaseInfo: String?): String =
+        listOfNotNull(kind(type), year(releaseInfo)).joinToString(" · ")
+
+    /** The first year of a release text, such as 2019 for "2019-2023". */
+    fun year(releaseInfo: String?): String? = releaseInfo?.let { Regex("\\b(19|20)\\d{2}\\b").find(it)?.value }
+
+    /** The rating of a card, such as "7.4". Null when the addon gives no number above 0. */
+    fun rating(imdbRating: String?): String? =
+        imdbRating?.trim()?.toDoubleOrNull()?.takeIf { it > 0 && it <= 10 }?.let { String.format(java.util.Locale.ROOT, "%.1f", it) }
+
+    private fun kind(type: String): String? = when (type.lowercase()) {
+        "movie" -> "Movie"
+        "series" -> "Series"
+        "anime" -> "Anime"
+        "tv", "channel" -> "Channel"
+        "" -> null
+        else -> type.replaceFirstChar { it.uppercase() }
+    }
+
     fun preview(m: MetaPreview): MetaPreview = m.copy(name = englishName(m.name, m.aliases))
 
     fun meta(m: Meta): Meta = m.copy(name = englishName(m.name, m.aliases), videos = m.videos.map(::video))
