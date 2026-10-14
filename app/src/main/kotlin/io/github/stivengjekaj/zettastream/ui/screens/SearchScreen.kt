@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import io.github.stivengjekaj.zettastream.ui.FocusMemory
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
@@ -216,12 +218,18 @@ fun SearchScreen(app: AppState) {
                 modifier = Modifier.padding(start = Sizes.gutter(tv), end = Sizes.gutter(tv), top = 12.dp),
             )
         }
+        // Better matches can come after the first answers. The grid keeps its place on the first card
+        // that it showed, so while the viewer is not in the results, it goes back to the top.
+        val grid = rememberLazyGridState()
+        var inResults by remember { mutableStateOf(false) }
+        LaunchedEffect(results.firstOrNull()?.id) { if (!inResults) grid.scrollToItem(0) }
         LazyVerticalGrid(
             columns = GridCells.Adaptive(Sizes.posterWidth(tv) + 8.dp),
+            state = grid,
             contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().onFocusChanged { inResults = it.hasFocus },
         ) {
             items(results, key = { it.type + it.id }) { meta ->
                 PosterCard(
