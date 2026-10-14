@@ -316,8 +316,8 @@ them and for what you watch. See [TERMS.md](TERMS.md).
 ## License
 
 MIT. See [LICENSE](LICENSE) for the text, and [TERMS.md](TERMS.md) for the terms
-of the project. JetBrains Mono is under the SIL Open Font License, in
-[licenses/](licenses/JetBrainsMono-OFL.txt).
+of the project. Karla is under the SIL Open Font License, in
+[licenses/](licenses/Karla-OFL.txt).
 
 <div align="center">
 <sub>Made for one Hitachi TV and one remote control. Press <code>0</code> for the menu.</sub>
