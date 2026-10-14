@@ -18,6 +18,8 @@ data class MetaPreview(
     val imdbRating: String? = null,
     val genres: List<String> = emptyList(),
     val aliases: List<String> = emptyList(),
+    /** The IMDb ID of a title from another database, such as Kitsu. Subtitle addons often know only IMDb IDs. */
+    @SerialName("imdb_id") val imdbId: String? = null,
 )
 
 /** The full details of one title. */
@@ -41,7 +43,7 @@ data class Meta(
     fun toPreview() = MetaPreview(
         id = id, type = type, name = name, poster = poster, background = background,
         logo = logo, description = description, releaseInfo = releaseInfo,
-        imdbRating = imdbRating, genres = genres, aliases = aliases,
+        imdbRating = imdbRating, genres = genres, aliases = aliases, imdbId = imdbId,
     )
 }
 
@@ -156,6 +158,20 @@ object Display {
      * season 2 numbered as season 1. The IMDb numbers are correct, so use them.
      */
     fun video(v: Video): Video = v.copy(season = v.imdbSeason ?: v.season, episode = v.imdbEpisode ?: v.episode)
+
+    /**
+     * The IMDb form of a video ID, such as `tt2560140:1:1` for `kitsu:7442:1`.
+     * Null for an IMDb ID, or when the title has no IMDb numbers.
+     */
+    fun imdbAlias(meta: MetaPreview, videoId: String, episodes: List<Video>): Pair<String, String>? {
+        val imdb = meta.imdbId?.takeIf { it.startsWith("tt") } ?: return null
+        if (videoId.startsWith("tt")) return null
+        if (episodes.isEmpty() || meta.type == "movie") return "movie" to imdb
+        val video = episodes.firstOrNull { it.id == videoId } ?: return null
+        val season = video.imdbSeason ?: return null
+        val episode = video.imdbEpisode ?: return null
+        return "series" to "$imdb:$season:$episode"
+    }
 
     fun preview(m: MetaPreview): MetaPreview = m.copy(name = englishName(m.name, m.aliases))
 

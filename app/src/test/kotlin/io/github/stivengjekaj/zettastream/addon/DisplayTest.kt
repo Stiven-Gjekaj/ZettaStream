@@ -29,4 +29,15 @@ class DisplayTest {
         val v = Video(id = "tt1:1:3", season = 1, episode = 3)
         assertEquals(v, Display.video(v))
     }
+
+    @Test
+    fun anAnimeEpisodeHasAnImdbFormForSubtitles() {
+        val meta = MetaPreview(id = "kitsu:7442", type = "anime", imdbId = "tt2560140")
+        val episodes = listOf(Video(id = "kitsu:7442:1", season = 1, episode = 1, imdbSeason = 1, imdbEpisode = 1))
+        assertEquals("series" to "tt2560140:1:1", Display.imdbAlias(meta, "kitsu:7442:1", episodes))
+        assertEquals("movie" to "tt2560140", Display.imdbAlias(meta.copy(type = "movie"), "kitsu:7442", emptyList()))
+        assertEquals(null, Display.imdbAlias(meta.copy(id = "tt2560140"), "tt2560140:1:1", episodes))
+        assertEquals(null, Display.imdbAlias(meta.copy(imdbId = null), "kitsu:7442:1", episodes))
+    }
 }
+

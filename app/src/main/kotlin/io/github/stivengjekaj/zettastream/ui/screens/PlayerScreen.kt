@@ -61,6 +61,7 @@ import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import androidx.media3.ui.PlayerView
 import io.github.stivengjekaj.zettastream.BuildConfig
+import io.github.stivengjekaj.zettastream.addon.Display
 import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.StreamInfo
 import io.github.stivengjekaj.zettastream.addon.pickSameSource
@@ -471,7 +472,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     val stream = c.addons.streamsFrom(addonUrl, type, target.id, withTorrents = c.settings.settings.value.showTorrents)
                         ?.let { pickSameSource(it, playback.bingeGroup, playback.streamName, playback.streamInfo, playback.torrent != null) }
                     if (stream == null) { app.replace(streamsScreen); return@launch }
-                    val subtitles = withTimeoutOrNull(4000) { c.addons.subtitles(type, target.id) }.orEmpty()
+                    val subtitles = withTimeoutOrNull(4000) { c.addons.subtitles(type, target.id, Display.imdbAlias(playback.meta, target.id, playback.episodes)) }.orEmpty()
                     app.replace(
                         Screen.Player(
                             playback.copy(

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.stivengjekaj.zettastream.addon.Display
 import io.github.stivengjekaj.zettastream.addon.StreamGroup
 import io.github.stivengjekaj.zettastream.addon.StreamOrder
 import io.github.stivengjekaj.zettastream.addon.Subtitle
@@ -69,7 +70,7 @@ fun AutoPlayScreen(app: AppState, screen: Screen.AutoPlay) {
     LaunchedEffect(screen.videoId) {
         val settings = c.settings.settings.value
         val maxBytes = StreamOrder.streamableBytes(type)
-        val subtitles = async { runCatching { c.addons.subtitles(type, screen.videoId) }.getOrDefault(emptyList<Subtitle>()) }
+        val subtitles = async { runCatching { c.addons.subtitles(type, screen.videoId, Display.imdbAlias(screen.meta, screen.videoId, screen.episodes)) }.getOrDefault(emptyList<Subtitle>()) }
         val groups = mutableListOf<StreamGroup>()
         var done = false
         val kept = c.addons.cachedStreams(type, screen.videoId, settings.showTorrents)

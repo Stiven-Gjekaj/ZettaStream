@@ -174,13 +174,16 @@ class AddonRepository(
      * Each addon gets [subtitleWait] milliseconds. A slow addon does not hold
      * back the subtitles of the others.
      */
-    suspend fun subtitles(type: String, videoId: String): List<Subtitle> = coroutineScope {
-        val installed = state.value.addons.filter { it.supports("subtitles", type, videoId) }
-        val addons = installed.ifEmpty { listOfNotNull(fallbackAddon()?.takeIf { it.supports("subtitles", type, videoId) }) }
-        addons.map { addon ->
+    suspend fun subtitles(type: String, videoId: String, alias: Pair<String, String>? = null): List<Subtitle> = coroutineScope {
+        // An addon that does not know the ID, such as a Kitsu ID, can know its IMDb form.
+        val ids = listOfNotNull(type to videoId, alias)
+        fun asked(addons: List<Addon>) = addons.mapNotNull { addon -> ids.firstOrNull { (t, id) -> addon.supports("subtitles", t, id) }?.let { addon to it } }
+        val installed = asked(state.value.addons)
+        val requests = installed.ifEmpty { asked(listOfNotNull(fallbackAddon())) }
+        requests.map { (addon, id) ->
             async {
                 // The wait runs on real time, also in a test with virtual time.
-                withContext(Dispatchers.IO) { withTimeoutOrNull(subtitleWait) { runCatching { client.subtitles(addon, type, videoId) }.getOrNull() } }.orEmpty()
+                withContext(Dispatchers.IO) { withTimeoutOrNull(subtitleWait) { runCatching { client.subtitles(addon, id.first, id.second) }.getOrNull() } }.orEmpty()
             }
         }.awaitAll().flatten().distinctBy { it.url }
     }

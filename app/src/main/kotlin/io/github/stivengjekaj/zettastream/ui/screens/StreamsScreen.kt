@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
+import io.github.stivengjekaj.zettastream.addon.Display
 import io.github.stivengjekaj.zettastream.addon.ListedStream
 import io.github.stivengjekaj.zettastream.addon.StreamInfo
 import io.github.stivengjekaj.zettastream.addon.StreamOrder
@@ -93,7 +94,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
     val groups = remember(screen.videoId, reloads) { mutableStateListOf<StreamGroup>() }
     var done by remember(screen.videoId, reloads) { mutableStateOf(false) }
     val asked = remember(screen.videoId) { c.addons.addons.value.addons.count { it.supports("stream", type, screen.videoId) } }
-    val subtitles by produceState(emptyList<Subtitle>(), screen.videoId) { value = c.addons.subtitles(type, screen.videoId) }
+    val subtitles by produceState(emptyList<Subtitle>(), screen.videoId) { value = c.addons.subtitles(type, screen.videoId, Display.imdbAlias(screen.meta, screen.videoId, screen.episodes)) }
     val firstFocus = remember { FocusRequester() }
     var focused by remember(screen.videoId) { mutableStateOf(false) }
     // The row that had the focus. Back from the player gives it the focus again.

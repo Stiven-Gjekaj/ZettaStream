@@ -29,8 +29,9 @@ class AddonRepositoryTest {
                 "/good/manifest.json" -> ok("""{"id":"g","name":"Good","types":["movie"],"resources":["stream"],"catalogs":[{"type":"movie","id":"top"},{"type":"movie","id":"find","extra":[{"name":"search","isRequired":true}]}]}""")
                 "/good/stream/movie/tt1.json" -> ok("""{"streams":[{"url":"https://a.test/1.mp4"},{"infoHash":"x"},{"infoHash":"y"}]}""")
                 "/good/stream/movie/tt2.json" -> ok("""{"streams":[{"url":"https://a.test/1.mp4"},{"infoHash":"abcdef0123456789abcdef0123456789abcdef01","fileIdx":2,"sources":["tracker:udp://t.test:1/announce"]}]}""")
-                "/subs/manifest.json" -> ok("""{"id":"s","name":"Subs","types":["movie"],"idPrefixes":["tt"],"resources":["subtitles"],"catalogs":[]}""")
+                "/subs/manifest.json" -> ok("""{"id":"s","name":"Subs","types":["movie","series"],"idPrefixes":["tt"],"resources":["subtitles"],"catalogs":[]}""")
                 "/subs/subtitles/movie/tt1.json" -> ok("""{"subtitles":[{"id":"1","url":"https://s.test/1.srt","lang":"eng"}]}""")
+                "/subs/subtitles/series/tt9%3A1%3A2.json" -> ok("""{"subtitles":[{"id":"3","url":"https://s.test/3.srt","lang":"eng"}]}""")
                 "/slow/manifest.json" -> ok("""{"id":"w","name":"Slow","types":["movie"],"idPrefixes":["tt"],"resources":["subtitles"],"catalogs":[]}""")
                 "/slow/subtitles/movie/tt1.json" -> MockResponse.Builder().body("""{"subtitles":[{"id":"2","url":"https://s.test/2.srt","lang":"eng"}]}""")
                     .headersDelay(5, java.util.concurrent.TimeUnit.SECONDS).build()
@@ -130,6 +131,15 @@ class AddonRepositoryTest {
         assertEquals(listOf("https://s.test/1.srt"), repository.subtitles("movie", "tt1").map { it.url })
         assertTrue(System.currentTimeMillis() - start < 3_000)
         scope.cancel()
+    }
+
+    @Test
+    fun anAddonThatKnowsOnlyImdbGetsTheImdbFormOfAnAnimeId() = runTest {
+        val sources = MutableStateFlow(SourceList.parse("${server.url("/subs/manifest.json")}"))
+        val repository = AddonRepository(AddonClient(OkHttpClient()), sources, backgroundScope, null)
+        repository.addons.first { !it.loading && it.addons.isNotEmpty() }
+        val subs = repository.subtitles("anime", "kitsu:9:2", alias = "series" to "tt9:1:2")
+        assertEquals(listOf("https://s.test/3.srt"), subs.map { it.url })
     }
 }
 
