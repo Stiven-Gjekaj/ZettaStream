@@ -6,8 +6,7 @@
 
 ## Versions that get a fix
 
-ZettaStream is early. A security fix goes to the newest release. No older
-version is maintained.
+A security fix goes to the newest release. No older version is maintained.
 
 ## How to report a problem
 
