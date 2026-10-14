@@ -123,6 +123,7 @@ class MainActivity : ComponentActivity() {
         } ?: original
         // The remote control test shows the key as the device sent it.
         app.keyCapture?.let { if (it(if (app.current == Screen.KeyTest) original else event)) return true }
+        if (event.action == KeyEvent.ACTION_DOWN) app.keyPresses++
         if (super.dispatchKeyEvent(event)) return true
         return app.onUnhandledKey(event)
     }
@@ -154,13 +155,17 @@ private fun Root(app: AppState, finish: () -> Unit) {
         if (app.focusContentSoon) {
             app.focusContentSoon = false
             // The item that had the focus was on the screen before. From the icon bar, Right goes to the new screen.
-            // When the old item is gone and nothing has the focus, the new screen takes it.
+            // When the old item is gone and nothing has the focus, the new screen takes it. A screen that
+            // still loads, such as Live TV, has nothing to focus yet, so this tries again until a key press.
             FocusReturn.last = null
+            val keys = app.keyPresses
             withFrameNanos { }
             withFrameNanos { }
-            when {
-                app.railFocused -> runCatching { focusManager.moveFocus(FocusDirection.Right) }
-                !app.contentFocused -> runCatching { app.content.requestFocus() }
+            repeat(FOCUS_TRIES) {
+                if (app.contentFocused || app.keyPresses != keys) return@LaunchedEffect
+                if (app.railFocused) runCatching { focusManager.moveFocus(FocusDirection.Right) }
+                else runCatching { app.content.requestFocus() }
+                delay(FOCUS_RETRY)
             }
         }
     }
@@ -262,3 +267,7 @@ private fun VpnNotice(app: AppState) {
     )
     LaunchedEffect(Unit) { runCatching { ok.requestFocus() } }
 }
+
+/** A new screen tries this many times to take the focus, [FOCUS_RETRY] ms apart, while it loads. */
+private const val FOCUS_TRIES = 40
+private const val FOCUS_RETRY = 150L

@@ -153,6 +153,8 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     /** The screen part next to the icon bar. It gives the focus back to the item that had it. */
     val content = FocusRequester()
     val edgeGuard = EdgeGuard()
+    /** The number of key presses. A wait for the focus stops when the viewer presses a key. */
+    var keyPresses = 0
     /** True while an item of the screen next to the icon bar has the focus. */
     var contentFocused = false
     /** True after a main screen opens, so that the new screen takes the focus. */
