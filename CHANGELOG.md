@@ -13,6 +13,13 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.3.0 (2026-10-15)
+
+- "Explore more" at the end of each row opens all the titles of the row in a
+  grid, and more titles load as you scroll.
+- "More like this" is under About, and it also ends with "Explore more".
+- `4` now opens Live TV and `5` opens Settings, in the order of the icon bar.
+
 ## 1.2.0 (2026-10-15)
 
 - Profiles: the app starts on "Who is watching?". Each profile has its own
