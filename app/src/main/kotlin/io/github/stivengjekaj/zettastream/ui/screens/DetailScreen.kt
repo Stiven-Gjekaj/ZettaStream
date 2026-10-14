@@ -1,6 +1,15 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Check
+import io.github.stivengjekaj.zettastream.addon.Display
+import io.github.stivengjekaj.zettastream.ui.components.FactChip
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,12 +24,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
@@ -39,6 +47,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -134,40 +143,68 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
         )
         onDispose { app.screenActions = emptyMap() }
     }
-    LaunchedEffect(m != null) { if (m != null) runCatching { playFocus.requestFocus() } }
+    val list = rememberLazyListState()
+    // Down from the buttons goes to the episode that Watch starts, not to the card below the button.
+    val episodeFocus = remember { FocusRequester() }
+    val downTarget = episodes.firstOrNull { it.id == target?.id } ?: episodes.firstOrNull()
+    LaunchedEffect(m != null) {
+        if (m != null) {
+            runCatching { playFocus.requestFocus() }
+            // The page opens at the top, so that the title shows. The focus scrolls the page
+            // in the next frames, so this waits for that scroll first.
+            repeat(3) { withFrameNanos { } }
+            list.scrollToItem(0)
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
+        // The art fills the top of the page, as on Miruro 2.0. It fades into the black at the left and below.
         val background = m?.background ?: preview.background ?: m?.poster ?: preview.poster
-        if (background != null) {
-            AsyncImage(background, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(), alpha = 0.35f)
+        Box(Modifier.fillMaxWidth().height(if (tv) 520.dp else 300.dp)) {
+            if (background != null) {
+                AsyncImage(background, null, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize(), alpha = 0.7f)
+            }
+            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Background.copy(alpha = 0.95f), 0.6f to Background.copy(alpha = 0.4f), 1f to Background.copy(alpha = 0.1f))))
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.4f to Background.copy(alpha = 0f), 1f to Background)))
         }
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Background.copy(alpha = 0.3f), Background))))
 
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(Sizes.gutter(tv))) {
+        LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(Sizes.gutter(tv))) {
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                Row(Modifier.padding(top = if (tv) 40.dp else 8.dp), horizontalArrangement = Arrangement.spacedBy(if (tv) 32.dp else 16.dp)) {
                     val poster = m?.poster ?: preview.poster
                     if (poster != null) {
                         AsyncImage(
                             poster, null, contentScale = ContentScale.Crop,
-                            modifier = Modifier.width(if (tv) 200.dp else 110.dp).height(if (tv) 300.dp else 165.dp)
+                            modifier = Modifier.width(if (tv) 220.dp else 110.dp).height(if (tv) 330.dp else 165.dp)
                                 .clip(Corner),
                         )
                     }
-                    Column(Modifier.weight(1f)) {
-                        Text(m?.name ?: preview.name, color = TextPrimary, fontSize = if (tv) 36.sp else 24.sp, fontWeight = FontWeight.Bold)
-                        val info = listOfNotNull(m?.releaseInfo ?: preview.releaseInfo, m?.runtime, (m?.imdbRating ?: preview.imdbRating)?.let { "IMDb $it" })
-                        if (info.isNotEmpty()) Text(info.joinToString("  ·  "), color = TextSecondary, fontSize = 15.sp)
-                        val genres = m?.genres ?: preview.genres
-                        if (genres.isNotEmpty()) Text(genres.take(4).joinToString(", "), color = TextSecondary, fontSize = 14.sp)
-                        Spacer(Modifier.height(12.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        val logo = m?.logo ?: preview.logo
+                        val name = m?.name ?: preview.name
+                        if (logo != null && tv) {
+                            AsyncImage(logo, name, contentScale = ContentScale.Fit, alignment = Alignment.CenterStart, modifier = Modifier.height(100.dp).fillMaxWidth(0.6f))
+                        } else {
+                            Text(name, color = TextPrimary, fontSize = if (tv) 40.sp else 24.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
+                        val facts = listOfNotNull(
+                            Display.year(m?.releaseInfo ?: preview.releaseInfo),
+                            Display.kind(m?.type ?: preview.type),
+                            m?.runtime,
+                            Display.rating(m?.imdbRating ?: preview.imdbRating)?.let { "IMDb $it" },
+                        ) + (m?.genres ?: preview.genres).take(3)
+                        if (facts.isNotEmpty()) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { facts.forEach { FactChip(it) } }
+                        }
                         Text(
-                            m?.description ?: preview.description.orEmpty(), color = TextPrimary, fontSize = if (tv) 17.sp else 14.sp,
-                            maxLines = if (tv) 5 else 8, overflow = TextOverflow.Ellipsis,
+                            m?.description ?: preview.description.orEmpty(), color = TextPrimary.copy(alpha = 0.85f), fontSize = if (tv) 17.sp else 14.sp,
+                            maxLines = if (tv) 4 else 8, overflow = TextOverflow.Ellipsis,
                         )
-                        Spacer(Modifier.height(18.dp))
                         if (m == null) CircularProgressIndicator(color = Accent)
-                        else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        else Row(
+                            Modifier.focusProperties { if (isSeries && seasons.size <= 1 && downTarget != null) down = episodeFocus },
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
                             val resume = target?.let { library.progress[it.id] }?.takeIf { !it.isFinished && it.position > 0 }
                             ZButton(
                                 onClick = { play(if (isSeries) target else null) },
@@ -179,10 +216,10 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                                 Spacer(Modifier.width(6.dp))
                                 Text(
                                     when {
-                                        !isSeries -> if (library.progress[preview.id]?.let { !it.isFinished && it.position > 0 } == true) "Resume" else "Play"
-                                        target != null -> (if (resume != null) "Resume " else "Play ") +
+                                        !isSeries -> if (library.progress[preview.id]?.let { !it.isFinished && it.position > 0 } == true) "Resume" else "Watch now"
+                                        target != null -> (if (resume != null) "Resume " else "Watch ") +
                                             (if (target.season != null && target.episode != null) "S${target.season} E${target.episode}" else target.label)
-                                        else -> "Play"
+                                        else -> "Watch now"
                                     },
                                 )
                             }
@@ -197,7 +234,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                             }
                             val inList = library.watchlist.any { it.id == preview.id }
                             ZButton(onClick = { app.toggleWatchlist(m.toPreview()) }, tv = tv) {
-                                Icon(if (inList) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder, null)
+                                Icon(if (inList) Icons.Rounded.Check else Icons.Rounded.Add, null)
                                 Spacer(Modifier.width(6.dp))
                                 Text(if (inList) "In watchlist" else "Watchlist")
                             }
@@ -210,17 +247,17 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                                 }
                             }
                         }
-                        if (tv) {
-                            Spacer(Modifier.height(10.dp))
-                            Text("Red: watchlist   Green: watched   Yellow: sources", color = TextSecondary, fontSize = 13.sp)
-                        }
+                        if (tv) Text("Red: watchlist   Green: watched   Yellow: sources", color = TextSecondary, fontSize = 13.sp)
                     }
                 }
+            }
+            if (isSeries) {
+                item { SectionHeading("Episodes", detail = "${count(episodes.size, "episode")}${selectedSeason?.let { if (it == 0) " · Specials" else " · Season $it" }.orEmpty()}", tv = tv) }
             }
             if (isSeries && seasons.size > 1) {
                 item {
                     TvRow(tv) {
-                        LazyRow(Modifier.padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        LazyRow(Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             items(seasons) { s ->
                                 FilterChip(
                                     shape = Corner,
@@ -229,7 +266,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                                     label = { Text(when (s) { null -> "Other"; 0 -> "Specials"; else -> "Season $s" }) },
                                     modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
+                                        selectedContainerColor = Accent, selectedLabelColor = OnAccent,
                                         containerColor = Surface, labelColor = TextSecondary,
                                     ),
                                 )
@@ -239,49 +276,104 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                 }
             }
             if (isSeries) {
-                item { Spacer(Modifier.height(12.dp)) }
-                items(episodes, key = { it.id }) { video ->
-                    EpisodeRow(video, tv, library, onFocus = { focusedVideo = video }, onClick = { play(video) })
+                // A grid of episode cards: four on each line on a TV, two on a phone.
+                val perLine = if (tv) 4 else 2
+                items(episodes.chunked(perLine), key = { line -> line.first().id }) { line ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(if (tv) 20.dp else 12.dp)) {
+                        line.forEach { video ->
+                            EpisodeCard(video, tv, library, Modifier.weight(1f), if (video == downTarget) episodeFocus else null, onFocus = { focusedVideo = video }, onClick = { play(video) })
+                        }
+                        repeat(perLine - line.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+            if (m != null) {
+                val about = aboutFacts(m)
+                if (about.isNotEmpty()) {
+                    item { SectionHeading("About", detail = null, tv = tv) }
+                    item { AboutTable(about, tv) }
                 }
             }
         }
     }
 }
 
+/** The facts for the About table, as label and value. A fact that the addon does not give does not show. */
+fun aboutFacts(m: Meta): List<Pair<String, String>> {
+    val seasons = m.videos.mapNotNull { it.season }.filter { it > 0 }.distinct().size
+    return listOfNotNull(
+        Display.kind(m.type)?.let { "Type" to it },
+        m.releaseInfo?.let { "Released" to it },
+        m.runtime?.let { "Runtime" to it },
+        Display.rating(m.imdbRating)?.let { "IMDb" to "$it / 10" },
+        m.genres.takeIf { it.isNotEmpty() }?.let { "Genres" to it.joinToString(", ") },
+        seasons.takeIf { it > 0 && m.type != "movie" }?.let { "Seasons" to it.toString() },
+        m.videos.size.takeIf { it > 0 && m.type != "movie" }?.let { "Episodes" to it.toString() },
+        m.aliases.filter { it != m.name }.take(2).takeIf { it.isNotEmpty() }?.let { "Other names" to it.joinToString(", ") },
+    )
+}
+
 @Composable
-private fun EpisodeRow(video: Video, tv: Boolean, library: LibraryData, onFocus: () -> Unit, onClick: () -> Unit) {
-    val shape = Corner
-    val progress = library.progress[video.id]
-    val watched = video.id in library.watched
-    var rowFocused by remember { mutableStateOf(false) }
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .onFocusChanged { rowFocused = it.isFocused }
-            .focusRing(shape, scaleTo = 1.02f, onFocus = onFocus)
-            .clip(shape)
-            .background(SurfaceHigh.copy(alpha = 0.6f))
-            .clickable(onClick = onClick)
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.width(if (tv) 200.dp else 120.dp).height(if (tv) 112.dp else 68.dp).clip(RoundedCornerShape(8.dp)).background(Background)) {
-            if (video.thumbnail != null) AsyncImage(video.thumbnail, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            if (progress != null && progress.duration > 0 && !progress.isFinished) {
-                Box(
-                    Modifier.align(Alignment.BottomStart).fillMaxWidth(progress.position.toFloat() / progress.duration)
-                        .height(4.dp).background(Accent),
-                )
+private fun SectionHeading(text: String, detail: String?, tv: Boolean) {
+    Column(Modifier.padding(top = 32.dp, bottom = 12.dp)) {
+        Text(text, color = TextPrimary, fontSize = if (tv) 24.sp else 19.sp, fontWeight = FontWeight.Bold)
+        if (detail != null) Text(detail, color = TextSecondary, fontSize = 13.sp)
+    }
+}
+
+@Composable
+private fun AboutTable(facts: List<Pair<String, String>>, tv: Boolean) {
+    // The table takes the focus, so that the remote can scroll down to it.
+    Column(Modifier.fillMaxWidth(if (tv) 0.6f else 1f).focusRing(Corner, scaleTo = 1f).focusable().clip(Corner).border(1.dp, Outline, Corner)) {
+        facts.forEachIndexed { i, (label, value) ->
+            Row(Modifier.fillMaxWidth().background(if (i % 2 == 0) Surface else Background).padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Text(label, color = TextSecondary, fontSize = 14.sp, modifier = Modifier.width(if (tv) 160.dp else 110.dp))
+                Text(value, color = TextPrimary, fontSize = 14.sp, modifier = Modifier.weight(1f))
             }
         }
-        Spacer(Modifier.width(16.dp))
-        Column(Modifier.weight(1f)) {
-            ScrollingText(episodeLabel(video), active = rowFocused, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp,
-                lineHeight = if (tv) 24.sp else 20.sp, maxLines = 1)
-            video.released?.take(10)?.let { Text(it, color = TextSecondary, fontSize = 12.sp) }
-            video.summary?.let { Text(it, color = TextSecondary, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+    }
+}
+
+@Composable
+private fun EpisodeCard(video: Video, tv: Boolean, library: LibraryData, modifier: Modifier, requester: FocusRequester?, onFocus: () -> Unit, onClick: () -> Unit) {
+    val progress = library.progress[video.id]
+    val watched = video.id in library.watched
+    var focused by remember { mutableStateOf(false) }
+    Column(modifier) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .then(if (requester != null) Modifier.focusRequester(requester) else Modifier)
+                .onFocusChanged { focused = it.isFocused }
+                .focusRing(Corner, scaleTo = 1.04f, onFocus = onFocus)
+                .clip(Corner)
+                .background(SurfaceHigh)
+                .clickable(onClick = onClick),
+        ) {
+            if (video.thumbnail != null) AsyncImage(video.thumbnail, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            // The episode number sits on the picture, as on Miruro 2.0.
+            video.episode?.let {
+                Text(
+                    "EP $it", color = OnAccent, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp).clip(Corner).background(Accent).padding(horizontal = 7.dp, vertical = 2.dp),
+                )
+            }
+            if (watched) {
+                Icon(
+                    Icons.Rounded.CheckCircle, "Watched", tint = Accent,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(22.dp).clip(CircleShape).background(Background),
+                )
+            }
+            if (progress != null && progress.duration > 0 && !progress.isFinished) {
+                Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Background.copy(alpha = 0.6f)))
+                Box(Modifier.align(Alignment.BottomStart).fillMaxWidth(progress.position.toFloat() / progress.duration).height(4.dp).background(Accent))
+            }
         }
-        if (watched) Icon(Icons.Rounded.CheckCircle, "Watched", tint = Accent, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.height(10.dp))
+        ScrollingText(video.label, active = focused, color = TextPrimary, fontSize = if (tv) 15.sp else 14.sp, lineHeight = 20.sp, maxLines = 1, fontWeight = FontWeight.Medium)
+        val date = video.released?.take(10)
+        val line = listOfNotNull(video.season?.let { s -> video.episode?.let { "S$s E$it" } }, date).joinToString(" · ")
+        if (line.isNotEmpty()) Text(line, color = TextSecondary, fontSize = 12.sp, maxLines = 1)
     }
 }

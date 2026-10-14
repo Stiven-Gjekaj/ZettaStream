@@ -184,7 +184,8 @@ object Display {
     fun rating(imdbRating: String?): String? =
         imdbRating?.trim()?.toDoubleOrNull()?.takeIf { it > 0 && it <= 10 }?.let { String.format(java.util.Locale.ROOT, "%.1f", it) }
 
-    private fun kind(type: String): String? = when (type.lowercase()) {
+    /** The kind of a title in the singular, such as "Movie". */
+    fun kind(type: String): String? = when (type.lowercase()) {
         "movie" -> "Movie"
         "series" -> "Series"
         "anime" -> "Anime"
