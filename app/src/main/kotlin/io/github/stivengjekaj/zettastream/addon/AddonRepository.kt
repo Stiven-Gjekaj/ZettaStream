@@ -86,6 +86,9 @@ class AddonRepository(
     /** Every row that the addons can give, in the order of [HomeRows.order]. */
     fun homeRows(): List<CatalogRow> = HomeRows.order(state.value.addons.flatMap(HomeRows::of))
 
+    /** The home rows in the order that the viewer chose. */
+    fun homeRows(order: List<String>): List<CatalogRow> = HomeRows.arrange(homeRows(), order)
+
     /** The types that the home screen can filter by, in a fixed order. Each kind shows one time. */
     fun types(): List<String> {
         val order = listOf("movie", "series", "anime", "tv", "sport")

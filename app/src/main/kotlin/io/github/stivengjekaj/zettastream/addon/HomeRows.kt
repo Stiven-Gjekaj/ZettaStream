@@ -34,6 +34,24 @@ object HomeRows {
     fun order(rows: List<CatalogRow>): List<CatalogRow> = rows.sortedBy(::tier)
 
     /**
+     * Puts [rows] in the order of [keys]. The rows that [keys] does not name, such as the
+     * rows of a new addon, keep their order and come after the others.
+     */
+    fun arrange(rows: List<CatalogRow>, keys: List<String>): List<CatalogRow> {
+        val place = keys.withIndex().associate { (i, k) -> k to i }
+        return rows.sortedBy { place[it.key] ?: Int.MAX_VALUE }
+    }
+
+    /** The order after the row at [index] moves one place up ([step] -1) or down ([step] 1). */
+    fun move(rows: List<CatalogRow>, index: Int, step: Int): List<String> {
+        val keys = rows.map { it.key }.toMutableList()
+        val target = index + step
+        if (index !in keys.indices || target !in keys.indices) return keys
+        keys.add(target, keys.removeAt(index))
+        return keys
+    }
+
+    /**
      * Tells if [items] mostly repeat the items of a row above. Two addons often
      * give the same "Popular" list, and the second copy does not help.
      */

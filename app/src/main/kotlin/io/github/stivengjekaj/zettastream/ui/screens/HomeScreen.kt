@@ -74,7 +74,8 @@ fun HomeScreen(app: AppState) {
     val addonState by c.addons.addons.collectAsState()
     val sources by c.sources.sources.collectAsState()
     val library by c.library.data.collectAsState()
-    val rows = remember(addonState) { c.addons.homeRows() }
+    val viewerOrder = c.settings.settings.collectAsState().value.rowOrder
+    val rows = remember(addonState, viewerOrder) { c.addons.homeRows(viewerOrder) }
     val types = remember(addonState) { c.addons.types() }
     val viewer by c.settings.settings.collectAsState()
     val shown = rows.filter { (app.homeFilter == null || typeKey(it.catalog.type) == app.homeFilter) && it.key !in viewer.hiddenRows }

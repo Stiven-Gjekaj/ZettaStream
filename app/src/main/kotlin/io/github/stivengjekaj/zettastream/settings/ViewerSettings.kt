@@ -54,6 +54,8 @@ data class ViewerSettings(
     val audioDelayMs: Long = 0,
     /** The last searches, newest first. */
     val searchHistory: List<String> = emptyList(),
+    /** The keys of the home rows in the order that the viewer chose. A row that is not here keeps its place after them. */
+    val rowOrder: List<String> = emptyList(),
     /** The keys of the home rows that the viewer turned off. */
     val hiddenRows: Set<String> = emptySet(),
 )

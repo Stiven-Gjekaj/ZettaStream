@@ -39,4 +39,22 @@ class HomeRowsTest {
         assertFalse(HomeRows.isRepeat(listOf("a", "x", "y", "z", "w"), above))
         assertFalse(HomeRows.isRepeat(listOf("a", "b"), above))
     }
+
+    @Test
+    fun theViewerOrderComesFirstAndANewRowGoesLast() {
+        val anime = addon("anime", Catalog("anime", "rated", "Top Rated"), Catalog("anime", "x", "Genres"))
+        val rows = HomeRows.of(cinemeta) + HomeRows.of(anime)
+        val keys = rows.associate { it.title to it.key }
+        val order = listOf(keys.getValue("Genres"), keys.getValue("Popular"), "gone|row")
+        assertEquals(listOf("Genres", "Popular", "New 2026", "Top Rated"), HomeRows.arrange(rows, order).map { it.title })
+    }
+
+    @Test
+    fun aMoveSwapsARowWithItsNeighbourAndStopsAtTheEnds() {
+        val rows = HomeRows.of(cinemeta)
+        val keys = rows.map { it.key }
+        assertEquals(keys.reversed(), HomeRows.move(rows, 1, -1))
+        assertEquals(keys, HomeRows.move(rows, 0, -1))
+        assertEquals(keys, HomeRows.move(rows, 1, 1))
+    }
 }
