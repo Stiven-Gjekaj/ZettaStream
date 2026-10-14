@@ -62,6 +62,7 @@ import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import androidx.media3.ui.PlayerView
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.Display
+import io.github.stivengjekaj.zettastream.addon.Video
 import io.github.stivengjekaj.zettastream.addon.Subtitle
 import io.github.stivengjekaj.zettastream.addon.StreamInfo
 import io.github.stivengjekaj.zettastream.addon.pickSameSource
@@ -103,6 +104,7 @@ private const val CONFIRM_WINDOW = 3_000L
 private const val COUNTDOWN = 10_000L
 private const val LOAD_RETRIES = 6
 private const val LABEL_TIME = 8_000L
+private const val PREPARE_AHEAD = 60_000L
 
 /**
  * Gives each part of the video more tries than the default. When one part of
@@ -248,6 +250,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     val autoSkipped = remember { mutableSetOf<Long>() }
     var countdownEnds by remember { mutableStateOf<Long?>(null) }
     var retries by remember { mutableIntStateOf(0) }
+    // The next episode, found in the last minutes of this one: its video ID, and its playback or null.
+    var preparedNext by remember { mutableStateOf<Pair<String, VideoPlayback?>?>(null) }
     // True after the first frame plays. Before it, a failed stream gives its place to the next best one.
     var everReady by remember { mutableStateOf(false) }
     // The saved position. Another source can be shorter, so the player checks it when the length is known.
@@ -450,6 +454,30 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         show((if (type == C.TRACK_TYPE_TEXT) "Subtitles: " else "Audio: ") + name)
     }
 
+    /** The next episode from the same source and quality. Null when that source has no match. */
+    suspend fun sameSourcePlayback(target: Video, label: String): VideoPlayback? {
+        val p = playback as? VideoPlayback ?: return null
+        val addonUrl = p.addonUrl ?: return null
+        val type = p.meta.type
+        val stream = c.addons.streamsFrom(addonUrl, type, target.id, withTorrents = c.settings.settings.value.showTorrents)
+            ?.let { pickSameSource(it, p.bingeGroup, p.streamName, p.streamInfo, p.torrent != null) } ?: return null
+        val subtitles = withTimeoutOrNull(4000) { c.addons.subtitles(type, target.id, Display.imdbAlias(p.meta, target.id, p.episodes)) }.orEmpty()
+        return p.copy(
+            videoId = target.id,
+            label = label,
+            url = stream.url.orEmpty(),
+            torrent = stream.torrentSource(),
+            headers = stream.requestHeaders,
+            subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
+            bingeGroup = stream.behaviorHints?.bingeGroup ?: p.bingeGroup,
+            streamName = stream.name ?: p.streamName,
+            streamInfo = StreamInfo.of(stream),
+            sourceLabel = c.addons.addons.value.addons.firstOrNull { it.manifestUrl == addonUrl }
+                ?.let { StreamOrder.shortLabel(ListedStream(it, stream, StreamInfo.of(stream))) },
+            fallbacks = emptyList(),
+        )
+    }
+
     fun changeEpisode(step: Int) {
         when (playback) {
             is LivePlayback -> {
@@ -462,36 +490,17 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 if (index < 0 || target == null) { show(if (step > 0) "This is the last episode" else "This is the first episode"); return }
                 saveProgress()
                 val label = episodeLabel(target)
-                show("Loading $label")
-                val streamsScreen = Screen.AutoPlay(playback.meta, target.id, label, playback.episodes)
-                val addonUrl = playback.addonUrl
-                if (addonUrl == null) { app.replace(streamsScreen); return }
-                // Play the next episode from the same source, with no stop at the list of streams.
-                c.scope.launch {
-                    val type = playback.meta.type
-                    val stream = c.addons.streamsFrom(addonUrl, type, target.id, withTorrents = c.settings.settings.value.showTorrents)
-                        ?.let { pickSameSource(it, playback.bingeGroup, playback.streamName, playback.streamInfo, playback.torrent != null) }
-                    if (stream == null) { app.replace(streamsScreen); return@launch }
-                    val subtitles = withTimeoutOrNull(4000) { c.addons.subtitles(type, target.id, Display.imdbAlias(playback.meta, target.id, playback.episodes)) }.orEmpty()
-                    app.replace(
-                        Screen.Player(
-                            playback.copy(
-                                videoId = target.id,
-                                label = label,
-                                url = stream.url.orEmpty(),
-                                torrent = stream.torrentSource(),
-                                headers = stream.requestHeaders,
-                                subtitles = (stream.subtitles + subtitles).distinctBy { it.url },
-                                bingeGroup = stream.behaviorHints?.bingeGroup ?: playback.bingeGroup,
-                                streamName = stream.name ?: playback.streamName,
-                                streamInfo = StreamInfo.of(stream),
-                                sourceLabel = c.addons.addons.value.addons.firstOrNull { it.manifestUrl == addonUrl }
-                                    ?.let { StreamOrder.shortLabel(ListedStream(it, stream, StreamInfo.of(stream))) },
-                                fallbacks = emptyList(),
-                            ),
-                        ),
-                    )
+                val findBest = Screen.AutoPlay(playback.meta, target.id, label, playback.episodes)
+                // The next episode was found before the end of this one, so it starts at once.
+                val ready = preparedNext?.takeIf { it.first == target.id }
+                if (ready != null) {
+                    app.replace(ready.second?.let { Screen.Player(it) } ?: findBest)
+                    return
                 }
+                show("Loading $label")
+                if (playback.addonUrl == null) { app.replace(findBest); return }
+                // Play the next episode from the same source, with no stop at the list of streams.
+                c.scope.launch { app.replace(sameSourcePlayback(target, label)?.let { Screen.Player(it) } ?: findBest) }
             }
         }
     }
@@ -533,6 +542,18 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         }
         // Going back before the start of the countdown stops it.
         if (countdownEnds != null && start != null && position < start) countdownEnds = null
+    }
+
+    // About a minute before the countdown, find the next episode, so that it starts at once.
+    // The position changes each half second, so the search hangs on a true or false, not on the position.
+    val nextDue = playback is VideoPlayback && hasNext && playback.addonUrl != null &&
+        Skip.countdownStart(skips, duration)?.let { position >= it - PREPARE_AHEAD } == true
+    LaunchedEffect(nextDue) {
+        val p = playback as? VideoPlayback ?: return@LaunchedEffect
+        if (!nextDue || preparedNext != null) return@LaunchedEffect
+        val target = p.episodes.getOrNull(p.episodes.indexOfFirst { it.id == p.videoId } + 1) ?: return@LaunchedEffect
+        preparedNext = target.id to runCatching { sameSourcePlayback(target, episodeLabel(target)) }.getOrNull()
+        if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "prepared next ${target.id}: ${preparedNext?.second?.sourceLabel}")
     }
 
     LaunchedEffect(countdownEnds) {
