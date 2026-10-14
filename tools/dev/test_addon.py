@@ -11,7 +11,13 @@ The emulator reaches it at http://10.0.2.2:7799/manifest.json.
 
 Run: python3 tools/dev/test_addon.py
 Add a number of seconds, such as 8, to make each stream answer wait that long.
+
+Set BROKEN_MP4 to the path of a local MP4 file to add one more stream. It plays
+the first 20 MB of the file, then the connection drops and each new request for
+the rest gives a web page, as an expired link does. The player must go on with
+the next source at the same position.
 """
+import os
 import http.server
 import json
 import re
@@ -21,6 +27,8 @@ import sys
 import time
 
 DELAY = float(sys.argv[1]) if len(sys.argv) > 1 else 0
+BROKEN_MP4 = os.environ.get("BROKEN_MP4")
+CUT = 20 * 1024 * 1024
 
 MANIFEST = {
     "id": "test.zetta", "name": "Test streams", "version": "1.0.0",
@@ -53,7 +61,43 @@ def seconds_srt(count=3600):
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
+    def broken_mp4(self):
+        size = os.path.getsize(BROKEN_MP4)
+        start = 0
+        rng = self.headers.get("Range")
+        if rng and rng.startswith("bytes="):
+            start = int(rng[6:].split("-")[0] or 0)
+        if start >= CUT:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            self.wfile.write(b"<html><body>This link expired.</body></html>")
+            return
+        self.send_response(206 if rng else 200)
+        self.send_header("Content-Type", "video/mp4")
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Content-Length", str(size - start))
+        if rng:
+            self.send_header("Content-Range", "bytes %d-%d/%d" % (start, size - 1, size))
+        self.end_headers()
+        with open(BROKEN_MP4, "rb") as f:
+            f.seek(start)
+            left = CUT - start
+            try:
+                while left > 0:
+                    chunk = f.read(min(65536, left))
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                    left -= len(chunk)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+        self.close_connection = True
+
     def do_GET(self):
+        if self.path == "/broken.mp4" and BROKEN_MP4:
+            self.broken_mp4()
+            return
         if self.path == "/proxy/master.txt":
             # The Mux playlist, with each relative link made absolute.
             src = STREAMS["streams"][0]["url"]
@@ -83,6 +127,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         elif self.path.startswith("/stream/"):
             time.sleep(DELAY)
             body = STREAMS
+            if BROKEN_MP4:
+                broken = {"url": "http://10.0.2.2:7799/broken.mp4", "name": "Broken MP4\n1080p",
+                          "title": "Stops after 20 MB, then gives a web page"}
+                body = {"streams": [broken] + STREAMS["streams"]}
         else:
             body = None
         self.send_response(200 if body else 404)
