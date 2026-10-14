@@ -602,3 +602,12 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   backup or of the source list, raises the major number.
 - A test release has a label, such as `1.1.0-rc1`. See "Test versions".
 
+## 2026-10-14: Home after 1.0.0
+
+- Home has a "Your watchlist" row, newest first, under Continue watching. The
+  type filter applies to it.
+- Home shows a spinner until the art of the banner is there, at most for 6
+  seconds, so the screen does not jump.
+- When a button of the banner, or of the top of a title page, has the focus,
+  the screen scrolls to the top.
+
