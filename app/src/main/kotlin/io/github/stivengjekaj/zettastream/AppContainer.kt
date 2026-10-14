@@ -40,7 +40,7 @@ class AppContainer(app: Application) {
     val live = LiveRepository(http, sources.sources, scope)
     val library = Library(File(app.filesDir, "library.json"))
     val updates = UpdateChecker(http)
-    val installer = UpdateInstaller(app, http)
+    val installer = UpdateInstaller(app, http, scope)
     val watchNext = WatchNext(app)
     val skipTimes = SkipTimes(http)
     val settings = SettingsStore(File(app.filesDir, "settings.json"))

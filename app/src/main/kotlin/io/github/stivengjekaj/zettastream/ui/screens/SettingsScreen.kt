@@ -152,7 +152,7 @@ fun SettingsScreen(app: AppState) {
                 if (newer) updateText(installState) else update ?: "Version ${BuildConfig.VERSION_NAME}",
                 tv,
             ) {
-                if (newer) { scope.launch { c.installer.install() }; return@SettingsRow }
+                if (newer) { c.installer.install(); return@SettingsRow }
                 update = "Checking"
                 scope.launch {
                     val latest = c.updates.latestVersion()

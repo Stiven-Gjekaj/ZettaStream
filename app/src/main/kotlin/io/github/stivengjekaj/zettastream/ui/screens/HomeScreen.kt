@@ -2,8 +2,6 @@ package io.github.stivengjekaj.zettastream.ui.screens
 
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.ui.components.HeroBanner
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 import io.github.stivengjekaj.zettastream.update.UpdateState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -210,12 +208,11 @@ fun UpdateBanner(app: AppState, latest: String) {
     val tv = app.isTv
     val installer = app.container.installer
     val state by installer.updates.collectAsState()
-    val scope = rememberCoroutineScope()
     // The message has its own side space. The button takes the same space.
     Column {
         Message("Version $latest is available", updateText(state), tv)
         ZButton(
-            onClick = { scope.launch { installer.install() } },
+            onClick = { installer.install() },
             tv = tv,
             modifier = Modifier.padding(start = Sizes.gutter(tv), bottom = 8.dp),
         ) { Text(if (state is UpdateState.NeedsPermission) "Allowed? Install now" else "Install the update") }
