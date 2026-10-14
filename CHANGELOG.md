@@ -13,6 +13,15 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.2.0 (2026-10-15)
+
+- Profiles: the app starts on "Who is watching?". Each profile has its own
+  picture, history, watchlist, and settings. Pictures of anime characters
+  come from AniList, and of TV characters and actors from TVmaze.
+- Your library and settings move into a first profile named "Main".
+- The picture at the top of the icon bar opens the profiles.
+- On Android 12 and newer phones, the small window opens by itself.
+
 ## 1.1.3 (2026-10-15)
 
 - A stream that stops in the middle of a video no longer ends playback. The
