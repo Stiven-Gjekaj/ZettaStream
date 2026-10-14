@@ -113,6 +113,11 @@ fun SettingsScreen(app: AppState) {
                 tv,
             ) { app.open(Screen.Sources) }
         }
+        item {
+            val profiles by c.profiles.profiles.collectAsState()
+            val me = profiles.profiles.firstOrNull { it.id == profiles.last }?.name.orEmpty()
+            SettingsRow("Switch profile", "$me. Each profile has its own history, watchlist, and settings.", tv) { app.open(Screen.Profiles) }
+        }
         item { SettingsRow("Home rows", "${viewer.hiddenRows.size} rows off. Turn each row of the home screen off or on.", tv) { app.open(Screen.HomeRows) } }
         item { Section("Viewing", tv) }
         item { SettingsRow("Subtitles", "${onOff(viewer.subtitlesOn)}. The Subtitles button changes them while you watch.", tv) { set { it.copy(subtitlesOn = !it.subtitlesOn) } } }

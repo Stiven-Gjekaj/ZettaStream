@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.collectAsState
+import io.github.stivengjekaj.zettastream.ui.screens.ProfileCircle
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.key
@@ -86,6 +89,7 @@ fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
     // While a new screen opens, the focus can pass through the bar. The bar does not open for that.
     val open = app.railFocused && !app.screenChanging
     val items = remember { List(NavItems.size) { FocusRequester() } }
+    val profileItem = remember { FocusRequester() }
     val selectedIndex = NavItems.indexOfFirst { it.screen == current }.coerceAtLeast(0)
     app.railEntry = items[selectedIndex]
     val width by animateDpAsState(if (open) RailOpenWidth else RailWidth, label = "rail")
@@ -118,7 +122,30 @@ fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
             .padding(vertical = 24.dp, horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text("Z", color = TextPrimary, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 14.dp, bottom = 20.dp))
+        // The picture of the profile. OK opens "Who is watching?".
+        val profiles by app.container.profiles.profiles.collectAsState()
+        val me = profiles.profiles.firstOrNull { it.id == profiles.last } ?: profiles.profiles.firstOrNull()
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .focusRequester(profileItem)
+                .focusProperties { up = FocusRequester.Cancel; down = items[0] }
+                .focusRing(Corner, scaleTo = 1.04f, rememberForReturn = false)
+                .clip(Corner)
+                .clickable { app.open(Screen.Profiles) }
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ProfileCircle(me?.name ?: "?", me?.avatar, 36.dp)
+            if (open) {
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(me?.name.orEmpty(), color = TextPrimary, fontSize = 18.sp, maxLines = 1)
+                    Text("Switch profile", color = TextSecondary, fontSize = 12.sp, maxLines = 1)
+                }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
         // Settings sits at the bottom. Up and Down follow the order on the screen.
         val (bottom, top) = NavItems.indices.partition { NavItems[it].screen == Screen.Settings }
         val shown = top + bottom
@@ -133,7 +160,7 @@ fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .focusRequester(items[index])
                     .focusProperties {
-                        up = if (place > 0) items[shown[place - 1]] else FocusRequester.Cancel
+                        up = if (place > 0) items[shown[place - 1]] else profileItem
                         down = if (place < shown.lastIndex) items[shown[place + 1]] else FocusRequester.Cancel
                     }
                     .focusRing(Corner, scaleTo = 1.04f, rememberForReturn = false)
