@@ -84,6 +84,7 @@ import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
 import io.github.stivengjekaj.zettastream.addon.ListedStream
+import io.github.stivengjekaj.zettastream.addon.StreamHealth
 import io.github.stivengjekaj.zettastream.addon.StreamOrder
 import io.github.stivengjekaj.zettastream.ui.videoPlayback
 import io.github.stivengjekaj.zettastream.library.Resume
@@ -274,8 +275,12 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     }
 
     /** Plays the next best stream in the place of this one. False when no stream is left. */
+    fun healthKey(p: VideoPlayback) = StreamHealth.key(p.addonUrl, p.url, p.torrent?.infoHash, p.torrent?.fileIdx)
+
+    /** Marks this stream as one that did not start, then plays the next best one. */
     fun tryNext(): Boolean {
         val p = playback as? VideoPlayback ?: return false
+        c.scope.launch { c.health.failed(healthKey(p), p.addonUrl.orEmpty()) }
         val next = p.fallbacks.firstOrNull() ?: return false
         val following = videoPlayback(p.meta, p.videoId, p.label, p.episodes, next, p.subtitles, p.fallbacks.drop(1))
         app.toast = "That stream did not start. Trying ${following.sourceLabel}"
@@ -711,7 +716,11 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                     return
                 }
                 buffering = state == Player.STATE_BUFFERING
-                if (state == Player.STATE_READY) { retries = 0; everReady = true }
+                if (state == Player.STATE_READY) {
+                    if (!everReady && playback is VideoPlayback) c.scope.launch { c.health.played(healthKey(playback), playback.addonUrl.orEmpty()) }
+                    retries = 0
+                    everReady = true
+                }
                 if (state == Player.STATE_ENDED && playback is VideoPlayback) {
                     saveProgress()
                     if (c.settings.settings.value.autoplayNext && !countdownCancelled) {

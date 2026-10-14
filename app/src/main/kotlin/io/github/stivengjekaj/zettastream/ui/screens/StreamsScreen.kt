@@ -220,6 +220,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                 val summary: @Composable () -> Unit = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (stream.isTorrent) Badge("TORRENT", strong = true)
+                        if (c.health.failedRecently(listed)) Badge("DID NOT START", strong = true)
                         ScrollingText(
                             stream.name?.replace('\n', ' ') ?: listed.addon.name, active = rowFocused, color = TextPrimary,
                             fontSize = if (tv) 18.sp else 15.sp, lineHeight = if (tv) 24.sp else 20.sp, maxLines = 2, fontWeight = FontWeight.SemiBold,

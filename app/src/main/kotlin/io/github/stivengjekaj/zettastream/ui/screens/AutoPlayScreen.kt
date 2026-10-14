@@ -87,12 +87,12 @@ fun AutoPlayScreen(app: AppState, screen: Screen.AutoPlay) {
         val start = System.currentTimeMillis()
         while (!done) {
             val waited = System.currentTimeMillis() - start
-            val best = StreamOrder.best(groups.toList(), settings.directFirst, maxBytes)
+            val best = StreamOrder.best(groups.toList(), settings.directFirst, maxBytes, c.health)
             if (best != null && StreamOrder.isIdeal(best, settings.directFirst, maxBytes) && waited >= IDEAL_WAIT) break
             if (best != null && waited >= MAX_WAIT) break
             delay(250)
         }
-        val ranked = StreamOrder.ranked(groups.toList(), settings.directFirst, maxBytes)
+        val ranked = StreamOrder.ranked(groups.toList(), settings.directFirst, maxBytes, c.health)
         if (ranked.isEmpty()) { failed = true; return@LaunchedEffect }
         val subs = withTimeoutOrNull(4_500) { subtitles.await() }.orEmpty()
         app.replace(

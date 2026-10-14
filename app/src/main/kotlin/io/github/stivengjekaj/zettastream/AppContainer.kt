@@ -7,6 +7,7 @@ import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import io.github.stivengjekaj.zettastream.addon.AddonClient
 import io.github.stivengjekaj.zettastream.addon.AddonRepository
+import io.github.stivengjekaj.zettastream.addon.StreamHealth
 import io.github.stivengjekaj.zettastream.iptv.LiveRepository
 import io.github.stivengjekaj.zettastream.library.Library
 import io.github.stivengjekaj.zettastream.net.Http
@@ -35,6 +36,7 @@ class AppContainer(app: Application) {
     val updates = UpdateChecker(http)
     val skipTimes = SkipTimes(http)
     val settings = SettingsStore(File(app.filesDir, "settings.json"))
+    val health = StreamHealth(File(app.filesDir, "health.json"))
     val torrents = TorrentEngine(File(app.cacheDir, "torrents"), settings.settings, scope)
 }
 
