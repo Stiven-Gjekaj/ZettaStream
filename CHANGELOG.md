@@ -13,6 +13,14 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.3.3 (2026-10-15)
+
+- Fixes a freeze and a crash of search with a long source list. The merge of
+  the results was too slow for a TV, and it ran on the main thread. It is
+  now about 17 times faster and runs in the background.
+- The answers of the addons are read in the background, so Home and the
+  stream list also stay smooth while they load.
+
 ## 1.3.2 (2026-10-15)
 
 - Profile pictures show the whole face in the circle. Before, the top of the
