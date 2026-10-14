@@ -207,7 +207,10 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                         )
                         if (m == null) CircularProgressIndicator(color = Accent)
                         else FlowRow(
-                            Modifier.focusProperties { if (isSeries && seasons.size <= 1 && downTargetShown) down = episodeFocus },
+                            Modifier
+                                .focusProperties { if (isSeries && seasons.size <= 1 && downTargetShown) down = episodeFocus }
+                                // Up from the episodes to a button shows all of the top of the page, with the title.
+                                .onFocusChanged { if (it.hasFocus) scope.launch { withFrameNanos { }; list.animateScrollToItem(0) } },
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
