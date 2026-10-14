@@ -47,6 +47,7 @@ import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Icon
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
+import io.github.stivengjekaj.zettastream.ui.theme.OnAccent
 import io.github.stivengjekaj.zettastream.ui.theme.SurfaceHigh
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
@@ -78,6 +79,7 @@ fun PosterCard(
     progress: Float? = null,
     caption: String? = null,
     focusKey: String? = null,
+    badge: String? = null,
 ) {
     val shape = Corner
     val card = CardShape.of(meta.posterShape)
@@ -120,6 +122,13 @@ fun PosterCard(
                     // A square image is often a channel logo, so show all of it.
                     contentScale = if (card == CardShape.Square) ContentScale.Fit else ContentScale.Crop,
                     modifier = Modifier.fillMaxSize().then(if (card == CardShape.Square) Modifier.padding(10.dp) else Modifier),
+                )
+            }
+            // A mark such as "NEW" sits at the top left of the art.
+            if (badge != null) {
+                Text(
+                    badge, color = OnAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.TopStart).padding(6.dp).clip(Corner).background(Accent).padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
             // The rating sits on the art, as on Miruro 2.0.

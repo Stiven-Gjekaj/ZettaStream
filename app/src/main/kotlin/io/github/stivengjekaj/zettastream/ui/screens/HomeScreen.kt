@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import kotlinx.coroutines.async
+import io.github.stivengjekaj.zettastream.library.NewEpisodes
+import io.github.stivengjekaj.zettastream.library.NewEpisode
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.alpha
@@ -97,6 +100,12 @@ fun HomeScreen(app: AppState) {
     LaunchedEffect(Unit) { delay(COVER_WAIT); coverReady = true }
     if (sources.isEmpty() || (!addonState.loading && rows.isEmpty())) coverReady = true
     val list = rememberLazyListState()
+    // New episodes of the shows that the viewer follows. The answer stays for a time, so that Back does not ask again.
+    val followed = remember(library) { NewEpisodes.followed(library) }
+    // It waits for the addons, because a show asked before they load has no episodes.
+    val newEpisodes by produceState(NewEpisodeCache.get(followed, library.watched), followed.map { it.id }, library.watched, addonState.loading) {
+        if (!addonState.loading) value = NewEpisodeCache.load(followed, library.watched) { c.addons.meta(it) }
+    }
     val scope = rememberCoroutineScope()
 
     if (!coverReady) {
@@ -210,6 +219,31 @@ fun HomeScreen(app: AppState) {
                 }
             }
         }
+        if (newEpisodes.isNotEmpty() && (app.homeFilter == null || newEpisodes.any { typeKey(it.meta.type) == app.homeFilter })) {
+            item(key = "new-episodes") {
+                val shownNew = newEpisodes.filter { app.homeFilter == null || typeKey(it.meta.type) == app.homeFilter }
+                SectionTitle("New episodes", tv, detail = "This week, from the shows that you follow")
+                TvRow(tv) {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(if (tv) 18.dp else 12.dp),
+                    ) {
+                        items(shownNew, key = { it.video.id }) { new ->
+                            // The card of the show in the watchlist or the history, so that its picture is the same.
+                            val preview = followed.firstOrNull { it.id == new.meta.id } ?: new.meta.toPreview()
+                            PosterCard(
+                                preview, Sizes.posterWidth(tv),
+                                onClick = { app.open(Screen.Detail(preview)) },
+                                onFocus = { app.focusedMeta = preview },
+                                caption = newEpisodeCaption(new),
+                                focusKey = "new|${new.video.id}",
+                                badge = "NEW",
+                            )
+                        }
+                    }
+                }
+            }
+        }
         // The watchlist has its own row under Continue watching. The type filter applies to it too.
         val watchlist = library.watchlist.filter { app.homeFilter == null || typeKey(it.type) == app.homeFilter }
         if (watchlist.isNotEmpty()) {
@@ -269,3 +303,38 @@ fun updateText(state: UpdateState): String = when (state) {
 
 /** The longest wait for the art of the banner before Home shows. */
 private const val COVER_WAIT = 6_000L
+
+/** For example "S2 E5 · Oct 12". */
+private fun newEpisodeCaption(new: NewEpisode): String {
+    val number = new.video.season?.let { s -> new.video.episode?.let { "S$s E$it" } } ?: new.video.label
+    val date = java.text.SimpleDateFormat("MMM d", java.util.Locale.getDefault()).format(java.util.Date(new.released))
+    return "$number · $date"
+}
+
+/** Keeps the new episodes for [NewEpisodeCache.KEEP_MS], so that Home does not ask the addons on each visit. */
+private object NewEpisodeCache {
+    const val KEEP_MS = 30L * 60 * 1000
+    private var key: String? = null
+    private var time = 0L
+    private var metas: List<io.github.stivengjekaj.zettastream.addon.Meta> = emptyList()
+
+    private fun keyOf(shows: List<MetaPreview>) = shows.joinToString(",") { it.id }
+
+    fun get(shows: List<MetaPreview>, watched: Set<String>): List<NewEpisode> =
+        if (key == keyOf(shows)) NewEpisodes.find(metas, System.currentTimeMillis(), watched) else emptyList()
+
+    suspend fun load(
+        shows: List<MetaPreview>, watched: Set<String>, meta: suspend (MetaPreview) -> io.github.stivengjekaj.zettastream.addon.Meta,
+    ): List<NewEpisode> {
+        val k = keyOf(shows)
+        if (k != key || System.currentTimeMillis() - time > KEEP_MS) {
+            metas = kotlinx.coroutines.coroutineScope {
+                shows.map { async { runCatching { meta(it) }.getOrNull() } }.mapNotNull { it.await() }
+            }
+            // A show with no episodes is an addon that did not answer. Then the next visit asks again.
+            key = k
+            time = if (metas.any { it.videos.isNotEmpty() }) System.currentTimeMillis() else 0L
+        }
+        return NewEpisodes.find(metas, System.currentTimeMillis(), watched)
+    }
+}
