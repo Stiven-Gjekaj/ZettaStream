@@ -273,7 +273,10 @@ private fun CatalogRowView(app: AppState, row: CatalogRow, above: List<CatalogRo
     if (list != null && HomeRows.isRepeat(list.map { it.id }, above.mapNotNull { r -> app.container.addons.cachedCatalog(r)?.map { it.id } })) return
     SectionTitle(row.title, tv, detail = "${typeLabel(row.catalog.type)} from ${row.addon.name}")
     if (list == null) PlaceholderRow(tv)
-    else PosterRow(list, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = row.key)
+    else PosterRow(
+        list, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = row.key,
+        onMore = { app.open(Screen.Catalog(row)) },
+    )
 }
 
 /** Tells that a new version is out, and installs it with one button. */

@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
+import androidx.compose.foundation.border
+import io.github.stivengjekaj.zettastream.ui.theme.Outline
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -186,6 +189,7 @@ fun PosterRow(
     onClick: (MetaPreview) -> Unit,
     onFocus: (MetaPreview) -> Unit,
     keyPrefix: String = "",
+    onMore: (() -> Unit)? = null,
 ) {
     TvRow(tv) {
         LazyRow(
@@ -198,6 +202,8 @@ fun PosterRow(
                 focusKey = "$keyPrefix|${meta.type}|${meta.id}",
             )
             }
+            // The last card opens the whole catalog.
+            if (onMore != null) item(key = "more") { MoreCard(Sizes.posterWidth(tv) * CardShape.of(metas.firstOrNull()?.posterShape).widthScale, CardShape.of(metas.firstOrNull()?.posterShape), keyPrefix, onMore) }
         }
     }
 }
@@ -228,5 +234,33 @@ fun Message(title: String, body: String, tv: Boolean, modifier: Modifier = Modif
         Text(title, color = TextPrimary, fontSize = if (tv) 24.sp else 20.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
         Text(body, color = TextSecondary, fontSize = if (tv) 17.sp else 15.sp)
+    }
+}
+
+/** "Explore more" at the end of a row. It has the size of the cards before it. */
+@Composable
+private fun MoreCard(width: Dp, card: CardShape, keyPrefix: String, onClick: () -> Unit) {
+    val focusKey = "$keyPrefix|more"
+    val requester = remember { FocusRequester() }
+    LaunchedEffect(focusKey) {
+        if (FocusMemory.pending == focusKey) { FocusMemory.pending = null; runCatching { requester.requestFocus() } }
+    }
+    Column(Modifier.width(width)) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(width * card.heightRatio)
+                .focusRequester(requester)
+                .focusRing(Corner, onFocus = { FocusMemory.last = focusKey })
+                .clip(Corner)
+                .border(1.dp, Outline, Corner)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = TextPrimary, modifier = Modifier.size(36.dp))
+                Text("Explore more", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
+            }
+        }
     }
 }

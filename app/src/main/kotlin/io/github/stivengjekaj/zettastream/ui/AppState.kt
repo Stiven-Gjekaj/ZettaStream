@@ -115,6 +115,8 @@ sealed interface Screen {
     data object Sources : Screen
     data object KeyTest : Screen
     data object HomeRows : Screen
+    /** All the titles of one catalog, page after page. */
+    data class Catalog(val row: io.github.stivengjekaj.zettastream.addon.CatalogRow) : Screen
     /** "Who is watching?" The app starts here. */
     data object Profiles : Screen
     /** Adds a profile when [id] is null, or changes the profile with that ID. */

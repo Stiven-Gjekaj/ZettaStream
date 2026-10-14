@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream
 
+import io.github.stivengjekaj.zettastream.ui.screens.CatalogScreen
 import io.github.stivengjekaj.zettastream.ui.screens.EditProfileScreen
 import io.github.stivengjekaj.zettastream.ui.screens.ProfilesScreen
 import android.content.res.Configuration
@@ -266,6 +267,7 @@ private fun Content(app: AppState, screen: Screen) {
         is Screen.AutoPlay -> AutoPlayScreen(app, screen)
         is Screen.Player -> PlayerScreen(app, screen.playback)
         Screen.Profiles -> ProfilesScreen(app)
+        is Screen.Catalog -> CatalogScreen(app, screen.row)
         is Screen.EditProfile -> EditProfileScreen(app, screen.id)
     }
 }
