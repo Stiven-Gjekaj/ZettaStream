@@ -25,7 +25,8 @@ with the app.
 - [ ] A season pack plays the correct episode.
 - [ ] The automatic intro skip operates on an anime episode with AniSkip
       times.
-- [ ] The app operates on a phone.
+- [ ] The app operates on a phone. (It operates on a phone emulator in
+      0.11.1. Check it on a real phone.)
 
 ### Phase 2: hardening
 

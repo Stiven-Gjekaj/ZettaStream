@@ -12,6 +12,13 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.11.1 (2026-10-14)
+
+- On a phone, the facts and the buttons of a title wrap to a new line.
+- Live TV takes the focus after its channels load, also when a number key
+  opens it.
+- An HD and an SD copy of a channel are each a favourite alone.
+
 ## 0.11.0 (2026-10-14)
 
 - A new interface after Miruro 2.0, in black and white, with the Karla font.
