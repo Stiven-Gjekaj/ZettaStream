@@ -552,3 +552,18 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - "Restore" sends a backup file to the TV, which replaces its data. A file
   that is not a ZettaStream backup changes nothing.
 - The page needs the token of the QR code, like the source list.
+
+## 2026-10-14: Interface overhaul after Miruro 2.0
+
+- The interface follows the layout of Miruro 2.0 (the "Miruro 2.0" link of
+  miruro.com): a slim icon bar on the left, a large banner on Home, and a
+  title page with the art behind it.
+- The colors stay black and white.
+- All text uses Karla, the font of Miruro 2.0 (SIL Open Font License), in
+  the APK. This replaces JetBrains Mono. The phone page keeps a monospace
+  font only for the source list and the diagnostics.
+- The icon bar is always on a TV screen. Left on the first item of a row
+  goes into it, but only with a new press: a Left that moved inside the row
+  less than 0.4 seconds before, or a held Left, stops at the edge. Right goes
+  back to the item that had the focus. Right, Back, Menu, and `0` leave the
+  bar. The bar does not keep the focus.
