@@ -13,6 +13,11 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.3.2 (2026-10-15)
+
+- Profile pictures show the whole face in the circle. Before, the top of the
+  picture showed, and some faces were cut at the chin or the eyes.
+
 ## 1.3.1 (2026-10-15)
 
 - Search shows the same title from many addons one time, and the best match
