@@ -4,17 +4,30 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SearchRankSpeedTest {
-    /** Many addons with many results, as on a TV with a long source list. */
-    @Test
-    fun aLargeSearchMergesQuickly() {
-        val answers = (0 until 40).map { a ->
-            (0 until 100).map { i -> MetaPreview(if (i % 3 == 0) "tt$i" else "a$a:$i", if (i % 2 == 0) "movie" else "series", "Title number $i of the long list", releaseInfo = "${2000 + i % 20}") }
+    private fun answers(addons: Int) = (0 until addons).map { a ->
+        (0 until 100).map { i -> MetaPreview("a$a:$i", if (i % 2 == 0) "movie" else "series", "Title $a number $i of the long list", releaseInfo = "${2000 + i % 20}") }
+    }
+
+    /** The shortest of a few runs, so that a pause of the machine does not count. */
+    private fun time(input: List<List<MetaPreview>>): Long {
+        repeat(3) { SearchRank.merge("title", input) }
+        return (0 until 5).minOf {
+            val start = System.nanoTime()
+            SearchRank.merge("title", input)
+            System.nanoTime() - start
         }
-        val start = System.nanoTime()
-        // The search merges again after each answer.
-        for (n in 1..answers.size) SearchRank.merge("title", answers.take(n))
-        val ms = (System.nanoTime() - start) / 1_000_000
-        // The old merge took about 2 s here. The limit leaves room for a slow build server.
-        assertTrue("40 merges took $ms ms", ms < 1_000)
+    }
+
+    /**
+     * Four times the results take about four times the time. The old merge compared each
+     * result with each other result, so it took about sixteen times the time, and it froze the
+     * app with a long source list. A ratio does not depend on the speed of the machine.
+     */
+    @Test
+    fun theTimeGrowsWithTheResultsAndNotWithTheirSquare() {
+        val small = time(answers(10))
+        val large = time(answers(40))
+        val ratio = large.toDouble() / small
+        assertTrue("4 times the results took $ratio times the time", ratio < 9)
     }
 }
