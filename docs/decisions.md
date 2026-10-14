@@ -471,3 +471,31 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   tracks of each language.
 - The player plays DASH links. A link that the player cannot read moves to
   the next stream, and does not stop the app.
+
+## 2026-10-14: Resume, failed streams, and the next episode
+
+- A saved position that is past the end of the source that plays now, less
+  15 seconds, starts the video from the beginning. A stream that never played
+  does not save a position, so its end does not mark the video as watched.
+- A stream that does not start is remembered for one day. The app chooses
+  it last, and the list marks it "DID NOT START". An addon with 3 such
+  streams in one day comes after the other addons of the same resolution. A
+  stream that plays clears the marks of its addon. The marks stay on the
+  device.
+- About one minute before the next episode countdown, the app finds the next
+  episode from the same source. When the countdown ends, it plays at once.
+
+## 2026-10-14: Subtitles for anime
+
+- Subtitle addons such as OpenSubtitles know only IMDb IDs. For a title from
+  Kitsu, the app also asks with the IMDb form of the ID, such as
+  `tt2560140:1:1`, from the IMDb ID and the IMDb episode numbers of the title.
+
+## 2026-10-14: Diagnostics
+
+- The app keeps the last 500 events in memory: the answers of the addons and
+  their times, the choice of auto play, the torrent details, slow torrent
+  pieces, the player states, and the errors with their reasons.
+- The phone page of Settings, Sources has a link to these events. The page
+  needs the token of the QR code, like the source list.
+- Nothing goes to a server, and nothing goes to a file.
