@@ -533,3 +533,22 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   first 48 frames.
 - A setting turns this off. The screen can go black for a second when the
   mode changes.
+
+## 2026-10-14: Live TV favourites and guide grid
+
+- Red on a channel adds it to the favourites, or removes it. A "Favourites"
+  chip shows only them, and they come first in "All". They stay in the
+  library.
+- "Guide view" shows the guide as a time grid: three hours from the last
+  half hour, one row for each channel. OK on a programme plays the channel.
+- A playlist and a guide can write one channel ID in two forms, such as
+  `News24.al@SD` and `News.24.al`. The app compares the letters and digits
+  before the `@`.
+
+## 2026-10-14: Backup
+
+- The phone page has "Download a backup": one JSON file with the library,
+  the favourite channels, the settings, and the source list.
+- "Restore" sends a backup file to the TV, which replaces its data. A file
+  that is not a ZettaStream backup changes nothing.
+- The page needs the token of the QR code, like the source list.
