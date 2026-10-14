@@ -627,3 +627,29 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   half the download of the medium poster. The banner keeps its size, because
   it fills the screen.
 
+## 2026-10-15: Profiles
+
+- The app starts on "Who is watching?", as on Netflix: round pictures with
+  the names. The profile of the last time has the focus, so OK starts it.
+- Each profile has its own library (history, watchlist, watched marks,
+  favourite channels) and its own settings, in `files/profiles/<id>/`. The
+  sources are the same for all profiles.
+- On the first start of this version, the library and the settings move into
+  a first profile named "Main". Nothing is lost.
+- At most 5 profiles. The last profile cannot be deleted. A profile has no
+  PIN.
+- The picture comes from AniList (anime characters) or TVmaze (TV characters
+  and actors). Both are free and need no key. A search finds a character or
+  an actor by name. With no picture, the circle shows the first letter.
+- The picture at the top of the icon bar, and Settings, Switch profile, open
+  the profiles again.
+
+## 2026-10-15: A stream that stops in the middle
+
+- A stream that played and then stops with an error: the player reconnects
+  at the same position. Damaged data makes the second try jump 5 seconds
+  ahead. Then the next best source goes on at the same position.
+- The count of tries starts again only after 30 seconds of good playback past
+  the fault, so a reconnect that fails at once does not repeat with no end.
+- A manual choice from the list has no next source, so it shows the error.
+
