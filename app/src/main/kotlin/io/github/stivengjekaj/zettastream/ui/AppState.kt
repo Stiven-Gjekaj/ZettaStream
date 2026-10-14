@@ -155,6 +155,8 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     val edgeGuard = EdgeGuard()
     /** True from a change of screen until the new screen has the focus. The icon bar stays closed. */
     var screenChanging by mutableStateOf(false)
+    /** True while the player shows in a small window over other apps, on a phone. */
+    var inPictureInPicture by mutableStateOf(false)
     /** The number of key presses. A wait for the focus stops when the viewer presses a key. */
     var keyPresses = 0
     /** True while an item of the screen next to the icon bar has the focus. */

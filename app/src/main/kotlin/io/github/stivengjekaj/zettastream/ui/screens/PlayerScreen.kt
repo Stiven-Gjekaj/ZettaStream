@@ -819,13 +819,14 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         }
     }
 
-    // Another app in front pauses the video. The sound must not go on with no picture.
+    // A closed small window, or another app in front, pauses the video. The sound must not go on with no picture.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) player.pause() }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
+    LaunchedEffect(app.inPictureInPicture) { playerView?.useController = !app.isTv && !app.inPictureInPicture }
 
     // Apply the subtitle style when the view exists and each time the viewer changes it.
     LaunchedEffect(viewer, playerView) { SubtitleStyle.apply(playerView?.subtitleView, viewer) }
@@ -842,7 +843,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 PlayerView(ctx).apply {
                     this.player = player
                     playerView = this
-                    useController = !app.isTv
+                    useController = !app.isTv && !app.inPictureInPicture
                     setShowSubtitleButton(true)
                     SubtitleStyle.apply(subtitleView, viewer)
                     keepScreenOn = true
@@ -850,6 +851,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             },
             modifier = Modifier.fillMaxSize(),
         )
+        // The small window shows only the video.
+        if (app.inPictureInPicture) return@Box
         // The stream that plays: at the start, and each time the overlay shows.
         val sourceLabel = (playback as? VideoPlayback)?.sourceLabel
         if (sourceLabel != null && (now < labelUntil || overlay)) {

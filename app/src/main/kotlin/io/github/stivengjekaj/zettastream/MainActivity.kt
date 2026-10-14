@@ -1,5 +1,9 @@
 package io.github.stivengjekaj.zettastream
 
+import android.content.res.Configuration
+import android.util.Rational
+import android.os.Build
+import android.app.PictureInPictureParams
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
@@ -116,6 +120,22 @@ class MainActivity : ComponentActivity() {
      * Lint marks this override as a restricted API by mistake: the method is public in Activity.
      */
     @SuppressLint("RestrictedApi")
+    /**
+     * On a phone, the player goes into a small window when the viewer leaves the app, so the
+     * video goes on. A TV has no such window.
+     */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (!app.isTv && app.current is Screen.Player && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            runCatching { enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()) }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        app.inPictureInPicture = isInPictureInPictureMode
+    }
+
     override fun dispatchKeyEvent(original: KeyEvent): Boolean {
         val event = RemoteKeys.translate(original.keyCode)?.let { code ->
             KeyEvent(original.downTime, original.eventTime, original.action, code, original.repeatCount, original.metaState,
