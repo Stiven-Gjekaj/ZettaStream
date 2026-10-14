@@ -146,6 +146,8 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
     // Down from the buttons goes to the episode that Watch starts, not to the card below the button.
     val episodeFocus = remember { FocusRequester() }
     val downTarget = episodes.firstOrNull { it.id == target?.id } ?: episodes.firstOrNull()
+    // The card of a far episode is not built yet. Then Down uses the normal search.
+    var downTargetShown by remember { mutableStateOf(false) }
     LaunchedEffect(m != null) {
         if (m != null) {
             runCatching { playFocus.requestFocus() }
@@ -201,7 +203,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                         )
                         if (m == null) CircularProgressIndicator(color = Accent)
                         else Row(
-                            Modifier.focusProperties { if (isSeries && seasons.size <= 1 && downTarget != null) down = episodeFocus },
+                            Modifier.focusProperties { if (isSeries && seasons.size <= 1 && downTargetShown) down = episodeFocus },
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             val resume = target?.let { library.progress[it.id] }?.takeIf { !it.isFinished && it.position > 0 }
@@ -270,7 +272,7 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                 items(episodes.chunked(perLine), key = { line -> line.first().id }) { line ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(if (tv) 20.dp else 12.dp)) {
                         line.forEach { video ->
-                            EpisodeCard(video, tv, library, Modifier.weight(1f), if (video == downTarget) episodeFocus else null, onFocus = { focusedVideo = video }, onClick = { play(video) })
+                            EpisodeCard(video, tv, library, Modifier.weight(1f), if (video == downTarget) episodeFocus else null, { downTargetShown = it }, onFocus = { focusedVideo = video }, onClick = { play(video) })
                         }
                         repeat(perLine - line.size) { Spacer(Modifier.weight(1f)) }
                     }
@@ -324,7 +326,16 @@ private fun AboutTable(facts: List<Pair<String, String>>, tv: Boolean) {
 }
 
 @Composable
-private fun EpisodeCard(video: Video, tv: Boolean, library: LibraryData, modifier: Modifier, requester: FocusRequester?, onFocus: () -> Unit, onClick: () -> Unit) {
+private fun EpisodeCard(
+    video: Video, tv: Boolean, library: LibraryData, modifier: Modifier, requester: FocusRequester?,
+    onShown: (Boolean) -> Unit, onFocus: () -> Unit, onClick: () -> Unit,
+) {
+    if (requester != null) {
+        DisposableEffect(requester) {
+            onShown(true)
+            onDispose { onShown(false) }
+        }
+    }
     val progress = library.progress[video.id]
     val watched = video.id in library.watched
     var focused by remember { mutableStateOf(false) }
