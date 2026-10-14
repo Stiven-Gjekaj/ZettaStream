@@ -73,7 +73,9 @@ tab bar and touch controls.
 - An options panel in the player: Menu, `0`, or hold OK
 - Skip the intro of an anime episode at the exact second, from AniSkip
 - Subtitles from OpenSubtitles when no subtitle addon is in your list
-- Live TV from M3U playlists, with now and next from an XMLTV guide
+- Live TV from M3U playlists, with now and next from an XMLTV guide,
+  favourite channels, and a guide grid
+- Back up and restore the library and the settings from the phone page
 
 </td>
 <td width="50%" valign="top">
