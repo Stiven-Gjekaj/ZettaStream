@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.compose.ui.ExperimentalComposeUiApi
+import io.github.stivengjekaj.zettastream.remote.RemoteKeys
 import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.ui.components.ZButton
 import io.github.stivengjekaj.zettastream.remote.RemoteAction
@@ -41,6 +43,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onInterceptKeyBeforeSoftKeyboard
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
@@ -66,6 +69,7 @@ private object LastSearch {
     var results: List<MetaPreview> = emptyList()
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchScreen(app: AppState) {
     val tv = app.isTv
@@ -128,14 +132,27 @@ fun SearchScreen(app: AppState) {
                 ),
                 // The field draws its own border when it has the focus, so it has no focus ring.
                 // A text field keeps the Down key, so send it on to the results.
-                modifier = Modifier.weight(1f).onPreviewKeyEvent {
-                    if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
-                        keyboard?.hide()
-                        focusManager.moveFocus(FocusDirection.Down)
-                    } else {
-                        false
+                modifier = Modifier.weight(1f)
+                    // On a TV, a number key of the remote opens its screen, as on any other screen. This runs
+                    // before the on-screen keyboard, which would type the digit. The keyboard itself still types
+                    // digits, because its buttons do not send key presses.
+                    .onInterceptKeyBeforeSoftKeyboard {
+                        val native = it.nativeKeyEvent
+                        if (!tv || native.keyCode !in NUMBER_KEYS) return@onInterceptKeyBeforeSoftKeyboard false
+                        if (it.type == KeyEventType.KeyDown && RemoteKeys.global(native.keyCode) != RemoteAction.Search) {
+                            keyboard?.hide()
+                            app.onUnhandledKey(native)
+                        }
+                        true
                     }
-                },
+                    .onPreviewKeyEvent {
+                        if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
+                            keyboard?.hide()
+                            focusManager.moveFocus(FocusDirection.Down)
+                        } else {
+                            false
+                        }
+                    },
             )
             ZButton(onClick = ::listen, tv = tv) {
                 Icon(Icons.Rounded.Mic, null)
@@ -171,3 +188,7 @@ fun SearchScreen(app: AppState) {
         }
     }
 }
+
+/** The number keys of a remote control and of a keyboard. */
+private val NUMBER_KEYS = (android.view.KeyEvent.KEYCODE_0..android.view.KeyEvent.KEYCODE_9) +
+    (android.view.KeyEvent.KEYCODE_NUMPAD_0..android.view.KeyEvent.KEYCODE_NUMPAD_9)
