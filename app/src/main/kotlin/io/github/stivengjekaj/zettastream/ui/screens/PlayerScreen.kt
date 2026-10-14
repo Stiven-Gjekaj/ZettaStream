@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import io.github.stivengjekaj.zettastream.player.TimingRenderersFactory
+import io.github.stivengjekaj.zettastream.player.Timing
 import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.common.Format
 import androidx.media3.exoplayer.analytics.AnalyticsListener
@@ -231,8 +233,11 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     val c = app.container
     val context = LocalContext.current
     val viewer by c.settings.settings.collectAsState()
+    // The subtitle delay is for this video only. The audio delay stays, because it belongs to the sound system.
+    val timing = remember { Timing().apply { audioDelayMs = c.settings.settings.value.audioDelayMs } }
+    var subtitleDelay by remember { mutableLongStateOf(0L) }
     val player = remember {
-        ExoPlayer.Builder(context).setLoadControl(loadControl(isTorrent = (playback as? VideoPlayback)?.torrent != null)).build().apply {
+        ExoPlayer.Builder(context, TimingRenderersFactory(context, timing)).setLoadControl(loadControl(isTorrent = (playback as? VideoPlayback)?.torrent != null)).build().apply {
             playWhenReady = true
             // The viewer settings choose the first subtitle and audio tracks.
             val start = c.settings.settings.value
@@ -623,6 +628,17 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             }
             is LivePlayback -> rows += OptionRow("Channel", "Previous  /  Next", { changeEpisode(-1) }, { changeEpisode(1) })
         }
+        fun shiftSubtitles(direction: Int) {
+            subtitleDelay = Timing.step(subtitleDelay, direction, Timing.SUBTITLE_STEP, Timing.SUBTITLE_LIMIT)
+            timing.subtitleDelayMs = subtitleDelay
+        }
+        fun shiftAudio(direction: Int) {
+            val next = Timing.step(viewer.audioDelayMs, direction, Timing.AUDIO_STEP, Timing.AUDIO_LIMIT)
+            timing.audioDelayMs = next
+            c.scope.launch { c.settings.update { it.copy(audioDelayMs = next) } }
+        }
+        rows.add(1, OptionRow("Subtitle delay", Timing.label(subtitleDelay), { shiftSubtitles(-1) }, { shiftSubtitles(1) }))
+        rows.add(3, OptionRow("Audio delay", Timing.label(viewer.audioDelayMs), { shiftAudio(-1) }, { shiftAudio(1) }))
         if (playback is VideoPlayback) {
             rows += OptionRow("Speed", if (speed == 1f) "Normal" else "${speed}x", { setSpeed(-1) }, { setSpeed(1) })
             rows += OptionRow("Source", "Choose another source", onSelect = { chooseSource() })

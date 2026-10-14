@@ -50,6 +50,8 @@ data class ViewerSettings(
     val directFirst: Boolean = false,
     val torrentUpload: Boolean = false,
     val vpnNotice: Boolean = true,
+    /** The sound plays this much later than the picture. It fixes a sound system that adds a delay. */
+    val audioDelayMs: Long = 0,
     /** The keys of the home rows that the viewer turned off. */
     val hiddenRows: Set<String> = emptySet(),
 )
