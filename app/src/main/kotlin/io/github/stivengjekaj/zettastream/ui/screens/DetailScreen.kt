@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -101,6 +103,7 @@ fun nextToPlay(meta: Meta, data: LibraryData): Video? {
     return resume ?: videos.firstOrNull { it.id !in data.watched && seasonKey(it.season) != Int.MAX_VALUE } ?: videos.firstOrNull()
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DetailScreen(app: AppState, preview: MetaPreview) {
     val c = app.container
@@ -195,16 +198,18 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                             Display.rating(m?.imdbRating ?: preview.imdbRating)?.let { "IMDb $it" },
                         ) + (m?.genres ?: preview.genres).take(3)
                         if (facts.isNotEmpty()) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { facts.forEach { FactChip(it) } }
+                            // The facts and the buttons wrap to a new line on a narrow screen.
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { facts.forEach { FactChip(it) } }
                         }
                         Text(
                             m?.description ?: preview.description.orEmpty(), color = TextPrimary.copy(alpha = 0.85f), fontSize = if (tv) 17.sp else 14.sp,
                             maxLines = if (tv) 4 else 8, overflow = TextOverflow.Ellipsis,
                         )
                         if (m == null) CircularProgressIndicator(color = Accent)
-                        else Row(
+                        else FlowRow(
                             Modifier.focusProperties { if (isSeries && seasons.size <= 1 && downTargetShown) down = episodeFocus },
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             val resume = target?.let { library.progress[it.id] }?.takeIf { !it.isFinished && it.position > 0 }
                             ZButton(

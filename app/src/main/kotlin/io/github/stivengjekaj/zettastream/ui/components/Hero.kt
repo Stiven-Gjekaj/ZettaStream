@@ -7,6 +7,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,6 +65,7 @@ private const val BANNER_KEY = "banner|"
  * The large banner at the top of Home, after Miruro 2.0: the art of a title,
  * its logo or name, its facts, a short text, and three buttons.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HeroBanner(
     items: List<MetaPreview>,
@@ -112,7 +115,7 @@ fun HeroBanner(
             } else {
                 Text(meta.name, color = TextPrimary, fontSize = if (tv) 44.sp else 28.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxLines = 2) {
                 (listOfNotNull(Display.year(meta.releaseInfo), Display.kind(meta.type)) + meta.genres.take(3)).forEach { FactChip(it) }
             }
             meta.description?.let {
