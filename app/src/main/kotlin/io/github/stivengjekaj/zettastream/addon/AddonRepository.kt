@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.addon
 
+import kotlinx.coroutines.delay
 import io.github.stivengjekaj.zettastream.diag.Diagnostics
 import io.github.stivengjekaj.zettastream.source.Source
 import io.github.stivengjekaj.zettastream.source.SourceKind
@@ -114,16 +115,27 @@ class AddonRepository(
         val catalogs = state.value.addons.flatMap { a -> a.manifest.catalogs.filter { it.supportsSearch }.map { a to it } }
         // One answer for each catalog, in the order of the source list, so the order does not depend on speed.
         val answers = arrayOfNulls<List<MetaPreview>>(catalogs.size)
+        val changed = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
         catalogs.mapIndexed { i, (addon, catalog) ->
             launch {
                 val metas = runCatching { client.catalog(addon, catalog, mapOf("search" to query)) }.getOrDefault(emptyList())
-                synchronized(answers) {
-                    answers[i] = metas
-                    trySend(SearchRank.merge(query, answers.filterNotNull()))
+                synchronized(answers) { answers[i] = metas }
+                changed.trySend(Unit)
+            }
+        }.let { jobs ->
+            // The list is merged away from the main thread, at most a few times a second, so the screen never waits.
+            val updates = launch {
+                while (true) {
+                    changed.receive()
+                    val snapshot = synchronized(answers) { answers.filterNotNull() }
+                    send(withContext(Dispatchers.Default) { SearchRank.merge(query, snapshot) })
+                    delay(SEARCH_UPDATE)
                 }
             }
-        }.forEach { it.join() }
-        val all = SearchRank.merge(query, answers.filterNotNull())
+            jobs.forEach { it.join() }
+            updates.cancel()
+        }
+        val all = withContext(Dispatchers.Default) { SearchRank.merge(query, answers.filterNotNull()) }
         if (catalogs.isNotEmpty()) searchCache[key] = System.currentTimeMillis() to all
         send(all)
     }
@@ -249,3 +261,6 @@ fun pickSameSource(
 
 /** How long the app keeps the results of a search. */
 private const val SEARCH_KEEP = 10 * 60 * 1000L
+
+/** The time between two updates of the search results while addons answer. */
+private const val SEARCH_UPDATE = 300L
