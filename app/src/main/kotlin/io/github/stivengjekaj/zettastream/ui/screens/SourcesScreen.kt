@@ -85,6 +85,7 @@ fun SourcesScreen(app: AppState) {
                 currentText = { SourceList.format(c.sources.sources.value) },
                 onLines = { text -> c.sources.replace(text).size },
                 onDone = { count -> c.scope.launch { received = count; restart++ } },
+                backup = c.backup,
             )
             pairUrl = server.start()
             onDispose { server.stop() }

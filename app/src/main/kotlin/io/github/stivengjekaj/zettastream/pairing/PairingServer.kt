@@ -1,6 +1,7 @@
 package io.github.stivengjekaj.zettastream.pairing
 
 import io.github.stivengjekaj.zettastream.diag.Diagnostics
+import io.github.stivengjekaj.zettastream.library.Backup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,7 +22,8 @@ data class HttpRequest(val method: String, val path: String, val query: Map<Stri
 
 /** Small HTTP helpers for the pairing page. They are separate so that tests can use them. */
 object PairingHttp {
-    const val MAX_BODY = 256 * 1024
+    /** A backup of a long history can be large. */
+    const val MAX_BODY = 4 * 1024 * 1024
 
     fun read(input: InputStream): HttpRequest? {
         val head = StringBuilder()
@@ -67,6 +69,21 @@ object PairingHttp {
         output.flush()
     }
 
+    fun writeText(output: OutputStream, status: String, text: String) = writeRaw(output, status, "text/plain; charset=utf-8", text, null)
+
+    /** Sends [text] as a file that the browser saves. */
+    fun writeFile(output: OutputStream, name: String, text: String) = writeRaw(output, "200 OK", "application/json; charset=utf-8", text, name)
+
+    private fun writeRaw(output: OutputStream, status: String, type: String, text: String, fileName: String?) {
+        val bytes = text.toByteArray(Charsets.UTF_8)
+        output.write(
+            ("HTTP/1.1 $status\r\nContent-Type: $type\r\nContent-Length: ${bytes.size}\r\nCache-Control: no-store\r\n" +
+                (fileName?.let { "Content-Disposition: attachment; filename=\"$it\"\r\n" } ?: "") + "Connection: close\r\n\r\n").toByteArray(),
+        )
+        output.write(bytes)
+        output.flush()
+    }
+
     fun page(token: String, current: String, message: String? = null): String = """
         <!doctype html><html><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -85,6 +102,23 @@ object PairingHttp {
         <form method="post" action="/?t=${escape(token)}">
         <textarea name="lines" autocapitalize="off" autocorrect="off" spellcheck="false">${escape(current)}</textarea>
         <button type="submit">Send to the TV</button></form>
+        <h1>Backup</h1>
+        <p>The watchlist, the history, the favourite channels, the settings, and this list, in one file.</p>
+        <p><a style="color:#f2f2f2" href="/backup?t=${escape(token)}">Download a backup</a></p>
+        <p>Restore a backup. It replaces the data on the TV.</p>
+        <input type="file" id="file" accept=".json,application/json" style="color:#f2f2f2">
+        <button type="button" onclick="restore()">Restore</button>
+        <p id="result" class="msg" style="display:none"></p>
+        <script>
+        function restore() {
+          var f = document.getElementById('file').files[0]; var out = document.getElementById('result');
+          if (!f) { out.style.display = 'block'; out.textContent = 'Choose a backup file first.'; return; }
+          f.text().then(function (t) { return fetch('/backup?t=${escape(token)}', { method: 'POST', body: t }); })
+            .then(function (r) { return r.text(); })
+            .then(function (msg) { out.style.display = 'block'; out.textContent = msg; })
+            .catch(function () { out.style.display = 'block'; out.textContent = 'The TV did not answer.'; });
+        }
+        </script>
         <p><a style="color:#f2f2f2" href="/log?t=${escape(token)}">Diagnostics: the last events on the TV</a></p></body></html>
     """.trimIndent()
 
@@ -118,6 +152,7 @@ class PairingServer(
     private val currentText: () -> String,
     private val onLines: suspend (String) -> Int,
     private val onDone: (Int) -> Unit,
+    private val backup: Backup? = null,
 ) {
     private var socket: ServerSocket? = null
     private var job: Job? = null
@@ -151,9 +186,15 @@ class PairingServer(
         val out = s.getOutputStream()
         val valid = token.isNotEmpty() && request.query["t"] == token
         when {
-            request.path != "/" && request.path != "/log" -> PairingHttp.write(out, "404 Not Found", "Not found")
+            request.path !in setOf("/", "/log", "/backup") -> PairingHttp.write(out, "404 Not Found", "Not found")
             !valid -> PairingHttp.write(out, "403 Forbidden", "This code is old. Scan the new QR code on the TV.")
             request.path == "/log" -> PairingHttp.write(out, "200 OK", PairingHttp.logPage(deviceInfo(), Diagnostics.lines()))
+            request.path == "/backup" && backup == null -> PairingHttp.write(out, "404 Not Found", "Not found")
+            request.path == "/backup" && request.method == "POST" -> {
+                val result = runBlocking { backup!!.restore(request.body) }
+                PairingHttp.writeText(out, if (result.isSuccess) "200 OK" else "400 Bad Request", result.getOrElse { "The backup did not restore: ${it.message}" })
+            }
+            request.path == "/backup" -> PairingHttp.writeFile(out, "zettastream-backup.json", backup!!.export())
             request.method == "POST" -> {
                 token = ""
                 val lines = PairingHttp.form(request.body)["lines"].orEmpty()

@@ -3,6 +3,7 @@ package io.github.stivengjekaj.zettastream
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.FlowPreview
+import io.github.stivengjekaj.zettastream.library.Backup
 import io.github.stivengjekaj.zettastream.tv.WatchNext
 import android.app.Application
 import coil3.ImageLoader
@@ -41,16 +42,17 @@ class AppContainer(app: Application) {
     val updates = UpdateChecker(http)
     val installer = UpdateInstaller(app, http)
     val watchNext = WatchNext(app)
+    val skipTimes = SkipTimes(http)
+    val settings = SettingsStore(File(app.filesDir, "settings.json"))
+    val health = StreamHealth(File(app.filesDir, "health.json"))
+    val backup = Backup(library, settings, sources)
+    val torrents = TorrentEngine(File(app.cacheDir, "torrents"), settings.settings, scope)
 
     init {
         // The "Play next" row of the TV follows the library, a few seconds after each change.
         @OptIn(FlowPreview::class)
         scope.launch(Dispatchers.IO) { library.data.debounce(3_000).collect { watchNext.sync(Library.continueWatching(it)) } }
     }
-    val skipTimes = SkipTimes(http)
-    val settings = SettingsStore(File(app.filesDir, "settings.json"))
-    val health = StreamHealth(File(app.filesDir, "health.json"))
-    val torrents = TorrentEngine(File(app.cacheDir, "torrents"), settings.settings, scope)
 }
 
 class ZettaStreamApp : Application(), SingletonImageLoader.Factory {
