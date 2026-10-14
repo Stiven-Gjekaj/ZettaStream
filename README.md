@@ -52,16 +52,38 @@ same app has a tab bar and touch controls.
 ## Screens
 
 The layout follows Miruro 2.0, in black and white, with the Karla font.
+These screens are from the Android TV emulator and a phone emulator.
 
 <table>
 <tr>
-<td width="50%"><img src="assets/screens/home.jpg" alt="Home: a large banner of featured titles"></td>
-<td width="50%"><img src="assets/screens/home-rows.jpg" alt="Home: rows of posters with the kind and the year"></td>
+<td width="50%"><img src="assets/screens/home.jpg" alt="Home: a large banner of featured titles"><br><sub>Home starts with a banner of featured titles.</sub></td>
+<td width="50%"><img src="assets/screens/anime.jpg" alt="Home with the Anime filter: rows of posters with ratings"><br><sub>The Anime filter. Each card shows the kind, the year, and the rating.</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="assets/screens/title.jpg" alt="A title page with the art, the facts, and the episodes"></td>
-<td width="50%"><img src="assets/screens/live.jpg" alt="Live TV with channel groups"></td>
+<td width="50%"><img src="assets/screens/watchlist.jpg" alt="Home: the watchlist row"><br><sub>Your watchlist has its own row on Home.</sub></td>
+<td width="50%"><img src="assets/screens/rail.jpg" alt="The icon bar, open"><br><sub>The icon bar opens with a new Left press, Menu, or 0.</sub></td>
 </tr>
+<tr>
+<td width="50%"><img src="assets/screens/title-series.jpg" alt="The title page of a series"><br><sub>A title page: the art, the facts, and the buttons.</sub></td>
+<td width="50%"><img src="assets/screens/episodes.jpg" alt="Episode cards of a series"><br><sub>Seasons and episode cards.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="assets/screens/title-film.jpg" alt="The title page of a film"><br><sub>A film, with Resume and an About table.</sub></td>
+<td width="50%"><img src="assets/screens/search.jpg" alt="Search results"><br><sub>Search in all your addons.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="assets/screens/live.jpg" alt="Live TV with channel groups"><br><sub>Live TV from a playlist, with groups and favourites.</sub></td>
+<td width="50%"><img src="assets/screens/settings.jpg" alt="Settings"><br><sub>Settings.</sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="33%"><img src="assets/screens/phone-home.jpg" alt="Home on a phone"></td>
+<td width="33%"><img src="assets/screens/phone-anime.jpg" alt="Anime rows on a phone"></td>
+<td width="33%"><img src="assets/screens/phone-title.jpg" alt="A title page on a phone"></td>
+</tr>
+<tr><td colspan="3" align="center"><sub>The same app on a phone, with a tab bar.</sub></td></tr>
 </table>
 
 ## Features
