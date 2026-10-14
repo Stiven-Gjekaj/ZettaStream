@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import io.github.stivengjekaj.zettastream.addon.MetaPreview
+import io.github.stivengjekaj.zettastream.ui.components.HeroBanner
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import io.github.stivengjekaj.zettastream.update.UpdateState
@@ -21,7 +23,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -67,15 +72,45 @@ fun HomeScreen(app: AppState) {
     val shown = rows.filter { (app.homeFilter == null || typeKey(it.catalog.type) == app.homeFilter) && it.key !in viewer.hiddenRows }
     val resume = remember(library) { Library.continueWatching(library) }
     val latest = app.latestVersion
+    // The banner shows the first titles with art from the first row.
+    val firstRow = shown.firstOrNull()
+    // A cached row shows at once. Then, after Back, the list has the same items as before and keeps its place.
+    fun pick(metas: List<MetaPreview>) = metas.filter { it.background != null }.take(6)
+    val cachedFeatured = remember(firstRow?.key) { firstRow?.let { c.addons.cachedCatalog(it) }?.let(::pick).orEmpty() }
+    val featured by produceState(cachedFeatured, firstRow?.key) {
+        val row = firstRow ?: return@produceState
+        if (value.isEmpty()) value = pick(runCatching { c.addons.catalog(row) }.getOrDefault(emptyList()))
+    }
+
+    // The banner takes the focus one time only. After Back, the focus returns to the item that had it.
+    var bannerFocused by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(Modifier.fillMaxSize(), state = rememberLazyListState(), contentPadding = PaddingValues(bottom = 48.dp)) {
-        item {
-            Row(
-                Modifier.padding(start = Sizes.gutter(tv), end = Sizes.gutter(tv), top = if (tv) 32.dp else 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Zetta", color = Accent, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold)
-                Text("Stream", color = TextSecondary, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold)
+        if (featured.isNotEmpty()) {
+            item(key = "banner") {
+                HeroBanner(
+                    featured, tv,
+                    inWatchlist = { meta -> library.watchlist.any { it.id == meta.id } },
+                    // A film plays at once. A series opens its page, where the viewer chooses the episode.
+                    onPlay = { meta ->
+                        if (typeKey(meta.type) == "movie") app.open(Screen.AutoPlay(meta, meta.id, meta.name, emptyList()))
+                        else app.open(Screen.Detail(meta))
+                    },
+                    onDetails = { app.open(Screen.Detail(it)) },
+                    onWatchlist = { app.toggleWatchlist(it) },
+                    takeFocus = !bannerFocused,
+                    onFocusTaken = { bannerFocused = true },
+                )
+            }
+        } else {
+            item {
+                Row(
+                    Modifier.padding(start = Sizes.gutter(tv), end = Sizes.gutter(tv), top = if (tv) 32.dp else 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Zetta", color = Accent, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold)
+                    Text("Stream", color = TextSecondary, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
         if (latest != null && UpdateChecker.isNewer(latest, BuildConfig.VERSION_NAME)) {
