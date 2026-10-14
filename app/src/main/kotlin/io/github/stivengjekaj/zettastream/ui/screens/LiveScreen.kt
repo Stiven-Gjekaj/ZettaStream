@@ -1,5 +1,21 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import kotlinx.coroutines.launch
+import io.github.stivengjekaj.zettastream.ui.components.ZButton
+import io.github.stivengjekaj.zettastream.remote.RemoteAction
+import io.github.stivengjekaj.zettastream.iptv.Programme
+import io.github.stivengjekaj.zettastream.iptv.GuideLayout
+import io.github.stivengjekaj.zettastream.iptv.GuideBlock
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -64,17 +80,48 @@ private fun groupsOf(channels: List<Channel>): List<String> =
     channels.mapNotNull { it.group }.groupingBy { it }.eachCount().entries
         .sortedByDescending { it.value }.take(40).map { it.key }
 
+/** The chip that shows only the favourite channels. It is not the name of a playlist group. */
+private const val FAVORITES = "\u0000favourites"
+
 @Composable
 fun LiveScreen(app: AppState) {
     val c = app.container
     val tv = app.isTv
     val state by c.live.live.collectAsState()
     val sources by c.sources.sources.collectAsState()
+    val library by c.library.data.collectAsState()
+    val favorites = library.favoriteChannels
     var group by remember { mutableStateOf<String?>(null) }
+    var guideView by rememberSaveable { mutableStateOf(false) }
+    var focusedChannel by remember { mutableStateOf<Channel?>(null) }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) { c.live.ensureLoaded() }
 
+    // Red adds the focused channel to the favourites, or removes it.
+    DisposableEffect(Unit) {
+        app.screenActions = mapOf(
+            RemoteAction.Watchlist to {
+                focusedChannel?.let { channel ->
+                    scope.launch {
+                        val added = c.library.toggleFavoriteChannel(channel.key)
+                        app.toast = if (added) "Added to the favourites: ${channel.name}" else "Removed from the favourites: ${channel.name}"
+                    }
+                }
+                Unit
+            },
+        )
+        onDispose { app.screenActions = emptyMap() }
+    }
+
     val groups = remember(state.channels) { groupsOf(state.channels) }
-    val shown = remember(state.channels, group) { state.channels.filter { group == null || it.group == group } }
+    // The favourites come first in All, and alone in Favourites.
+    val shown = remember(state.channels, group, favorites) {
+        when (group) {
+            FAVORITES -> state.channels.filter { it.key in favorites }
+            null -> state.channels.sortedByDescending { it.key in favorites }
+            else -> state.channels.filter { it.group == group }
+        }
+    }
     val now = System.currentTimeMillis()
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = if (tv) 32.dp else 16.dp)) {
@@ -89,6 +136,12 @@ fun LiveScreen(app: AppState) {
                 color = TextSecondary, fontSize = 14.sp, modifier = Modifier.padding(horizontal = Sizes.gutter(tv)),
             )
             if (state.loading) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 8.dp))
+            if (state.channels.isNotEmpty()) {
+                Row(Modifier.padding(horizontal = Sizes.gutter(tv), vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ZButton(onClick = { guideView = !guideView }, tv = tv) { Text(if (guideView) "List view" else "Guide view") }
+                    if (tv) Text("Red: favourite", color = TextSecondary, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
+                }
+            }
         }
         if (sources.none { it.kind == SourceKind.Playlist }) {
             item {
@@ -99,19 +152,19 @@ fun LiveScreen(app: AppState) {
                 )
             }
         }
-        if (groups.size > 1) {
+        if (groups.size > 1 || favorites.isNotEmpty()) {
             item {
                 TvRow(tv) {
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = Sizes.gutter(tv), vertical = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        items(listOf<String?>(null) + groups) { g ->
+                        items(listOf<String?>(null) + (if (favorites.isNotEmpty()) listOf(FAVORITES) else emptyList()) + groups) { g ->
                             FilterChip(
                                 shape = Corner,
                                 selected = g == group,
                                 onClick = { group = g },
-                                label = { Text(g ?: "All") },
+                                label = { Text(if (g == FAVORITES) "Favourites" else g ?: "All") },
                                 modifier = Modifier.focusRing(Corner, scaleTo = 1.04f),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = Outline, selectedLabelColor = TextPrimary,
@@ -123,15 +176,28 @@ fun LiveScreen(app: AppState) {
                 }
             }
         }
-        items(shown.size, key = { shown[it].url }) { index ->
-            val channel = shown[index]
-            ChannelRow(channel, state.guide, now, tv) { app.open(Screen.Player(LivePlayback(shown, index))) }
+        if (guideView) {
+            item { GuideHeader(GuideLayout.windowStart(now), tv) }
+            items(shown.size, key = { "guide|" + shown[it].url }) { index ->
+                val channel = shown[index]
+                GuideRow(
+                    channel, state.guide, GuideLayout.windowStart(now), now, channel.key in favorites, tv,
+                    onFocus = { focusedChannel = channel },
+                ) { app.open(Screen.Player(LivePlayback(shown, index))) }
+            }
+        } else {
+            items(shown.size, key = { shown[it].url }) { index ->
+                val channel = shown[index]
+                ChannelRow(channel, state.guide, now, channel.key in favorites, tv, onFocus = { focusedChannel = channel }) {
+                    app.open(Screen.Player(LivePlayback(shown, index)))
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun ChannelRow(channel: Channel, guide: Guide, now: Long, tv: Boolean, onClick: () -> Unit) {
+private fun ChannelRow(channel: Channel, guide: Guide, now: Long, favorite: Boolean, tv: Boolean, onFocus: () -> Unit, onClick: () -> Unit) {
     val shape = Corner
     val (current, next) = guide.nowAndNext(channel.tvgId, now)
     val time = DateFormat.getTimeInstance(DateFormat.SHORT)
@@ -139,6 +205,7 @@ private fun ChannelRow(channel: Channel, guide: Guide, now: Long, tv: Boolean, o
         Modifier
             .fillMaxWidth()
             .padding(horizontal = Sizes.gutter(tv), vertical = 4.dp)
+            .onFocusChanged { if (it.isFocused) onFocus() }
             .focusRing(shape, scaleTo = 1.02f)
             .clip(shape)
             .background(SurfaceHigh.copy(alpha = 0.6f))
@@ -152,7 +219,10 @@ private fun ChannelRow(channel: Channel, guide: Guide, now: Long, tv: Boolean, o
         }
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(channel.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (favorite) Icon(Icons.Rounded.Star, "Favourite", tint = TextPrimary, modifier = Modifier.size(18.dp).padding(end = 4.dp))
+                Text(channel.name, color = TextPrimary, fontSize = if (tv) 18.sp else 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
             if (current != null) {
                 Text("${time.format(Date(current.start))}  ${current.title}", color = TextPrimary.copy(alpha = 0.85f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 LinearProgressIndicator(
@@ -169,3 +239,64 @@ private fun ChannelRow(channel: Channel, guide: Guide, now: Long, tv: Boolean, o
         }
     }
 }
+
+/** The times above the guide grid, one each half hour. */
+@Composable
+private fun GuideHeader(from: Long, tv: Boolean) {
+    val time = DateFormat.getTimeInstance(DateFormat.SHORT)
+    Row(Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 6.dp)) {
+        Spacer(Modifier.width(GUIDE_NAME_WIDTH))
+        BoxWithConstraints(Modifier.weight(1f)) {
+            val steps = (GuideLayout.SPAN / GuideLayout.HALF_HOUR).toInt()
+            for (i in 0 until steps) {
+                Text(
+                    time.format(Date(from + i * GuideLayout.HALF_HOUR)), color = TextSecondary, fontSize = 12.sp,
+                    modifier = Modifier.offset(x = maxWidth * i / steps),
+                )
+            }
+        }
+    }
+}
+
+/** One channel in the guide grid: its name, then its programmes on the time line. OK on a programme plays the channel. */
+@Composable
+private fun GuideRow(
+    channel: Channel, guide: Guide, from: Long, now: Long, favorite: Boolean, tv: Boolean,
+    onFocus: () -> Unit, onClick: () -> Unit,
+) {
+    val blocks = remember(channel.tvgId, guide, from) { GuideLayout.blocks(guide.programmes(channel.tvgId), from) }
+    val time = DateFormat.getTimeInstance(DateFormat.SHORT)
+    Row(Modifier.fillMaxWidth().height(if (tv) 56.dp else 48.dp).padding(horizontal = Sizes.gutter(tv), vertical = 3.dp)) {
+        Row(Modifier.width(GUIDE_NAME_WIDTH).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
+            if (favorite) Icon(Icons.Rounded.Star, "Favourite", tint = TextPrimary, modifier = Modifier.size(16.dp).padding(end = 4.dp))
+            Text(channel.name, color = TextPrimary, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(end = 8.dp))
+        }
+        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
+            // A channel with no guide has one block, so that it can still be played.
+            val shown = blocks.ifEmpty { listOf(GuideBlock(Programme(channel.key, "No guide", from, from + GuideLayout.SPAN), 0f, 1f)) }
+            shown.forEach { block ->
+                val onNow = now in block.programme.start until block.programme.stop
+                Box(
+                    Modifier
+                        .offset(x = maxWidth * block.offset)
+                        .width(maxWidth * block.width - 3.dp)
+                        .fillMaxHeight()
+                        .onFocusChanged { if (it.isFocused) onFocus() }
+                        .focusRing(Corner, scaleTo = 1.02f)
+                        .clip(Corner)
+                        .background(if (onNow) SurfaceHigh else SurfaceHigh.copy(alpha = 0.45f))
+                        .clickable(onClick = onClick)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Column {
+                        Text(block.programme.title, color = TextPrimary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (blocks.isNotEmpty()) Text(time.format(Date(block.programme.start)), color = TextSecondary, fontSize = 11.sp, maxLines = 1)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private val GUIDE_NAME_WIDTH = 180.dp
