@@ -153,6 +153,15 @@ fun PosterCard(
     }
 }
 
+/** The large title at the top of a screen, as on Miruro 2.0. */
+@Composable
+fun PageTitle(text: String, tv: Boolean, modifier: Modifier = Modifier) {
+    Text(
+        text, color = TextPrimary, fontSize = if (tv) 36.sp else 26.sp, fontWeight = FontWeight.ExtraBold,
+        modifier = modifier.padding(horizontal = Sizes.gutter(tv)).padding(bottom = 4.dp),
+    )
+}
+
 @Composable
 fun SectionTitle(text: String, tv: Boolean, detail: String? = null) {
     Column(Modifier.padding(start = Sizes.gutter(tv), end = Sizes.gutter(tv), top = 18.dp, bottom = 8.dp)) {

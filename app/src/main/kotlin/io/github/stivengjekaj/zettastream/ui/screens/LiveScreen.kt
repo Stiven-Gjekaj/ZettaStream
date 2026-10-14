@@ -61,6 +61,7 @@ import io.github.stivengjekaj.zettastream.ui.AppState
 import io.github.stivengjekaj.zettastream.ui.LivePlayback
 import io.github.stivengjekaj.zettastream.ui.Screen
 import io.github.stivengjekaj.zettastream.ui.components.Message
+import io.github.stivengjekaj.zettastream.ui.components.PageTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.components.focusRing
@@ -126,8 +127,7 @@ fun LiveScreen(app: AppState) {
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = if (tv) 32.dp else 16.dp)) {
         item {
-            Text("Live TV", color = TextPrimary, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = Sizes.gutter(tv)))
+            PageTitle("Live TV", tv)
             Text(
                 when {
                     state.loading -> "Loading ${state.channels.size} channels and the guide"

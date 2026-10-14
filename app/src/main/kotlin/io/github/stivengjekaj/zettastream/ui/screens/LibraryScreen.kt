@@ -23,6 +23,7 @@ import io.github.stivengjekaj.zettastream.ui.components.Message
 import io.github.stivengjekaj.zettastream.ui.components.PosterCard
 import io.github.stivengjekaj.zettastream.ui.components.PosterRow
 import io.github.stivengjekaj.zettastream.ui.components.SectionTitle
+import io.github.stivengjekaj.zettastream.ui.components.PageTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.components.TvRow
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
@@ -35,8 +36,7 @@ fun LibraryScreen(app: AppState) {
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = if (tv) 32.dp else 16.dp)) {
         item {
-            Text("Library", color = TextPrimary, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = Sizes.gutter(tv)))
+            PageTitle("Library", tv)
         }
         if (resume.isEmpty() && data.watchlist.isEmpty()) {
             item {

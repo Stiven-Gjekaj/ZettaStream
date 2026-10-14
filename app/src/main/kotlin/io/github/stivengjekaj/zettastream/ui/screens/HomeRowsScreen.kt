@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.ui.AppState
+import io.github.stivengjekaj.zettastream.ui.components.PageTitle
 import io.github.stivengjekaj.zettastream.ui.components.Sizes
 import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
@@ -31,8 +32,7 @@ fun HomeRowsScreen(app: AppState) {
     val rows = remember(addons) { c.addons.homeRows() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = if (tv) 32.dp else 16.dp)) {
         item {
-            Text("Home rows", color = TextPrimary, fontSize = if (tv) 30.sp else 24.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = Sizes.gutter(tv)))
+            PageTitle("Home rows", tv)
             Text(
                 "Press OK to turn a row off or on. New and trending rows come first. A row that repeats a row above it does not show.",
                 color = TextSecondary, fontSize = 14.sp, modifier = Modifier.padding(horizontal = Sizes.gutter(tv), vertical = 8.dp),
