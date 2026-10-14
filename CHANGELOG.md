@@ -12,6 +12,15 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 0.10.0 (2026-10-14)
+
+- Live TV: Red marks a favourite channel, a "Favourites" chip shows them,
+  and "Guide view" shows the guide as a time grid.
+- More channels get their guide: a playlist and a guide can write a channel
+  ID in two forms, and the app matches both.
+- The phone page can download a backup of the library, the favourites, the
+  settings, and the sources, and restore it on any TV.
+
 ## 0.9.0 (2026-10-14)
 
 - Install updates from inside the app: Home and Settings show "Install the
