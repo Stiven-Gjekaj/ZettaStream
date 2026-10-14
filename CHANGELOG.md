@@ -13,6 +13,20 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.1.3 (2026-10-15)
+
+- A stream that stops in the middle of a video no longer ends playback. The
+  player reconnects, jumps past damaged data, and then goes on with the next
+  best source at the same position.
+- A reconnect that fails at the same place no longer repeats with no end.
+- The player options have a subtitle delay and an audio delay.
+- Home has a "New episodes" row for the shows that you follow.
+- Search shows your recent searches. Home rows can move up and down.
+- A title page has a Trailer button, "More like this", the director, and
+  the cast.
+- On a phone, the video goes on in a small window when you leave the app.
+  On a TV, the sound stops when another app comes in front.
+
 ## 1.1.2 (2026-10-14)
 
 - The facts of a title have a dark fill, so they are easy to read on bright
