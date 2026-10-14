@@ -75,7 +75,7 @@ import io.github.stivengjekaj.zettastream.ui.theme.TextPrimary
 import io.github.stivengjekaj.zettastream.ui.theme.TextSecondary
 
 /** The last search, so that Back from a title shows the same results. */
-private object LastSearch {
+internal object LastSearch {
     var query = ""
     var results: List<MetaPreview> = emptyList()
 }

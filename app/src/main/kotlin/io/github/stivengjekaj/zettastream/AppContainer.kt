@@ -15,6 +15,8 @@ import io.github.stivengjekaj.zettastream.addon.AddonRepository
 import io.github.stivengjekaj.zettastream.addon.StreamHealth
 import io.github.stivengjekaj.zettastream.iptv.LiveRepository
 import io.github.stivengjekaj.zettastream.library.Library
+import io.github.stivengjekaj.zettastream.profile.Avatars
+import io.github.stivengjekaj.zettastream.profile.ProfileStore
 import io.github.stivengjekaj.zettastream.net.Http
 import io.github.stivengjekaj.zettastream.settings.SettingsStore
 import io.github.stivengjekaj.zettastream.skip.SkipTimes
@@ -38,15 +40,26 @@ class AppContainer(app: Application) {
     val sources = SourceStore(File(app.filesDir, "sources.txt"), BuildConfig.SEED_SOURCES)
     val addons = AddonRepository(AddonClient(http), sources.sources, scope)
     val live = LiveRepository(http, sources.sources, scope)
-    val library = Library(File(app.filesDir, "library.json"))
+    // Each profile has its own library and settings. The sources are the same for all.
+    val profiles = ProfileStore(app.filesDir)
+    private fun current() = profiles.profiles.value.let { d -> d.profiles.firstOrNull { it.id == d.last } ?: d.profiles.first() }
+    val library = Library(File(profiles.folder(current().id), "library.json"))
+    val avatars = Avatars(http)
     val updates = UpdateChecker(http)
     val installer = UpdateInstaller(app, http, scope)
     val watchNext = WatchNext(app)
     val skipTimes = SkipTimes(http)
-    val settings = SettingsStore(File(app.filesDir, "settings.json"))
+    val settings = SettingsStore(File(profiles.folder(current().id), "settings.json"))
     val health = StreamHealth(File(app.filesDir, "health.json"))
     val backup = Backup(library, settings, sources)
     val torrents = TorrentEngine(File(app.cacheDir, "torrents"), settings.settings, scope)
+
+    /** Changes to the library and the settings of [id]. */
+    suspend fun selectProfile(id: String) {
+        profiles.select(id)
+        library.switchTo(File(profiles.folder(id), "library.json"))
+        settings.switchTo(File(profiles.folder(id), "settings.json"))
+    }
 
     init {
         // The "Play next" row of the TV follows the library, a few seconds after each change.

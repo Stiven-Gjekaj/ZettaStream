@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream
 
+import io.github.stivengjekaj.zettastream.ui.screens.EditProfileScreen
+import io.github.stivengjekaj.zettastream.ui.screens.ProfilesScreen
 import android.content.res.Configuration
 import android.util.Rational
 import android.os.Build
@@ -181,7 +183,7 @@ private fun Root(app: AppState, finish: () -> Unit) {
     }
     val activity = LocalActivity.current as? MainActivity
     LaunchedEffect(screen) { activity?.updatePictureInPicture(screen is Screen.Player) }
-    val fullScreen = screen is Screen.Player
+    val fullScreen = screen is Screen.Player || screen is Screen.Profiles || screen is Screen.EditProfile
     // After a choice in the icon bar, the new screen takes the focus.
     LaunchedEffect(screen) {
         if (app.focusContentSoon) try {
@@ -263,6 +265,8 @@ private fun Content(app: AppState, screen: Screen) {
         is Screen.Streams -> StreamsScreen(app, screen)
         is Screen.AutoPlay -> AutoPlayScreen(app, screen)
         is Screen.Player -> PlayerScreen(app, screen.playback)
+        Screen.Profiles -> ProfilesScreen(app)
+        is Screen.EditProfile -> EditProfileScreen(app, screen.id)
     }
 }
 

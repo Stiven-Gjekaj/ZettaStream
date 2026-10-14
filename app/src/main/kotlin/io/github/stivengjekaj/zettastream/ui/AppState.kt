@@ -115,6 +115,10 @@ sealed interface Screen {
     data object Sources : Screen
     data object KeyTest : Screen
     data object HomeRows : Screen
+    /** "Who is watching?" The app starts here. */
+    data object Profiles : Screen
+    /** Adds a profile when [id] is null, or changes the profile with that ID. */
+    data class EditProfile(val id: String?) : Screen
 
     /**
      * A `when` and not a list: a list in the companion object can hold null
@@ -143,7 +147,7 @@ object FocusMemory {
 
 /** The state of the interface: the screens, the menu, and the key routing. */
 class AppState(val container: AppContainer, val isTv: Boolean) {
-    val stack = mutableStateListOf<Screen>(Screen.Home)
+    val stack = mutableStateListOf<Screen>(Screen.Profiles)
     val current: Screen get() = stack.last()
 
     /** True while an item of the icon bar of the TV has the focus. */
@@ -213,7 +217,7 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
                 stack.removeAt(stack.lastIndex)
                 FocusMemory.returnTo(current)
             }
-            current != Screen.Home -> open(Screen.Home)
+            current != Screen.Home && current != Screen.Profiles -> open(Screen.Home)
             isTv -> exitDialog = true
             else -> finish()
         }
