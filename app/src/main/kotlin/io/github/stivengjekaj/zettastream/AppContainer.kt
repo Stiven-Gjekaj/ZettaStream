@@ -1,5 +1,9 @@
 package io.github.stivengjekaj.zettastream
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.FlowPreview
+import io.github.stivengjekaj.zettastream.tv.WatchNext
 import android.app.Application
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -36,6 +40,13 @@ class AppContainer(app: Application) {
     val library = Library(File(app.filesDir, "library.json"))
     val updates = UpdateChecker(http)
     val installer = UpdateInstaller(app, http)
+    val watchNext = WatchNext(app)
+
+    init {
+        // The "Play next" row of the TV follows the library, a few seconds after each change.
+        @OptIn(FlowPreview::class)
+        scope.launch(Dispatchers.IO) { library.data.debounce(3_000).collect { watchNext.sync(Library.continueWatching(it)) } }
+    }
     val skipTimes = SkipTimes(http)
     val settings = SettingsStore(File(app.filesDir, "settings.json"))
     val health = StreamHealth(File(app.filesDir, "health.json"))
