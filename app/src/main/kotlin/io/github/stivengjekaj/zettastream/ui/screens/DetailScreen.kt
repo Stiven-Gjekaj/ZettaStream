@@ -1,5 +1,11 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.rounded.Movie
+import io.github.stivengjekaj.zettastream.ui.components.PosterRow
+import io.github.stivengjekaj.zettastream.addon.Similar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -113,6 +119,13 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
     val addonState by c.addons.addons.collectAsState()
     val meta by produceState<Meta?>(null, preview.id) { value = c.addons.meta(preview) }
     val m = meta
+    val context = LocalContext.current
+    // Titles of the same kind with the same first genre that an addon can give.
+    val similar by produceState(emptyList<MetaPreview>(), m?.id) {
+        val title = m ?: return@produceState
+        val row = Similar.row(addonState.addons, title.type, title.genres) ?: return@produceState
+        value = runCatching { c.addons.catalog(row) }.getOrDefault(emptyList()).filter { it.id != title.id }.take(SIMILAR_MAX)
+    }
     var season by remember { mutableStateOf<Int?>(null) }
     var focusedVideo by remember { mutableStateOf<Video?>(null) }
     val playFocus = remember { FocusRequester() }
@@ -241,6 +254,13 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                                     tv = tv,
                                 ) { Text("All seasons") }
                             }
+                            Display.trailer(m)?.let { id ->
+                                ZButton(onClick = { if (!openTrailer(context, id)) app.toast = "No app on this device plays YouTube videos" }, tv = tv) {
+                                    Icon(Icons.Rounded.Movie, null)
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("Trailer")
+                                }
+                            }
                             val inList = library.watchlist.any { it.id == preview.id }
                             ZButton(onClick = { app.toggleWatchlist(m.toPreview()) }, tv = tv) {
                                 Icon(if (inList) Icons.Rounded.Check else Icons.Rounded.Add, null)
@@ -283,6 +303,21 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                             EpisodeCard(video, tv, library, Modifier.weight(1f), if (video == downTarget) episodeFocus else null, { downTargetShown = it }, onFocus = { focusedVideo = video }, onClick = { play(video) })
                         }
                         repeat(perLine - line.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+            if (similar.isNotEmpty()) {
+                item { SectionHeading("More like this", detail = null, tv = tv) }
+                item(key = "similar") {
+                    // The row has its own side space, so it takes the full width of the page.
+                    val gutter = with(LocalDensity.current) { Sizes.gutter(tv).roundToPx() }
+                    Box(
+                        Modifier.layout { measurable, constraints ->
+                            val wide = measurable.measure(constraints.copy(minWidth = 0, maxWidth = constraints.maxWidth + 2 * gutter))
+                            layout(constraints.maxWidth, wide.height) { wide.place(-gutter, 0) }
+                        },
+                    ) {
+                        PosterRow(similar, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = "similar|${preview.id}")
                     }
                 }
             }
@@ -386,4 +421,14 @@ private fun EpisodeCard(
         val line = listOfNotNull(video.season?.let { s -> video.episode?.let { "S$s E$it" } }, date).joinToString(" · ")
         if (line.isNotEmpty()) Text(line, color = TextSecondary, fontSize = 12.sp, maxLines = 1)
     }
+}
+
+/** The most titles in the More like this row. */
+private const val SIMILAR_MAX = 15
+
+/** Opens a YouTube video in the YouTube app, or in any app that opens the link. False when no app can. */
+private fun openTrailer(context: android.content.Context, id: String): Boolean {
+    val app = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("vnd.youtube:$id"))
+    val web = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com/watch?v=$id"))
+    return listOf(app, web).any { intent -> runCatching { context.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
 }
