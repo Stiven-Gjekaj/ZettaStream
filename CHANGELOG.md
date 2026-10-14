@@ -13,6 +13,11 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.3.1 (2026-10-15)
+
+- Search shows the same title from many addons one time, and the best match
+  comes first. A repeated search answers at once.
+
 ## 1.3.0 (2026-10-15)
 
 - "Explore more" at the end of each row opens all the titles of the row in a
