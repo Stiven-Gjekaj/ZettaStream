@@ -29,18 +29,20 @@ val Danger = Color(0xFFFF6B6B)
 /** One corner radius for every card, button, chip, and focus ring. */
 val Corner = RoundedCornerShape(8.dp)
 
-private fun mono(weight: FontWeight) = Font(
-    R.font.jetbrains_mono,
+// Karla, the font of Miruro 2.0, under the SIL Open Font License. One variable file gives each weight.
+private fun karla(weight: FontWeight) = Font(
+    R.font.karla,
     weight = weight,
     variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
 )
 
-val Mono = FontFamily(
-    mono(FontWeight.Light),
-    mono(FontWeight.Normal),
-    mono(FontWeight.Medium),
-    mono(FontWeight.SemiBold),
-    mono(FontWeight.Bold),
+val Sans = FontFamily(
+    karla(FontWeight.Light),
+    karla(FontWeight.Normal),
+    karla(FontWeight.Medium),
+    karla(FontWeight.SemiBold),
+    karla(FontWeight.Bold),
+    karla(FontWeight.ExtraBold),
 )
 
 private val LINE_HEIGHT = 1.3.em
@@ -75,7 +77,7 @@ fun ZettaTheme(content: @Composable () -> Unit) {
             outline = Outline,
             error = Danger,
         ),
-        typography = Typography().withFont(Mono),
+        typography = Typography().withFont(Sans),
         content = content,
     )
 }

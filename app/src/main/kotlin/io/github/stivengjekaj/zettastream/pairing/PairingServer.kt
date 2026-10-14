@@ -89,10 +89,10 @@ object PairingHttp {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>ZettaStream sources</title>
         <style>
-          body{margin:0;padding:16px;background:#000;color:#f2f2f2;font-family:ui-monospace,'JetBrains Mono',Menlo,monospace}
+          body{margin:0;padding:16px;background:#000;color:#f2f2f2;font-family:Karla,ui-sans-serif,system-ui,sans-serif}
           h1{font-size:20px;margin:8px 0 4px;letter-spacing:-0.5px}p{color:#8c8c8c;font-size:13px}
           textarea{width:100%;box-sizing:border-box;height:55vh;background:#0e0e0e;color:#f2f2f2;border:1px solid #2e2e2e;border-radius:8px;padding:10px;font:12px ui-monospace,monospace}
-          button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:8px;background:#fff;color:#000;font:600 15px ui-monospace,monospace}
+          button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:8px;background:#fff;color:#000;font:600 15px Karla,ui-sans-serif,system-ui,sans-serif}
           .msg{padding:12px;border-radius:8px;background:#181818;color:#f2f2f2}
         </style></head><body>
         <h1>ZettaStream sources</h1>
@@ -126,8 +126,8 @@ object PairingHttp {
     fun logPage(header: String, lines: List<String>): String = """
         <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
         <title>ZettaStream diagnostics</title>
-        <style>body{margin:0;padding:16px;background:#000;color:#f2f2f2;font-family:ui-monospace,monospace}
-        h1{font-size:20px}p{color:#8c8c8c;font-size:13px}pre{white-space:pre-wrap;word-break:break-all;font-size:11px;line-height:1.5}</style></head>
+        <style>body{margin:0;padding:16px;background:#000;color:#f2f2f2;font-family:Karla,ui-sans-serif,system-ui,sans-serif}
+        h1{font-size:20px}p{color:#8c8c8c;font-size:13px}pre{font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-all;font-size:11px;line-height:1.5}</style></head>
         <body><h1>Diagnostics</h1><p>${escape(header)}</p>
         <p>Copy this text and send it with a fault report. Reload the page for new events.</p>
         <pre>${escape(lines.joinToString("\n").ifEmpty { "No events yet. Play something on the TV, then reload this page." })}</pre></body></html>
@@ -135,7 +135,7 @@ object PairingHttp {
 
     fun done(count: Int): String = """
         <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>body{margin:0;padding:24px;background:#000;color:#f2f2f2;font-family:ui-monospace,monospace}</style></head>
+        <style>body{margin:0;padding:24px;background:#000;color:#f2f2f2;font-family:Karla,ui-sans-serif,system-ui,sans-serif}</style></head>
         <body><h1>Sent</h1><p>The TV has $count sources now. You can close this page.</p></body></html>
     """.trimIndent()
 
