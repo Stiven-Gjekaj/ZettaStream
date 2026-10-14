@@ -110,6 +110,12 @@ These screens are from the Android TV emulator and a phone emulator.
 - An options panel in the player: Menu, `0`, or hold OK
 - Skip the intro of an anime episode at the exact second, from AniSkip
 - Subtitles from OpenSubtitles when no subtitle addon is in your list
+- A subtitle delay and an audio delay in the player options
+- Profiles, as on Netflix: each person has a picture, a history, a
+  watchlist, and settings
+- A "New episodes" row for the shows that you follow
+- A trailer, the cast, and "More like this" on each title page
+- On a phone, the video goes on in a small window when you leave the app
 - Live TV from M3U playlists, with now and next from an XMLTV guide,
   favourite channels, and a guide grid
 - Back up and restore the library and the settings from the phone page
@@ -356,6 +362,14 @@ Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md),
 follow the [Code of Conduct](CODE_OF_CONDUCT.md), and see
 [SUPPORT.md](SUPPORT.md) if you need help. A contribution that adds a source,
 or a link to a source, is refused.
+
+## Profile pictures
+
+The pictures of anime characters come from [AniList](https://anilist.co).
+The pictures of TV characters and actors come from
+[TVmaze](https://www.tvmaze.com), under CC BY-SA. The app asks these services
+only when you choose a picture. The rights to each picture stay with their
+owners.
 
 ## A note on rights
 
