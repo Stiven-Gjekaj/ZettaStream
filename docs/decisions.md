@@ -611,3 +611,19 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - When a button of the banner, or of the top of a title page, has the focus,
   the screen scrolls to the top.
 
+## 2026-10-14: Performance
+
+- The app has a startup profile. The `baselineprofile` module records it on
+  an emulator with Android 13 or newer: a start, a move through the rows of
+  Home, and a title page. The benchmark build starts with Cinemeta as its
+  only source, so that Home has rows to record.
+- A TV emulator with Android 12 cannot record it, because that needs root.
+  The profile comes from a phone emulator. Most of the code is the same.
+- On emulators, the start was about 4% faster with the profile, which is
+  inside the noise. The real test is the first days after an install on the
+  TV.
+- The focus ring is one modifier node, not a composed modifier.
+- A card asks metahub for the small poster (300 x 450), which is less than
+  half the download of the medium poster. The banner keeps its size, because
+  it fills the screen.
+
