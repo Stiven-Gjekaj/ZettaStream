@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream
 
+import android.content.Intent
+import io.github.stivengjekaj.zettastream.tv.DeepLink
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.KeyEvent
@@ -73,6 +75,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         app = AppState((application as ZettaStreamApp).container, deviceKind() == DeviceKind.Tv)
+        if (savedInstanceState == null) openLink(intent)
         setContent {
             ZettaTheme {
                 // On a TV, a control is only as large as it looks, so the focus ring fits it.
@@ -83,6 +86,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /** The "Play next" row of the TV opens a title with a link. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        openLink(intent)
+    }
+
+    private fun openLink(intent: Intent?) {
+        val meta = intent?.data?.toString()?.let(DeepLink::parse) ?: return
+        app.open(Screen.Detail(meta))
     }
 
     /** A start with no network leaves addons that did not answer. Try them again on return. */
