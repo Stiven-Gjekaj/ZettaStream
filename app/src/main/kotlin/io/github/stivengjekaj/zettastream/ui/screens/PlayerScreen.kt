@@ -86,6 +86,7 @@ import kotlinx.coroutines.Dispatchers
 import io.github.stivengjekaj.zettastream.addon.ListedStream
 import io.github.stivengjekaj.zettastream.addon.StreamOrder
 import io.github.stivengjekaj.zettastream.ui.videoPlayback
+import io.github.stivengjekaj.zettastream.library.Resume
 import io.github.stivengjekaj.zettastream.net.MediaKind
 import io.github.stivengjekaj.zettastream.net.MediaKinds
 import kotlinx.coroutines.delay
@@ -247,6 +248,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var retries by remember { mutableIntStateOf(0) }
     // True after the first frame plays. Before it, a failed stream gives its place to the next best one.
     var everReady by remember { mutableStateOf(false) }
+    // The saved position. Another source can be shorter, so the player checks it when the length is known.
+    var resumeAt by remember { mutableLongStateOf(0L) }
     val labelUntil = remember { System.currentTimeMillis() + LABEL_TIME }
     var countdownCancelled by remember { mutableStateOf(false) }
     var countdownLeft by remember { mutableIntStateOf(0) }
@@ -317,6 +320,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             return
         }
         player.setMediaSource(source)
+        resumeAt = startAt
         if (startAt > 0) player.seekTo(startAt)
         player.prepare()
     }
@@ -349,7 +353,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     }
 
     fun saveProgress() {
-        if (playback !is VideoPlayback) return
+        // A stream that never played has no position of the viewer. Its end must not mark the video as watched.
+        if (playback !is VideoPlayback || !everReady) return
         val d = player.duration
         if (d == C.TIME_UNSET || d <= 0) return
         val p = player.currentPosition
@@ -699,6 +704,12 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             }
             override fun onPlaybackStateChanged(state: Int) {
                 if (BuildConfig.DEBUG) android.util.Log.d("ZPlayer", "state=$state pos=${player.currentPosition} buf=${player.bufferedPosition} dur=${player.duration}")
+                // A saved position past the end of this source starts the video from the beginning.
+                if (!everReady && resumeAt > 0 && player.duration > 0 && !Resume.fits(resumeAt, player.duration)) {
+                    resumeAt = 0
+                    player.seekTo(0)
+                    return
+                }
                 buffering = state == Player.STATE_BUFFERING
                 if (state == Player.STATE_READY) { retries = 0; everReady = true }
                 if (state == Player.STATE_ENDED && playback is VideoPlayback) {
