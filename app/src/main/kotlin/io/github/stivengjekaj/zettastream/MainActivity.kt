@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -116,18 +117,22 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * The player and the key test take keys first. A key that nobody used goes to the app actions.
-     * Lint marks this override as a restricted API by mistake: the method is public in Activity.
-     */
-    @SuppressLint("RestrictedApi")
-    /**
      * On a phone, the player goes into a small window when the viewer leaves the app, so the
      * video goes on. A TV has no such window.
      */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (!app.isTv && app.current is Screen.Player && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // From Android 12, the window opens by itself. See updatePictureInPicture.
+        if (!app.isTv && app.current is Screen.Player && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             runCatching { enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()) }
+        }
+    }
+
+    /** From Android 12, the player screen tells Android to open the small window by itself, with a smooth move. */
+    fun updatePictureInPicture(player: Boolean) {
+        if (app.isTv || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        runCatching {
+            setPictureInPictureParams(PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).setAutoEnterEnabled(player).build())
         }
     }
 
@@ -136,6 +141,11 @@ class MainActivity : ComponentActivity() {
         app.inPictureInPicture = isInPictureInPictureMode
     }
 
+    /**
+     * The player and the key test take keys first. A key that nobody used goes to the app actions.
+     * Lint marks this override as a restricted API by mistake: the method is public in Activity.
+     */
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(original: KeyEvent): Boolean {
         val event = RemoteKeys.translate(original.keyCode)?.let { code ->
             KeyEvent(original.downTime, original.eventTime, original.action, code, original.repeatCount, original.metaState,
@@ -169,6 +179,8 @@ private fun Root(app: AppState, finish: () -> Unit) {
         savedKeys.retainAll(onStack)
         savedKeys += onStack
     }
+    val activity = LocalActivity.current as? MainActivity
+    LaunchedEffect(screen) { activity?.updatePictureInPicture(screen is Screen.Player) }
     val fullScreen = screen is Screen.Player
     // After a choice in the icon bar, the new screen takes the focus.
     LaunchedEffect(screen) {

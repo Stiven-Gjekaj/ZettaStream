@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The app installs its own updates. Android asks the viewer one time, and again for each update. -->
@@ -9,7 +10,9 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
+    <!-- PictureInPictureIssue: the small window has no source rectangle. The video fills the screen, so the window grows from the full screen. -->
     <application
+        tools:ignore="PictureInPictureIssue"
         android:name=".ZettaStreamApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

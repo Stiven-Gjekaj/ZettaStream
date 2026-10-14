@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.core.net.toUri
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
@@ -428,7 +429,7 @@ private const val SIMILAR_MAX = 15
 
 /** Opens a YouTube video in the YouTube app, or in any app that opens the link. False when no app can. */
 private fun openTrailer(context: android.content.Context, id: String): Boolean {
-    val app = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("vnd.youtube:$id"))
-    val web = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com/watch?v=$id"))
+    val app = android.content.Intent(android.content.Intent.ACTION_VIEW, "vnd.youtube:$id".toUri())
+    val web = android.content.Intent(android.content.Intent.ACTION_VIEW, "https://www.youtube.com/watch?v=$id".toUri())
     return listOf(app, web).any { intent -> runCatching { context.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
 }
