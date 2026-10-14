@@ -45,8 +45,19 @@ object StreamOrder {
      * the other streams of its resolution. Then torrents sort by seeders, and
      * direct links keep the order of the source list.
      */
-    fun best(groups: List<StreamGroup>, preferDirect: Boolean, maxTorrentBytes: Long? = null): ListedStream? =
-        ranked(groups, preferDirect, maxTorrentBytes).firstOrNull()
+    fun best(groups: List<StreamGroup>, preferDirect: Boolean, maxTorrentBytes: Long? = null, health: Health = Health.None): ListedStream? =
+        ranked(groups, preferDirect, maxTorrentBytes, health).firstOrNull()
+
+    /** What the app remembers of streams that did not start. */
+    interface Health {
+        fun failedRecently(listed: ListedStream): Boolean
+        fun unreliable(addonUrl: String): Boolean
+
+        object None : Health {
+            override fun failedRecently(listed: ListedStream) = false
+            override fun unreliable(addonUrl: String) = false
+        }
+    }
 
     /**
      * The largest torrent that streams well: about 7 Mbit/s for a two hour film
@@ -62,10 +73,13 @@ object StreamOrder {
         maxTorrentBytes != null && listed.stream.isTorrent && (listed.info.sizeBytes ?: 0) > maxTorrentBytes
 
     /** All streams, best first, in the order that [best] uses. The player tries the next one when a stream fails. */
-    fun ranked(groups: List<StreamGroup>, preferDirect: Boolean, maxTorrentBytes: Long? = null): List<ListedStream> {
+    fun ranked(groups: List<StreamGroup>, preferDirect: Boolean, maxTorrentBytes: Long? = null, health: Health = Health.None): List<ListedStream> {
         val all = groups.flatMap { g -> g.streams.map { ListedStream(g.addon, it, StreamInfo.of(it)) } }
         return all.withIndex().sortedWith(
-            compareBy<IndexedValue<ListedStream>> { resolutionRank(it.value.info.resolution) }
+            // A stream that did not start in the last day comes last. An addon with many such streams comes after the others.
+            compareBy<IndexedValue<ListedStream>> { health.failedRecently(it.value) }
+                .thenBy { resolutionRank(it.value.info.resolution) }
+                .thenBy { health.unreliable(it.value.addon.manifestUrl) }
                 .thenBy { tooBig(it.value, maxTorrentBytes) }
                 .thenBy { val s = it.value; s.stream.isTorrent && (s.info.seeders ?: 0) < FEW_SEEDERS }
                 .thenBy { it.value.stream.isTorrent == preferDirect }

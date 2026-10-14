@@ -108,5 +108,20 @@ class StreamOrderTest {
     fun anEpisodeHasASmallerLimitThanAFilm() {
         assertEquals(true, StreamOrder.streamableBytes("series") < StreamOrder.streamableBytes("movie"))
     }
+
+    @Test
+    fun aStreamThatFailedComesLastAndAnUnreliableAddonComesLater() {
+        val broken = named("1080p broken", false)
+        val groups = listOf(
+            StreamGroup(addon("A"), listOf(broken, named("720p ok", false))),
+            StreamGroup(addon("B"), listOf(named("1080p shaky", false))),
+            StreamGroup(addon("C"), listOf(named("1080p good", false))),
+        )
+        val health = object : StreamOrder.Health {
+            override fun failedRecently(listed: ListedStream) = listed.stream == broken
+            override fun unreliable(addonUrl: String) = addonUrl.contains("B.test")
+        }
+        assertEquals(listOf("1080p good", "1080p shaky", "720p ok", "1080p broken"), StreamOrder.ranked(groups, true, health = health).map { it.stream.name })
+    }
 }
 
