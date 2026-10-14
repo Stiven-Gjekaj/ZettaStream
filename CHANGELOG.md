@@ -13,6 +13,15 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.1.0 (2026-10-14)
+
+- Home has a "Your watchlist" row under Continue watching.
+- Home waits for the art of the banner, and the whole banner shows when one
+  of its buttons has the focus. Red and Info act on the banner title.
+- On a title page, Up from the episodes shows the title again.
+- The icon bar no longer opens for a moment when you open a title.
+- The search icon has space from the frame of the field.
+
 ## 1.0.0 (2026-10-14)
 
 The first stable release. It holds all the work of 0.1.0 to 0.11.1.
