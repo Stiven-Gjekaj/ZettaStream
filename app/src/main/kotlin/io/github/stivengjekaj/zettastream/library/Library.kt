@@ -30,6 +30,8 @@ data class LibraryData(
     val watchlist: List<MetaPreview> = emptyList(),
     val progress: Map<String, Progress> = emptyMap(),
     val watched: Set<String> = emptySet(),
+    /** The keys of the live channels that the viewer marked as favourites. */
+    val favoriteChannels: Set<String> = emptySet(),
 )
 
 /** Keeps the watchlist and the watch history on the device only. */
@@ -46,6 +48,13 @@ class Library(private val file: File, private val clock: () -> Long = System::cu
     suspend fun toggleWatchlist(meta: MetaPreview) = update { data ->
         if (data.watchlist.any { it.id == meta.id }) data.copy(watchlist = data.watchlist.filterNot { it.id == meta.id })
         else data.copy(watchlist = listOf(meta) + data.watchlist)
+    }
+
+    /** Adds the channel to the favourites, or removes it. Gives true when it is a favourite now. */
+    suspend fun toggleFavoriteChannel(key: String): Boolean {
+        val adding = key !in state.value.favoriteChannels
+        update { data -> data.copy(favoriteChannels = if (adding) data.favoriteChannels + key else data.favoriteChannels - key) }
+        return adding
     }
 
     suspend fun markWatched(id: String) = update { it.copy(watched = it.watched + id) }

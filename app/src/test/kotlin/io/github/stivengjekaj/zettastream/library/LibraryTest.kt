@@ -59,4 +59,13 @@ class LibraryTest {
         library.markWatched("tt1:1:1")
         assertTrue(library().isWatched("tt1:1:1"))
     }
+
+    @Test
+    fun aFavouriteChannelTogglesAndStaysAfterARestart() = runTest {
+        assertTrue(library().toggleFavoriteChannel("rtsh1.al"))
+        assertEquals(setOf("rtsh1.al"), library().data.value.favoriteChannels)
+        assertFalse(library().toggleFavoriteChannel("rtsh1.al"))
+        assertEquals(emptySet<String>(), library().data.value.favoriteChannels)
+    }
 }
+
