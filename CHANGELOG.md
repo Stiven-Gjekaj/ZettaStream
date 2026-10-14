@@ -13,6 +13,14 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.1.2 (2026-10-14)
+
+- The facts of a title have a dark fill, so they are easy to read on bright
+  art.
+- A screen that opens from the icon bar starts at its first item.
+- On the search screen, a number key of the remote opens its screen and does
+  not type a digit.
+
 ## 1.1.1 (2026-10-14)
 
 - A startup profile: Android compiles the code for the start and for Home
