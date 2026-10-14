@@ -586,3 +586,10 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - GitHub does not give a pre-release as the latest release, so the app does
   not offer a test version as an update.
 
+## 2026-10-14: The favourite key of a channel
+
+- A favourite channel is kept by its guide ID, because the ID stays when the
+  playlist changes the link.
+- When two channels in a playlist have the same ID, such as an HD and an SD
+  copy, each one is kept by its link. Then each copy is a favourite alone.
+
