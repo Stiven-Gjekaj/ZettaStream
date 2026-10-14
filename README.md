@@ -90,6 +90,9 @@ tab bar and touch controls.
 - A white ring that follows the edge of the focused item
 - Add sources from a phone with a QR code
 - A diagnostics page on the phone shows the last events of the TV
+- Install updates from inside the app
+- Unfinished titles in the Play next row of the TV home screen
+- Voice search, and a TV that switches to the frame rate of the video
 - A test screen that shows each button of your remote
 
 </td>
