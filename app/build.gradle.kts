@@ -14,6 +14,8 @@ android {
         targetSdk = 37
         versionCode = 19
         versionName = "1.1.0"
+        // Only the benchmark build starts with a source list. See the baselineprofile module.
+        buildConfigField("String", "SEED_SOURCES", "\"\"")
     }
 
     // The release key comes from environment variables. GitHub Actions sets
@@ -36,6 +38,16 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
+        }
+        // A release build for the baselineprofile module. It keeps the class names, so that
+        // the profile it records matches the code. R8 maps the profile for the release build.
+        create("benchmark") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".benchmark"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            proguardFiles("benchmark-rules.pro")
+            buildConfigField("String", "SEED_SOURCES", "\"https://v3-cinemeta.strem.io/manifest.json\"")
         }
     }
 

@@ -12,7 +12,8 @@ import java.io.File
  * Keeps the source list in the private storage of the app. A configured addon
  * URL can hold a key, so the file is never shared and never goes to a backup.
  */
-class SourceStore(private val file: File) {
+/** [seed] is the list for a first start. Only the benchmark build gives one. */
+class SourceStore(private val file: File, private val seed: String = "") {
     private val writer = SafeFile(file)
     private val state = MutableStateFlow(read())
     val sources: StateFlow<List<Source>> = state.asStateFlow()
@@ -26,5 +27,5 @@ class SourceStore(private val file: File) {
     }
 
     private fun read(): List<Source> =
-        if (file.exists()) SourceList.parse(file.readText()) else emptyList()
+        if (file.exists()) SourceList.parse(file.readText()) else SourceList.parse(seed)
 }

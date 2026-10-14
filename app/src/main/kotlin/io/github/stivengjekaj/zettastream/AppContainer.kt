@@ -35,7 +35,7 @@ class AppContainer(app: Application) {
     val imageHttp = http.newBuilder().cache(null).build()
     // Video data is large and is read once. It must not push the answers of the addons out of the cache.
     val videoHttp = http.newBuilder().cache(null).build()
-    val sources = SourceStore(File(app.filesDir, "sources.txt"))
+    val sources = SourceStore(File(app.filesDir, "sources.txt"), BuildConfig.SEED_SOURCES)
     val addons = AddonRepository(AddonClient(http), sources.sources, scope)
     val live = LiveRepository(http, sources.sources, scope)
     val library = Library(File(app.filesDir, "library.json"))
