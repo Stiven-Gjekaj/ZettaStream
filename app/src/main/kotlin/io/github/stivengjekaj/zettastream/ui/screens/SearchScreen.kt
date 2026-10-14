@@ -1,5 +1,16 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import io.github.stivengjekaj.zettastream.ui.FocusMemory
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import kotlinx.coroutines.launch
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import io.github.stivengjekaj.zettastream.settings.SearchHistory
 import androidx.compose.ui.ExperimentalComposeUiApi
 import io.github.stivengjekaj.zettastream.remote.RemoteKeys
 import androidx.compose.ui.unit.sp
@@ -69,7 +80,7 @@ private object LastSearch {
     var results: List<MetaPreview> = emptyList()
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(app: AppState) {
     val tv = app.isTv
@@ -79,12 +90,25 @@ fun SearchScreen(app: AppState) {
     var query by remember { mutableStateOf(LastSearch.query) }
     var results by remember { mutableStateOf(LastSearch.results) }
     var searching by remember { mutableStateOf(false) }
+    var focusFirstResult by remember { mutableStateOf(false) }
+    val viewer by app.container.settings.settings.collectAsState()
+    val firstRecent = remember { FocusRequester() }
+    val showRecent = query.isBlank() && viewer.searchHistory.isNotEmpty()
 
     LaunchedEffect(query) {
         if (query.isBlank() || query == LastSearch.query && results.isNotEmpty()) return@LaunchedEffect
         searching = true
         results = emptyList()
-        app.container.addons.search(query).collect { results = it }
+        app.container.addons.search(query).collect {
+            // After a recent search, the first result takes the focus when it comes.
+            if (focusFirstResult && results.isEmpty() && it.isNotEmpty()) {
+                FocusMemory.pending = "search|${it.first().type}|${it.first().id}"
+                focusFirstResult = false
+            }
+            results = it
+        }
+        val searched = query
+        app.container.settings.update { it.copy(searchHistory = SearchHistory.add(it.searchHistory, searched)) }
         LastSearch.query = query
         LastSearch.results = results
         searching = false
@@ -148,7 +172,9 @@ fun SearchScreen(app: AppState) {
                     .onPreviewKeyEvent {
                         if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
                             keyboard?.hide()
-                            focusManager.moveFocus(FocusDirection.Down)
+                            // Down goes to the newest search, not to the button that is nearest below.
+                            if (showRecent) runCatching { firstRecent.requestFocus() }.isSuccess
+                            else focusManager.moveFocus(FocusDirection.Down)
                         } else {
                             false
                         }
@@ -162,6 +188,24 @@ fun SearchScreen(app: AppState) {
         if (searching) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 8.dp))
         when {
             !searching && query.isNotBlank() && results.isEmpty() -> Message("Nothing found", "No catalog with search found \"$query\".", tv)
+            showRecent -> Column(Modifier.padding(horizontal = Sizes.gutter(tv), vertical = 16.dp)) {
+                Text("Recent searches", color = TextPrimary, fontSize = if (tv) 20.sp else 17.sp, fontWeight = FontWeight.SemiBold)
+                FlowRow(
+                    Modifier.padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    viewer.searchHistory.forEachIndexed { i, past ->
+                        ZButton(onClick = { keyboard?.hide(); focusFirstResult = true; text = past; query = past }, tv = tv, modifier = if (i == 0) Modifier.focusRequester(firstRecent) else Modifier) {
+                            Icon(Icons.Rounded.History, null, modifier = Modifier.size(18.dp))
+                            Text(past, modifier = Modifier.padding(start = 6.dp))
+                        }
+                    }
+                    ZButton(onClick = { app.container.scope.launch { app.container.settings.update { it.copy(searchHistory = emptyList()) } } }, tv = tv) {
+                        Text("Clear", color = TextSecondary)
+                    }
+                }
+            }
             query.isBlank() -> Message(
                 "Find a film, a series, or an anime",
                 if (tv) "Type a title and press Search. Or press the Search key of the remote and say the title." else "Type a title and press Search.",

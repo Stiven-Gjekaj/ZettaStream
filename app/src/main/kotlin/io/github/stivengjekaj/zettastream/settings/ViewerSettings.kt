@@ -52,6 +52,8 @@ data class ViewerSettings(
     val vpnNotice: Boolean = true,
     /** The sound plays this much later than the picture. It fixes a sound system that adds a delay. */
     val audioDelayMs: Long = 0,
+    /** The last searches, newest first. */
+    val searchHistory: List<String> = emptyList(),
     /** The keys of the home rows that the viewer turned off. */
     val hiddenRows: Set<String> = emptySet(),
 )
@@ -85,5 +87,16 @@ class SettingsStore(private val file: File) {
 
         /** Gives the next item of [options] after [current], and the first after the last. */
         fun <T> next(options: List<T>, current: T): T = options[(options.indexOf(current) + 1) % options.size]
+    }
+}
+
+/** Keeps the last searches, newest first. A search that is there already moves to the top. */
+object SearchHistory {
+    const val MAX = 8
+
+    fun add(history: List<String>, query: String): List<String> {
+        val q = query.trim()
+        if (q.isEmpty()) return history
+        return (listOf(q) + history.filterNot { it.equals(q, ignoreCase = true) }).take(MAX)
     }
 }
