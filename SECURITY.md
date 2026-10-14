@@ -31,7 +31,12 @@ JSON, M3U playlists, and XMLTV guides. These are in scope:
   stop the app every time that it starts.
 - A fault in the pairing page that the TV serves on the local network. The
   page must accept a list only with the token of the current QR code, and only
-  one time.
+  one time. The backup, the restore, and the diagnostics pages also need the
+  token. A request without the token cannot send a large body.
+- A fault in the update inside the app. It downloads only the newest release
+  of this repository, and Android installs it only when its signature is the
+  same as the installed app.
+- A restore that changes data from a file that is not a ZettaStream backup.
 - A fault that shows or sends the source list, which can hold keys, to a
   person or a server that the user did not choose.
 - A fault in the local server of the torrent engine. It must accept
