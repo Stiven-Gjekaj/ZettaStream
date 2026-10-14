@@ -206,6 +206,14 @@ fun HomeScreen(app: AppState) {
                 }
             }
         }
+        // The watchlist has its own row under Continue watching. The type filter applies to it too.
+        val watchlist = library.watchlist.filter { app.homeFilter == null || typeKey(it.type) == app.homeFilter }
+        if (watchlist.isNotEmpty()) {
+            item(key = "watchlist") {
+                SectionTitle("Your watchlist", tv, detail = count(watchlist.size, "title"))
+                PosterRow(watchlist, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = "home-watchlist")
+            }
+        }
         if (addonState.loading && rows.isEmpty() && sources.isNotEmpty()) {
             item { PlaceholderRow(tv) }
         }
