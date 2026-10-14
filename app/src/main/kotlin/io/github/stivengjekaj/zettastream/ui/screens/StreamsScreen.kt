@@ -1,5 +1,7 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import io.github.stivengjekaj.zettastream.ui.theme.Surface
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.DisposableEffect
@@ -159,7 +161,7 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
         contentPadding = PaddingValues(Sizes.gutter(tv)),
     ) {
         item {
-            Text(screen.meta.name, color = TextPrimary, fontSize = if (tv) 30.sp else 22.sp, fontWeight = FontWeight.Bold)
+            Text(screen.meta.name, color = TextPrimary, fontSize = if (tv) 36.sp else 26.sp, fontWeight = FontWeight.ExtraBold)
             if (screen.label != screen.meta.name) Text(screen.label, color = TextSecondary, fontSize = 16.sp)
             Text(
                 if (done) "${count(playable.sumOf { it.streams.size }, "stream")} from ${playable.size} of ${count(asked, "addon")}"
@@ -199,8 +201,8 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
         sections.forEach { section ->
             item(key = "head-" + section.title) {
                 Text(
-                    section.title, color = TextSecondary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(top = 18.dp, bottom = 6.dp),
+                    section.title.uppercase(), color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(top = 22.dp, bottom = 6.dp),
                 )
             }
             items(section.streams, key = { rowKey(section.title, it) }) { listed ->
@@ -215,7 +217,8 @@ fun StreamsScreen(app: AppState, screen: Screen.Streams) {
                     .onFocusChanged { rowFocused = it.isFocused; if (it.isFocused) lastRow = key }
                     .focusRing(shape, scaleTo = 1.02f)
                     .clip(shape)
-                    .background(SurfaceHigh)
+                    .background(Surface)
+                    .border(1.dp, Outline, shape)
                     .clickable { play(listed) }
                     .padding(14.dp)
                 val summary: @Composable () -> Unit = {

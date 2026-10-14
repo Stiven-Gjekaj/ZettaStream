@@ -112,7 +112,7 @@ fun AutoPlayScreen(app: AppState, screen: Screen.AutoPlay) {
         Modifier.fillMaxSize().padding(Sizes.gutter(tv)),
         verticalArrangement = Arrangement.Bottom,
     ) {
-        Text(screen.meta.name, color = TextPrimary, fontSize = if (tv) 30.sp else 22.sp, fontWeight = FontWeight.Bold)
+        Text(screen.meta.name, color = TextPrimary, fontSize = if (tv) 36.sp else 26.sp, fontWeight = FontWeight.ExtraBold)
         if (screen.label != screen.meta.name) Text(screen.label, color = TextSecondary, fontSize = 16.sp)
         if (failed) {
             Text(
