@@ -202,6 +202,14 @@ object Display {
      */
     fun cardPoster(url: String?): String? = url?.let { metahubPoster.replace(it, "$1small$3") }
 
+    /**
+     * True for a series whose episode list is one placeholder: a single video with an ID of
+     * four parts, such as `kitsu:7442:1:1`, that some addons give when they do not know the
+     * episodes. A film, and a series with no episodes, are not placeholders.
+     */
+    fun isPlaceholder(meta: Meta): Boolean =
+        meta.type != "movie" && meta.videos.size == 1 && meta.videos.single().id.split(':').size >= 4
+
     fun preview(m: MetaPreview): MetaPreview = m.copy(name = englishName(m.name, m.aliases))
 
     fun meta(m: Meta): Meta = m.copy(name = englishName(m.name, m.aliases), videos = m.videos.map(::video))

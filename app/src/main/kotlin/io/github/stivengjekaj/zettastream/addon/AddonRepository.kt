@@ -120,7 +120,8 @@ class AddonRepository(
     suspend fun meta(preview: MetaPreview): Meta {
         for (addon in state.value.addons.filter { it.supports("meta", preview.type, preview.id) }) {
             val meta = runCatching { client.meta(addon, preview.type, preview.id) }.getOrNull()
-            if (meta != null) return meta
+            // A series with only a placeholder episode tells nothing. The next addon can have the real list.
+            if (meta != null && !Display.isPlaceholder(meta)) return meta
         }
         return Meta(
             id = preview.id, type = preview.type, name = preview.name, poster = preview.poster,

@@ -67,4 +67,12 @@ class DisplayTest {
         assertEquals("https://media.kitsu.app/anime/1/poster.jpg", Display.cardPoster("https://media.kitsu.app/anime/1/poster.jpg"))
         assertEquals(null, Display.cardPoster(null))
     }
+
+    @Test
+    fun aSeriesWithOnePlaceholderEpisodeIsAPlaceholder() {
+        assertEquals(true, Display.isPlaceholder(Meta("kitsu:7442", "series", videos = listOf(Video("kitsu:7442:1:1")))))
+        assertEquals(false, Display.isPlaceholder(Meta("kitsu:7442", "series", videos = listOf(Video("kitsu:7442:1"), Video("kitsu:7442:2")))))
+        assertEquals(false, Display.isPlaceholder(Meta("tt1", "series", videos = listOf(Video("tt1:1:1")))))
+        assertEquals(false, Display.isPlaceholder(Meta("tt2", "movie", videos = listOf(Video("tt2:a:b:c")))))
+    }
 }
