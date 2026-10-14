@@ -29,16 +29,42 @@ class UpdateChecker(private val http: OkHttpClient) {
         /** The AFTVnews short code that opens [DOWNLOAD_URL] in the Downloader app. */
         const val DOWNLOADER_CODE = "8764108"
 
-        /** Tells if [latest] is newer than [current]. Both are `MAJOR.MINOR.PATCH`. */
-        fun isNewer(latest: String, current: String): Boolean {
-            val a = latest.split('.', '-').map { it.toIntOrNull() ?: 0 }
-            val b = current.split('.', '-').map { it.toIntOrNull() ?: 0 }
-            for (i in 0 until maxOf(a.size, b.size)) {
-                val x = a.getOrElse(i) { 0 }
-                val y = b.getOrElse(i) { 0 }
-                if (x != y) return x > y
+        /**
+         * Tells if [latest] is newer than [current]. Both are `MAJOR.MINOR.PATCH`, with an optional
+         * test label such as `-rc1`. A version with a test label comes before the same version without one.
+         */
+        fun isNewer(latest: String, current: String): Boolean = compare(latest, current) > 0
+
+        fun compare(a: String, b: String): Int {
+            val (coreA, testA) = split(a)
+            val (coreB, testB) = split(b)
+            for (i in 0 until maxOf(coreA.size, coreB.size)) {
+                val x = coreA.getOrElse(i) { 0 }
+                val y = coreB.getOrElse(i) { 0 }
+                if (x != y) return x.compareTo(y)
             }
-            return false
+            return when {
+                testA == testB -> 0
+                testA == null -> 1
+                testB == null -> -1
+                else -> compareTest(testA, testB)
+            }
+        }
+
+        private fun split(version: String): Pair<List<Int>, String?> {
+            val text = version.trim().removePrefix("v")
+            val core = text.substringBefore('-')
+            val test = text.substringAfter('-', "").ifEmpty { null }
+            return core.split('.').map { it.toIntOrNull() ?: 0 } to test
+        }
+
+        /** Compares two test labels, such as `rc2` and `rc10`, by their letters and then by their number. */
+        private fun compareTest(a: String, b: String): Int {
+            val letters = a.takeWhile { !it.isDigit() }.compareTo(b.takeWhile { !it.isDigit() })
+            if (letters != 0) return letters
+            val x = a.filter { it.isDigit() }.toIntOrNull() ?: 0
+            val y = b.filter { it.isDigit() }.toIntOrNull() ?: 0
+            return x.compareTo(y)
         }
     }
 }

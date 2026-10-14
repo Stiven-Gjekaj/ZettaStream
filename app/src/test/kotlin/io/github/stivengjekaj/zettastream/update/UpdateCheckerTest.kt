@@ -12,4 +12,14 @@ class UpdateCheckerTest {
         assertFalse(UpdateChecker.isNewer("0.1.0", "0.1.0"))
         assertFalse(UpdateChecker.isNewer("0.1.0", "0.2.0"))
     }
+
+    @Test
+    fun aTestVersionComesBeforeTheRelease() {
+        assertTrue(UpdateChecker.isNewer("1.0.0", "1.0.0-rc1"))
+        assertFalse(UpdateChecker.isNewer("1.0.0-rc1", "1.0.0"))
+        assertTrue(UpdateChecker.isNewer("1.0.0-rc1", "0.11.2"))
+        assertTrue(UpdateChecker.isNewer("1.0.0-rc10", "1.0.0-rc2"))
+        assertFalse(UpdateChecker.isNewer("1.0.0-rc2", "1.0.0-rc2"))
+        assertTrue(UpdateChecker.isNewer("1.0.1-rc1", "1.0.0"))
+    }
 }
