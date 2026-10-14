@@ -116,7 +116,8 @@ fun SearchScreen(app: AppState) {
                 singleLine = true,
                 // A placeholder, not a floating label: a label cuts a gap in the top border.
                 placeholder = { Text("Search titles", color = TextSecondary) },
-                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = TextSecondary) },
+                // On a TV, the app has no minimum touch size, so the icon needs its own space from the frame.
+                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = TextSecondary, modifier = Modifier.padding(start = 14.dp, end = 6.dp)) },
                 shape = Corner,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { query = text.trim(); keyboard?.hide() }),
