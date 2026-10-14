@@ -122,9 +122,10 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
     val m = meta
     val context = LocalContext.current
     // Titles of the same kind with the same first genre that an addon can give.
-    val similar by produceState(emptyList<MetaPreview>(), m?.id) {
+    val similarRow = remember(m?.id, addonState) { m?.let { Similar.row(addonState.addons, it.type, it.genres) } }
+    val similar by produceState(emptyList<MetaPreview>(), similarRow?.key) {
         val title = m ?: return@produceState
-        val row = Similar.row(addonState.addons, title.type, title.genres) ?: return@produceState
+        val row = similarRow ?: return@produceState
         value = runCatching { c.addons.catalog(row) }.getOrDefault(emptyList()).filter { it.id != title.id }.take(SIMILAR_MAX)
     }
     var season by remember { mutableStateOf<Int?>(null) }
@@ -307,6 +308,13 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                     }
                 }
             }
+            if (m != null) {
+                val about = aboutFacts(m)
+                if (about.isNotEmpty()) {
+                    item { SectionHeading("About", detail = null, tv = tv) }
+                    item { AboutTable(about, tv) }
+                }
+            }
             if (similar.isNotEmpty()) {
                 item { SectionHeading("More like this", detail = null, tv = tv) }
                 item(key = "similar") {
@@ -318,17 +326,13 @@ fun DetailScreen(app: AppState, preview: MetaPreview) {
                             layout(constraints.maxWidth, wide.height) { wide.place(-gutter, 0) }
                         },
                     ) {
-                        PosterRow(similar, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = "similar|${preview.id}")
+                        PosterRow(similar, tv, onClick = { app.open(Screen.Detail(it)) }, onFocus = { app.focusedMeta = it }, keyPrefix = "similar|${preview.id}",
+                            onMore = similarRow?.let { r -> { app.open(Screen.Catalog(r)) } },
+                        )
                     }
                 }
             }
-            if (m != null) {
-                val about = aboutFacts(m)
-                if (about.isNotEmpty()) {
-                    item { SectionHeading("About", detail = null, tv = tv) }
-                    item { AboutTable(about, tv) }
-                }
-            }
+
         }
     }
 }
