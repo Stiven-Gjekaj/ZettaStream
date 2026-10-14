@@ -1,5 +1,15 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import io.github.stivengjekaj.zettastream.ui.components.ZButton
+import io.github.stivengjekaj.zettastream.remote.RemoteAction
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.rounded.Mic
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.speech.RecognizerIntent
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -74,34 +84,61 @@ fun SearchScreen(app: AppState) {
         searching = false
     }
 
+    // Voice search uses the speech service of the device. The remote control sends the words back as text.
+    val voice = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val said = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.trim()
+        if (!said.isNullOrEmpty()) { text = said; query = said }
+    }
+    fun listen() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            .putExtra(RecognizerIntent.EXTRA_PROMPT, "Say a title")
+        runCatching { voice.launch(intent) }.onFailure { app.toast = "Voice search is not available on this device" }
+    }
+    // The Search key of the remote control starts voice search on this screen.
+    DisposableEffect(Unit) {
+        app.screenActions = mapOf(RemoteAction.Search to { listen() })
+        onDispose { app.screenActions = emptyMap() }
+    }
+
     Column(Modifier.fillMaxSize().padding(top = if (tv) 32.dp else 16.dp)) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            singleLine = true,
-            // A placeholder, not a floating label: a label cuts a gap in the top border.
-            placeholder = { Text("Search titles", color = TextSecondary) },
-            leadingIcon = { Icon(Icons.Rounded.Search, null, tint = TextSecondary) },
-            shape = Corner,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { query = text.trim(); keyboard?.hide() }),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Accent, unfocusedBorderColor = Outline,
-                focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
-                cursorColor = Accent,
-            ),
-            // The field draws its own border when it has the focus, so it has no focus ring.
-            // A text field keeps the Down key, so send it on to the results.
-            // On a TV, the Menu button is at the top right, so the field stops before it.
-            modifier = Modifier.fillMaxWidth().padding(start = Sizes.gutter(tv), end = if (tv) 150.dp else Sizes.gutter(tv)).onPreviewKeyEvent {
-                if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
-                    keyboard?.hide()
-                    focusManager.moveFocus(FocusDirection.Down)
-                } else {
-                    false
-                }
-            },
-        )
+        Row(
+            Modifier.fillMaxWidth().padding(start = Sizes.gutter(tv), end = if (tv) 150.dp else Sizes.gutter(tv)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                singleLine = true,
+                // A placeholder, not a floating label: a label cuts a gap in the top border.
+                placeholder = { Text("Search titles", color = TextSecondary) },
+                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = TextSecondary) },
+                shape = Corner,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { query = text.trim(); keyboard?.hide() }),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Accent, unfocusedBorderColor = Outline,
+                    focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+                    cursorColor = Accent,
+                ),
+                // The field draws its own border when it has the focus, so it has no focus ring.
+                // A text field keeps the Down key, so send it on to the results.
+                // On a TV, the Menu button is at the top right, so the field stops before it.
+                modifier = Modifier.weight(1f).onPreviewKeyEvent {
+                    if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
+                        keyboard?.hide()
+                        focusManager.moveFocus(FocusDirection.Down)
+                    } else {
+                        false
+                    }
+                },
+            )
+            ZButton(onClick = ::listen, tv = tv) {
+                Icon(Icons.Rounded.Mic, null)
+                Text("Voice", modifier = Modifier.padding(start = 6.dp))
+            }
+        }
         if (searching) LinearProgressIndicator(color = Accent, modifier = Modifier.fillMaxWidth().padding(horizontal = Sizes.gutter(tv), vertical = 8.dp))
         if (!searching && query.isNotBlank() && results.isEmpty()) {
             Message("Nothing found", "No catalog with search found \"$query\".", tv)
