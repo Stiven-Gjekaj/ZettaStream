@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.pairing
 
+import io.github.stivengjekaj.zettastream.diag.Diagnostics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -83,7 +84,19 @@ object PairingHttp {
         This list replaces the list on the TV.</p>
         <form method="post" action="/?t=${escape(token)}">
         <textarea name="lines" autocapitalize="off" autocorrect="off" spellcheck="false">${escape(current)}</textarea>
-        <button type="submit">Send to the TV</button></form></body></html>
+        <button type="submit">Send to the TV</button></form>
+        <p><a style="color:#f2f2f2" href="/log?t=${escape(token)}">Diagnostics: the last events on the TV</a></p></body></html>
+    """.trimIndent()
+
+    /** The last events of the TV, newest last, for a fault report. */
+    fun logPage(header: String, lines: List<String>): String = """
+        <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>ZettaStream diagnostics</title>
+        <style>body{margin:0;padding:16px;background:#000;color:#f2f2f2;font-family:ui-monospace,monospace}
+        h1{font-size:20px}p{color:#8c8c8c;font-size:13px}pre{white-space:pre-wrap;word-break:break-all;font-size:11px;line-height:1.5}</style></head>
+        <body><h1>Diagnostics</h1><p>${escape(header)}</p>
+        <p>Copy this text and send it with a fault report. Reload the page for new events.</p>
+        <pre>${escape(lines.joinToString("\n").ifEmpty { "No events yet. Play something on the TV, then reload this page." })}</pre></body></html>
     """.trimIndent()
 
     fun done(count: Int): String = """
@@ -138,8 +151,9 @@ class PairingServer(
         val out = s.getOutputStream()
         val valid = token.isNotEmpty() && request.query["t"] == token
         when {
-            request.path != "/" -> PairingHttp.write(out, "404 Not Found", "Not found")
+            request.path != "/" && request.path != "/log" -> PairingHttp.write(out, "404 Not Found", "Not found")
             !valid -> PairingHttp.write(out, "403 Forbidden", "This code is old. Scan the new QR code on the TV.")
+            request.path == "/log" -> PairingHttp.write(out, "200 OK", PairingHttp.logPage(deviceInfo(), Diagnostics.lines()))
             request.method == "POST" -> {
                 token = ""
                 val lines = PairingHttp.form(request.body)["lines"].orEmpty()
@@ -152,6 +166,10 @@ class PairingServer(
     }
 
     companion object {
+        /** The app version and the device, at the top of the diagnostics page. */
+        fun deviceInfo(): String =
+            "ZettaStream ${io.github.stivengjekaj.zettastream.BuildConfig.VERSION_NAME}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}, Android ${android.os.Build.VERSION.RELEASE}"
+
         const val PORT = 8765
 
         fun newToken(): String {
