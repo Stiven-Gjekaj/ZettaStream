@@ -34,8 +34,8 @@ object RemoteKeys {
         KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_NUMPAD_1 -> RemoteAction.Home
         KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_NUMPAD_2 -> RemoteAction.Search
         KeyEvent.KEYCODE_3, KeyEvent.KEYCODE_NUMPAD_3 -> RemoteAction.Library
-        KeyEvent.KEYCODE_4, KeyEvent.KEYCODE_NUMPAD_4 -> RemoteAction.Settings
-        KeyEvent.KEYCODE_5, KeyEvent.KEYCODE_NUMPAD_5 -> RemoteAction.LiveTv
+        KeyEvent.KEYCODE_4, KeyEvent.KEYCODE_NUMPAD_4 -> RemoteAction.LiveTv
+        KeyEvent.KEYCODE_5, KeyEvent.KEYCODE_NUMPAD_5 -> RemoteAction.Settings
         KeyEvent.KEYCODE_INFO -> RemoteAction.Info
         KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_TV_DATA_SERVICE -> RemoteAction.Guide
         KeyEvent.KEYCODE_PROG_RED -> RemoteAction.Watchlist

@@ -70,8 +70,9 @@ val NavItems = listOf(
     NavItem(Screen.Home, "Home", Icons.Rounded.Home, "1"),
     NavItem(Screen.Search, "Search", Icons.Rounded.Search, "2"),
     NavItem(Screen.Library, "Library", Icons.Rounded.VideoLibrary, "3"),
-    NavItem(Screen.Settings, "Settings", Icons.Rounded.Settings, "4"),
-    NavItem(Screen.Live, "Live TV", Icons.Rounded.LiveTv, "5"),
+    // The keys follow the order on the screen, where Settings is last.
+    NavItem(Screen.Live, "Live TV", Icons.Rounded.LiveTv, "4"),
+    NavItem(Screen.Settings, "Settings", Icons.Rounded.Settings, "5"),
 )
 
 /** The width of the icon bar. The screens on a TV start after it. */

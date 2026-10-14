@@ -15,7 +15,7 @@ class RemoteKeysTest {
     @Test
     fun theNumberKeysGoToTheScreens() {
         assertEquals(
-            listOf(RemoteAction.Home, RemoteAction.Search, RemoteAction.Library, RemoteAction.Settings, RemoteAction.LiveTv),
+            listOf(RemoteAction.Home, RemoteAction.Search, RemoteAction.Library, RemoteAction.LiveTv, RemoteAction.Settings),
             (KeyEvent.KEYCODE_1..KeyEvent.KEYCODE_5).map { RemoteKeys.global(it) },
         )
     }
