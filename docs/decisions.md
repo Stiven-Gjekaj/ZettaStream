@@ -653,3 +653,14 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   the fault, so a reconnect that fails at once does not repeat with no end.
 - A manual choice from the list has no next source, so it shows the error.
 
+## 2026-10-15: Explore more, and the number keys
+
+- The last card of each Home row, and of "More like this", is "Explore
+  more". It opens all the titles of that catalog in a grid, as in Search.
+  Near the end of the grid, the next page loads with the `skip` value of the
+  addon, until a page gives no new title.
+- "More like this" is under the About table.
+- This replaces the number keys of "Remote control buttons" and "Live TV":
+  `4` opens Live TV and `5` opens Settings, in the order of the icon bar,
+  where Settings is at the bottom. The phone tab bar has the same order.
+
