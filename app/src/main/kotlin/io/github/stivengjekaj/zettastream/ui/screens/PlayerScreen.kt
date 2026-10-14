@@ -68,7 +68,6 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import androidx.media3.ui.PlayerView
-import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.addon.Display
 import io.github.stivengjekaj.zettastream.addon.Video
 import io.github.stivengjekaj.zettastream.addon.Subtitle
@@ -399,7 +398,6 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             duration = player.duration
             delay(500)
             if (player.isPlaying && System.currentTimeMillis() % 10_000 < 500) saveProgress()
-            if (BuildConfig.DEBUG && System.currentTimeMillis() % 10_000 < 500) android.util.Log.d("ZPlayer", "tick pos=${player.currentPosition} buf=${player.bufferedPosition} playing=${player.isPlaying}")
         }
     }
 

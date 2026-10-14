@@ -1,6 +1,7 @@
 package io.github.stivengjekaj.zettastream.diag
 
 import android.util.Log
+import io.github.stivengjekaj.zettastream.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -16,8 +17,11 @@ object Diagnostics {
     private val lines = ArrayDeque<String>()
     private val time = SimpleDateFormat("HH:mm:ss", Locale.ROOT)
 
-    /** When false, as in unit tests, nothing goes to the Android log. */
-    @Volatile var toLogcat = true
+    /**
+     * Only a debug build also writes to the Android log. A release build keeps the
+     * lines in memory only, because they hold the links of the streams.
+     */
+    @Volatile var toLogcat = BuildConfig.DEBUG
 
     @Synchronized
     fun log(tag: String, message: String, error: Throwable? = null) {
