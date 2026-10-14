@@ -153,7 +153,9 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
     /** The screen part next to the icon bar. It gives the focus back to the item that had it. */
     val content = FocusRequester()
     val edgeGuard = EdgeGuard()
-    /** True after a choice in the icon bar, so that the new screen takes the focus. */
+    /** True while an item of the screen next to the icon bar has the focus. */
+    var contentFocused = false
+    /** True after a main screen opens, so that the new screen takes the focus. */
     var focusContentSoon = false
     var exitDialog by mutableStateOf(false)
     var homeFilter by mutableStateOf<String?>(null)
@@ -171,6 +173,8 @@ class AppState(val container: AppContainer, val isTv: Boolean) {
 
     fun open(screen: Screen) {
         FocusMemory.leave(current)
+        // A main screen can open from the icon bar or from a number key. In both cases, the new screen takes the focus.
+        if (screen.isTopLevel && isTv) focusContentSoon = true
         if (screen.isTopLevel) {
             stack.clear()
             stack.add(screen)

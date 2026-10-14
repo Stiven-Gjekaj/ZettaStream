@@ -127,7 +127,7 @@ fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
                     .focusRing(Corner, scaleTo = 1.04f, rememberForReturn = false)
                     .clip(Corner)
                     .background(if (active) Accent else Color.Transparent)
-                    .clickable { app.open(item.screen); app.focusContentSoon = true }
+                    .clickable { app.open(item.screen) }
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

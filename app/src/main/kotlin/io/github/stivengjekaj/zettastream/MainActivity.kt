@@ -2,6 +2,7 @@ package io.github.stivengjekaj.zettastream
 
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.focusGroup
 import android.content.Intent
 import io.github.stivengjekaj.zettastream.tv.DeepLink
@@ -152,11 +153,15 @@ private fun Root(app: AppState, finish: () -> Unit) {
     LaunchedEffect(screen) {
         if (app.focusContentSoon) {
             app.focusContentSoon = false
-            // The item that had the focus was on the screen before. Right goes to the new screen.
+            // The item that had the focus was on the screen before. From the icon bar, Right goes to the new screen.
+            // When the old item is gone and nothing has the focus, the new screen takes it.
             FocusReturn.last = null
             withFrameNanos { }
             withFrameNanos { }
-            runCatching { focusManager.moveFocus(FocusDirection.Right) }
+            when {
+                app.railFocused -> runCatching { focusManager.moveFocus(FocusDirection.Right) }
+                !app.contentFocused -> runCatching { app.content.requestFocus() }
+            }
         }
     }
     Box(Modifier.fillMaxSize().background(Background)) {
@@ -169,6 +174,7 @@ private fun Root(app: AppState, finish: () -> Unit) {
             Box(
                 Modifier.weight(1f)
                     .then(if (rail) Modifier.padding(start = RailWidth) else Modifier)
+                    .onFocusChanged { app.contentFocused = it.hasFocus }
                     .focusRequester(app.content)
                     .focusRestorer()
                     .focusGroup()
