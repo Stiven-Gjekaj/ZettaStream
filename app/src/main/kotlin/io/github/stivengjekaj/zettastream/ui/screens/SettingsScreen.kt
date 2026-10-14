@@ -113,6 +113,7 @@ fun SettingsScreen(app: AppState) {
             }
         }
         item { SettingsRow("Play the next episode", "${onOff(viewer.autoplayNext)}. A countdown at the end of an episode starts the next one.", tv) { set { it.copy(autoplayNext = !it.autoplayNext) } } }
+        item { SettingsRow("Match the frame rate", "${onOff(viewer.matchFrameRate)}. The TV switches to the frame rate of the video, such as 24 Hz for a film. The screen can go black for a second.", tv) { set { it.copy(matchFrameRate = !it.matchFrameRate) } } }
         item { SettingsRow("Skip intros automatically", "${onOff(viewer.autoSkipIntro)}. The app jumps over the opening and the recap of an anime episode when it knows their times.", tv) { set { it.copy(autoSkipIntro = !it.autoSkipIntro) } } }
         item { SettingsRow("Press the channel buttons twice", "${onOff(viewer.confirmChannel)}. When off, one press changes the episode or the channel.", tv) { set { it.copy(confirmChannel = !it.confirmChannel) } } }
         item { Section("Torrents", tv) }

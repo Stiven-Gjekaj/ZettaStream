@@ -43,6 +43,8 @@ data class ViewerSettings(
     val subtitleEdge: SubtitleEdge = SubtitleEdge.Outline,
     val autoplayNext: Boolean = true,
     val autoSkipIntro: Boolean = false,
+    /** The TV switches to the frame rate of the video, so that a pan does not judder. */
+    val matchFrameRate: Boolean = true,
     val confirmChannel: Boolean = true,
     val showTorrents: Boolean = true,
     val directFirst: Boolean = false,

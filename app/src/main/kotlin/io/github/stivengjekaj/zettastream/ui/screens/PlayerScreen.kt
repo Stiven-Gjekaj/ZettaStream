@@ -1,5 +1,13 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.media3.exoplayer.DecoderReuseEvaluation
+import androidx.media3.common.Format
+import androidx.media3.exoplayer.analytics.AnalyticsListener
+import io.github.stivengjekaj.zettastream.player.FrameRate
+import io.github.stivengjekaj.zettastream.player.DisplayMode
+import android.content.ContextWrapper
+import android.content.Context
+import android.app.Activity
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -105,6 +113,7 @@ private const val CONFIRM_WINDOW = 3_000L
 private const val COUNTDOWN = 10_000L
 private const val LOAD_RETRIES = 6
 private const val LABEL_TIME = 8_000L
+private const val MEASURED_FRAMES = 48
 private const val PREPARE_AHEAD = 60_000L
 
 /**
@@ -251,6 +260,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     val autoSkipped = remember { mutableSetOf<Long>() }
     var countdownEnds by remember { mutableStateOf<Long?>(null) }
     var retries by remember { mutableIntStateOf(0) }
+    // True while the player measures the frame rate of a video that does not tell it.
+    var measureFrames by remember { mutableStateOf(false) }
     // The next episode, found in the last minutes of this one: its video ID, and its playback or null.
     var preparedNext by remember { mutableStateOf<Pair<String, VideoPlayback?>?>(null) }
     // True after the first frame plays. Before it, a failed stream gives its place to the next best one.
@@ -759,8 +770,30 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             override fun onTracksChanged(tracks: Tracks) { tracksVersion++ }
         }
         player.addListener(listener)
+        // The frame rate is known when the video decoder gets its format.
+        val formats = object : AnalyticsListener {
+            override fun onVideoInputFormatChanged(eventTime: AnalyticsListener.EventTime, format: Format, decoderReuseEvaluation: DecoderReuseEvaluation?) {
+                if (!app.isTv || !c.settings.settings.value.matchFrameRate) return
+                if (format.frameRate > 0f) matchFrameRate(context, format.frameRate) else measureFrames = true
+            }
+        }
+        player.addAnalyticsListener(formats)
+        // A video that does not tell its rate: measure it from the times of the first frames.
+        val frameTimes = java.util.Collections.synchronizedList(mutableListOf<Long>())
+        player.setVideoFrameMetadataListener { presentationTimeUs, _, _, _ ->
+            if (!measureFrames || frameTimes.size >= MEASURED_FRAMES) return@setVideoFrameMetadataListener
+            frameTimes += presentationTimeUs
+            if (frameTimes.size == MEASURED_FRAMES) {
+                measureFrames = false
+                val measured = FrameRate.fromTimes(frameTimes.toList())
+                Diagnostics.log("Player", "measured $measured fps from ${frameTimes.size} frames")
+                val fps = measured?.let(FrameRate::nearestCommon)
+                c.scope.launch { if (fps != null) matchFrameRate(context, fps) else Diagnostics.log("Player", "the frame rate cannot be measured") }
+            }
+        }
         app.keyCapture = ::onKey
         onDispose {
+            restoreFrameRate(context)
             app.keyCapture = null
             saveProgress()
             (playback as? VideoPlayback)?.torrent?.let { c.torrents.close(it.infoHash) }
@@ -874,4 +907,26 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             )
         }
     }
+}
+
+private fun Context.activity(): Activity? = generateSequence(this) { (it as? ContextWrapper)?.baseContext }.filterIsInstance<Activity>().firstOrNull()
+
+/** Asks the TV for the display mode that fits [fps]. The player calls it when it knows the video track. */
+private fun matchFrameRate(context: Context, fps: Float) {
+    if (fps <= 0f) { Diagnostics.log("Player", "the video does not tell its frame rate"); return }
+    val activity = context.activity() ?: return
+    val display = activity.windowManager.defaultDisplay ?: return
+    val modes = display.supportedModes.map { DisplayMode(it.modeId, it.physicalWidth, it.physicalHeight, it.refreshRate) }
+    val now = display.mode.let { DisplayMode(it.modeId, it.physicalWidth, it.physicalHeight, it.refreshRate) }
+    val chosen = FrameRate.choose(modes, now, fps)
+    Diagnostics.log("Player", "video at $fps fps, screen at ${now.refreshRate} Hz" + (chosen?.let { ", switch to ${it.refreshRate} Hz" } ?: ", no switch"))
+    if (chosen == null) return
+    activity.window.attributes = activity.window.attributes.apply { preferredDisplayModeId = chosen.id }
+}
+
+/** Gives the display mode back to the TV after playback. */
+private fun restoreFrameRate(context: Context) {
+    val activity = context.activity() ?: return
+    if (activity.window.attributes.preferredDisplayModeId == 0) return
+    activity.window.attributes = activity.window.attributes.apply { preferredDisplayModeId = 0 }
 }
