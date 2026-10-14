@@ -115,7 +115,7 @@ fun PosterCard(
             )
             if (meta.poster != null) {
                 AsyncImage(
-                    model = meta.poster,
+                    model = Display.cardPoster(meta.poster),
                     contentDescription = meta.name,
                     // A square image is often a channel logo, so show all of it.
                     contentScale = if (card == CardShape.Square) ContentScale.Fit else ContentScale.Crop,

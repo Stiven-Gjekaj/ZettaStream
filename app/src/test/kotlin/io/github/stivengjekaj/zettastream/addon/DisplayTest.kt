@@ -58,4 +58,13 @@ class DisplayTest {
         assertEquals(null, Display.rating("74"))
         assertEquals(null, Display.rating(null))
     }
+
+    @Test
+    fun aCardAsksForTheSmallMetahubPoster() {
+        assertEquals("https://images.metahub.space/poster/small/tt1/img", Display.cardPoster("https://images.metahub.space/poster/medium/tt1/img"))
+        assertEquals("https://images.metahub.space/poster/small/tt1/img", Display.cardPoster("https://images.metahub.space/poster/large/tt1/img"))
+        assertEquals("https://images.metahub.space/poster/small/tt1/img", Display.cardPoster("https://images.metahub.space/poster/small/tt1/img"))
+        assertEquals("https://media.kitsu.app/anime/1/poster.jpg", Display.cardPoster("https://media.kitsu.app/anime/1/poster.jpg"))
+        assertEquals(null, Display.cardPoster(null))
+    }
 }

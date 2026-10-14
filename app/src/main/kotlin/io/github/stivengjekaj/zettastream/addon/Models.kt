@@ -194,6 +194,14 @@ object Display {
         else -> type.replaceFirstChar { it.uppercase() }
     }
 
+    private val metahubPoster = Regex("""^(https://images\.metahub\.space/poster/)(medium|large)(/.*)$""")
+
+    /**
+     * The poster for a card. A card is about 300 pixels wide, so a large picture from
+     * metahub becomes its small size (300 x 450), which is less than half the download.
+     */
+    fun cardPoster(url: String?): String? = url?.let { metahubPoster.replace(it, "$1small$3") }
+
     fun preview(m: MetaPreview): MetaPreview = m.copy(name = englishName(m.name, m.aliases))
 
     fun meta(m: Meta): Meta = m.copy(name = englishName(m.name, m.aliases), videos = m.videos.map(::video))
