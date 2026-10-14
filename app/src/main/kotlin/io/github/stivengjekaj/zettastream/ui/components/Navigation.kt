@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -93,7 +94,15 @@ fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
             .onFocusChanged { app.railFocused = it.hasFocus }
             .focusProperties {
                 // Left from a row goes in only with a new press, to the item of the screen that is open.
-                onEnter = { if (!app.railRequested && !app.edgeGuard.allowed) cancelFocusChange() else if (!app.railRequested) items[selectedIndex].requestFocus() }
+                // Any other way in, such as the first key press after the start, goes to the screen.
+                onEnter = {
+                    when {
+                        app.railRequested -> Unit
+                        requestedFocusDirection != FocusDirection.Left -> app.content.requestFocus()
+                        app.edgeGuard.allowed -> items[selectedIndex].requestFocus()
+                        else -> cancelFocusChange()
+                    }
+                }
             }
             .focusGroup()
             .padding(vertical = 24.dp, horizontal = 12.dp),
