@@ -722,4 +722,12 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   playback starts it again at the same position, with a short pause.
 - With a colour filter, the player gives no video size, so the ambient side
   bars read the size of the video track.
+- CRT draws one scanline for each 1/270 of the screen height, so the lines
+  show from a sofa on a large TV. It also has strong dark corners, a round
+  black tube edge, and a soft shine at the top.
+- Once the effects ran, the video goes through them until the player
+  closes, and they draw the picture in its own shape. So "Stretch to fill"
+  is also an effect then, which stretches the picture to the shape of the
+  screen. A change of the filter or of the side bars waits 0.8 seconds, so
+  only the last choice restarts the video.
 
