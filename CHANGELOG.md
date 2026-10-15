@@ -13,6 +13,13 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.5.1 (2026-10-15)
+
+- The CRT filter is much stronger: large scanlines, dark corners, and the
+  round edge of a tube screen.
+- Fixes "Stretch to fill", which stopped working after a colour filter.
+- A quick change through many filters restarts the video one time only.
+
 ## 1.5.0 (2026-10-15)
 
 - Video filters in the player options: CRT, VHS, Vintage film, and Black and
