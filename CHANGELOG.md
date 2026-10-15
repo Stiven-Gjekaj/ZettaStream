@@ -13,6 +13,12 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.4.2 (2026-10-15)
+
+- The player options are shorter: no rows for the episode, the speed, or
+  the source. Channel up and down change the episode, and Yellow chooses
+  another source.
+
 ## 1.4.1 (2026-10-15)
 
 - Side bars has a new choice, "Stretch to fill": the full picture fills the
