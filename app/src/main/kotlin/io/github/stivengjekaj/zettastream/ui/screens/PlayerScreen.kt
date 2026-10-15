@@ -847,12 +847,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     // Apply the subtitle style when the view exists and each time the viewer changes it.
     LaunchedEffect(viewer, playerView) { SubtitleStyle.apply(playerView?.subtitleView, viewer) }
     LaunchedEffect(viewer.sideBars, playerView) {
-        // Zoom keeps the shape and cuts the top and the bottom. Stretch fills the screen and changes the shape.
-        playerView?.resizeMode = when (viewer.sideBars) {
-            SideBars.Zoom -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            SideBars.Stretch -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-        }
+        // Stretch fills the screen and changes the shape of the picture.
+        playerView?.resizeMode = if (viewer.sideBars == SideBars.Stretch) AspectRatioFrameLayout.RESIZE_MODE_FILL else AspectRatioFrameLayout.RESIZE_MODE_FIT
     }
 
     LaunchedEffect(message) { if (message != null) { delay(2500); message = null } }

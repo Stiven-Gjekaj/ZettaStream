@@ -31,7 +31,7 @@ enum class SubtitleFont(val label: String) { Default("Default"), Sans("Sans"), S
 enum class SubtitleEdge(val label: String) { None("None"), Outline("Outline"), Shadow("Drop shadow"), Raised("Raised") }
 
 /** What fills the bars beside a video of another shape, such as an old 4:3 anime. */
-enum class SideBars(val label: String) { Black("Black"), Ambient("Ambient blur"), Zoom("Zoom to fill"), Stretch("Stretch to fill") }
+enum class SideBars(val label: String) { Black("Black"), Ambient("Ambient blur"), Stretch("Stretch to fill") }
 
 /** The choices of the viewer. Each value has a default that works with no change. */
 @Serializable
@@ -66,7 +66,9 @@ data class ViewerSettings(
 
 /** Keeps the viewer settings in the private storage of the app. */
 class SettingsStore(private var file: File) {
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    // A choice that a newer version removed, such as the side bars "Zoom", becomes the default.
+    // Without this, one old value makes the whole file unreadable, and all the settings reset.
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
     private var writer = SafeFile(file)
     private val state = MutableStateFlow(read())
     val settings: StateFlow<ViewerSettings> = state.asStateFlow()

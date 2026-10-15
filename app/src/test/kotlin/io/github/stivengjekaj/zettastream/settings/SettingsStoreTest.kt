@@ -38,6 +38,16 @@ class SettingsStoreTest {
     }
 
     @Test
+    fun aRemovedChoiceBecomesTheDefaultAndTheOtherValuesStay() {
+        val file = folder.root.resolve("settings.json")
+        file.writeText("""{"subtitlesOn":true,"sideBars":"Zoom","subtitleSize":"Large"}""")
+        val settings = SettingsStore(file).settings.value
+        assertEquals(SideBars.Ambient, settings.sideBars)
+        assertTrue(settings.subtitlesOn)
+        assertEquals(SubtitleSize.Large, settings.subtitleSize)
+    }
+
+    @Test
     fun nextGoesRoundTheOptions() {
         val options = SubtitleSize.entries
         assertEquals(SubtitleSize.Large, SettingsStore.next(options, SubtitleSize.Normal))
