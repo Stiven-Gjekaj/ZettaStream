@@ -83,6 +83,8 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.exoplayer.hls)
     implementation(libs.media3.exoplayer.dash)
+    // Colour filters of the player. They run only while the viewer chooses one.
+    implementation(libs.media3.effect)
     implementation(libs.androidx.tvprovider)
     implementation(libs.media3.datasource.okhttp)
     implementation(libs.media3.ui)

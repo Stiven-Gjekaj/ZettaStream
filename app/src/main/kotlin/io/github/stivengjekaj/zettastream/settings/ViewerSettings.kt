@@ -45,6 +45,7 @@ data class ViewerSettings(
     val subtitleFont: SubtitleFont = SubtitleFont.Default,
     val subtitleEdge: SubtitleEdge = SubtitleEdge.Outline,
     val sideBars: SideBars = SideBars.Ambient,
+    val videoFilter: io.github.stivengjekaj.zettastream.player.VideoFilter = io.github.stivengjekaj.zettastream.player.VideoFilter.None,
     val autoplayNext: Boolean = true,
     val autoSkipIntro: Boolean = false,
     /** The TV switches to the frame rate of the video, so that a pan does not judder. */

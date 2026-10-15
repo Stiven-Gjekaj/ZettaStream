@@ -1,5 +1,8 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import io.github.stivengjekaj.zettastream.ui.components.FilterOverlay
+import io.github.stivengjekaj.zettastream.player.ColourMatrix
+import io.github.stivengjekaj.zettastream.player.VideoFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -626,6 +629,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             OptionRow("Edge", viewer.subtitleEdge.label,
                 { cycle(SubtitleEdge.entries, viewer.subtitleEdge, -1) { v, x -> v.copy(subtitleEdge = x) } },
                 { cycle(SubtitleEdge.entries, viewer.subtitleEdge, 1) { v, x -> v.copy(subtitleEdge = x) } }),
+            OptionRow("Filter", viewer.videoFilter.label + if (viewer.videoFilter.colour) " (more power)" else "",
+                { cycle(VideoFilter.entries, viewer.videoFilter, -1) { v, x -> v.copy(videoFilter = x) } },
+                { cycle(VideoFilter.entries, viewer.videoFilter, 1) { v, x -> v.copy(videoFilter = x) } }),
             OptionRow("Side bars", viewer.sideBars.label,
                 { cycle(SideBars.entries, viewer.sideBars, -1) { v, x -> v.copy(sideBars = x) } },
                 { cycle(SideBars.entries, viewer.sideBars, 1) { v, x -> v.copy(sideBars = x) } }),
@@ -846,6 +852,37 @@ fun PlayerScreen(app: AppState, playback: Playback) {
 
     // Apply the subtitle style when the view exists and each time the viewer changes it.
     LaunchedEffect(viewer, playerView) { SubtitleStyle.apply(playerView?.subtitleView, viewer) }
+    // A colour filter changes each frame on the graphics chip. With no colour filter, the player
+    // gets no effects at all, so the video goes from the decoder to the screen as before.
+    var effectsOn by remember { mutableStateOf(false) }
+    var filterSet by remember { mutableStateOf(false) }
+    LaunchedEffect(viewer.videoFilter) {
+        val matrix = ColourMatrix.of(viewer.videoFilter)
+        val first = !filterSet
+        filterSet = true
+        if (matrix == null && !effectsOn) return@LaunchedEffect
+        runCatching {
+            // The video pipeline takes new effects only when it starts, so a change during playback
+            // starts it again at the same position. The filter of the start needs no restart.
+            val restart = !first && player.playbackState != Player.STATE_IDLE
+            val at = player.currentPosition
+            val playing = player.playWhenReady
+            if (restart) player.stop()
+            if (matrix != null) {
+                val gl = ColourMatrix.toGl(matrix)
+                player.setVideoEffects(listOf(androidx.media3.effect.RgbMatrix { _, _ -> gl }))
+            } else {
+                player.setVideoEffects(emptyList())
+            }
+            effectsOn = matrix != null
+            if (restart) {
+                player.prepare()
+                player.seekTo(at)
+                player.playWhenReady = playing
+            }
+            Diagnostics.log("Player", "filter ${viewer.videoFilter}" + if (restart) ", restart at $at" else "")
+        }.onFailure { Diagnostics.log("Player", "the filter cannot run", it) }
+    }
     LaunchedEffect(viewer.sideBars, playerView) {
         // Stretch fills the screen and changes the shape of the picture.
         playerView?.resizeMode = if (viewer.sideBars == SideBars.Stretch) AspectRatioFrameLayout.RESIZE_MODE_FILL else AspectRatioFrameLayout.RESIZE_MODE_FIT
@@ -876,6 +913,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             },
             modifier = Modifier.fillMaxSize(),
         )
+        FilterOverlay(viewer.videoFilter)
         // The small window shows only the video.
         if (app.inPictureInPicture) return@Box
         // The stream that plays: at the start, and each time the overlay shows.
@@ -992,7 +1030,7 @@ private fun restoreFrameRate(context: Context) {
  */
 @OptIn(UnstableApi::class)
 @Composable
-private fun AmbientFill(player: Player, view: PlayerView?) {
+private fun AmbientFill(player: ExoPlayer, view: PlayerView?) {
     var frame by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
     val screen = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
     LaunchedEffect(view) {
@@ -1003,8 +1041,11 @@ private fun AmbientFill(player: Player, view: PlayerView?) {
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         var copied = false
         while (true) {
+            // With a colour filter, the player gives no video size, so the format of the track tells it.
             val size = player.videoSize
-            val needed = Ambient.needed(size.width, size.height, size.pixelWidthHeightRatio, screen.width, screen.height)
+            val format = player.videoFormat
+            val needed = if (size.width > 0) Ambient.needed(size.width, size.height, size.pixelWidthHeightRatio, screen.width, screen.height)
+            else format != null && Ambient.needed(format.width, format.height, format.pixelWidthHeightRatio, screen.width, screen.height)
             // A paused video needs one copy only.
             if (needed && surface.holder.surface.isValid && (player.isPlaying || !copied)) {
                 val result = kotlinx.coroutines.suspendCancellableCoroutine { done ->
