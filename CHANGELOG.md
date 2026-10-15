@@ -13,6 +13,12 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.5.0 (2026-10-15)
+
+- Video filters in the player options: CRT, VHS, Vintage film, and Black and
+  white. VHS, Vintage film, and Black and white use more power.
+- Side bars has no "Zoom to fill" now. A saved Zoom changes to Ambient blur.
+
 ## 1.4.2 (2026-10-15)
 
 - The player options are shorter: no rows for the episode, the speed, or
