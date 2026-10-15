@@ -684,9 +684,10 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 
 - A video of another shape than the screen, such as an old 4:3 anime, has
   bars at the sides. The setting "Side bars" chooses what fills them:
-  "Ambient blur" (the default), "Black", "Zoom to fill", or "Stretch to
-  fill". Zoom keeps the shape and cuts the top and the bottom. Stretch shows
-  all of the picture and changes its shape. It is in the
+  "Ambient blur" (the default), "Black", or "Stretch to fill". Stretch
+  shows all of the picture and changes its shape. "Zoom to fill" was removed
+  on 2026-10-15. A saved choice that no longer exists reads as the default,
+  and the other settings stay. It is in the
   player options and in Settings.
 - Ambient blur copies the frame at 32 x 18 pixels two times a second,
   blurs the copy, and stretches it behind the video, with a dark layer. The
@@ -704,4 +705,21 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   source. Channel up and down change the episode, and Yellow chooses another
   source. The speed is always normal. This replaces the episode row of
   "Universal remote keys". Live TV keeps its channel row.
+
+## 2026-10-15: Video filters
+
+- The player options have a "Filter" row: None (the default), CRT, VHS,
+  Vintage film, and Black and white. It is saved for each profile.
+- The scanlines, the dark corners, and the grain are drawn over the video,
+  as the subtitles are. They cost almost nothing. The grain moves 8 times a
+  second.
+- VHS, Vintage film, and Black and white also change the colours with one
+  colour matrix on the graphics chip, through the effects of Media3. The
+  row says "(more power)" for them. On the emulator they used about 40
+  percent more of the processor. With None or CRT, the player gets no
+  effects, and the video goes from the decoder to the screen as before.
+- The video pipeline takes new effects only when it starts. A change during
+  playback starts it again at the same position, with a short pause.
+- With a colour filter, the player gives no video size, so the ambient side
+  bars read the size of the video track.
 
