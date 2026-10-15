@@ -11,9 +11,11 @@ enum class VideoFilter(
     val scanlines: Float = 0f,
     val vignette: Float = 0f,
     val grain: Float = 0f,
+    /** True for the rounded black edge and the glass shine of a tube screen. */
+    val tube: Boolean = false,
 ) {
     None("None", false),
-    Crt("CRT", false, scanlines = 0.28f, vignette = 0.55f),
+    Crt("CRT", false, scanlines = 0.5f, vignette = 0.8f, tube = true),
     Vhs("VHS", true, scanlines = 0.14f, vignette = 0.3f, grain = 0.10f),
     Vintage("Vintage film", true, vignette = 0.6f, grain = 0.14f),
     BlackWhite("Black and white", true, vignette = 0.25f),

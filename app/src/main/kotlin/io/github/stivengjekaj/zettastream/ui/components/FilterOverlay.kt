@@ -1,5 +1,10 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.Path
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +32,9 @@ import kotlin.random.Random
 private const val GRAIN_INTERVAL = 125L
 private const val GRAIN_SIZE = 128
 
+/** The number of scanlines over the height of the screen, about as many as on an old TV picture. */
+private const val SCANLINES = 270f
+
 /**
  * The scanlines, the dark corners, and the grain of a filter, drawn on top of the video.
  * The scanlines and the corners are drawn one time. Only the grain moves.
@@ -37,20 +45,34 @@ fun FilterOverlay(filter: VideoFilter, modifier: Modifier = Modifier) {
         Canvas(
             modifier.fillMaxSize().drawWithCache {
                 val lines = Color.Black.copy(alpha = filter.scanlines)
+                // The lines follow the size of the screen, so that they show from a sofa also on a large TV.
+                val step = (size.height / SCANLINES).coerceAtLeast(3f)
                 val corners = Brush.radialGradient(
-                    0.55f to Color.Transparent, 1f to Color.Black.copy(alpha = filter.vignette),
-                    center = Offset(size.width / 2, size.height / 2), radius = size.maxDimension * 0.62f,
+                    0.5f to Color.Transparent, 1f to Color.Black.copy(alpha = filter.vignette),
+                    center = Offset(size.width / 2, size.height / 2), radius = size.maxDimension * 0.6f,
                 )
+                // A tube screen has round corners and a soft shine at the top of its glass.
+                val radius = size.minDimension * 0.07f
+                val edge = Path().apply {
+                    fillType = PathFillType.EvenOdd
+                    addRect(Rect(Offset.Zero, size))
+                    addRoundRect(RoundRect(Rect(Offset.Zero, size), CornerRadius(radius, radius)))
+                }
+                val shine = Brush.verticalGradient(0f to Color.White.copy(alpha = 0.07f), 0.35f to Color.Transparent)
                 onDrawBehind {
                     if (filter.scanlines > 0f) {
-                        // One dark line in each three lines of pixels, as on a tube screen.
+                        // A dark line for each line of the old picture, as on a tube screen.
                         var y = 0f
                         while (y < size.height) {
-                            drawLine(lines, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.5f)
-                            y += 3f
+                            drawLine(lines, Offset(0f, y), Offset(size.width, y), strokeWidth = step * 0.45f)
+                            y += step
                         }
                     }
                     if (filter.vignette > 0f) drawRect(corners)
+                    if (filter.tube) {
+                        drawRect(shine)
+                        drawPath(edge, Color.Black)
+                    }
                 }
             },
         ) {}
