@@ -684,7 +684,9 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 
 - A video of another shape than the screen, such as an old 4:3 anime, has
   bars at the sides. The setting "Side bars" chooses what fills them:
-  "Ambient blur" (the default), "Black", or "Zoom to fill". It is in the
+  "Ambient blur" (the default), "Black", "Zoom to fill", or "Stretch to
+  fill". Zoom keeps the shape and cuts the top and the bottom. Stretch shows
+  all of the picture and changes its shape. It is in the
   player options and in Settings.
 - Ambient blur copies the frame at 32 x 18 pixels two times a second,
   blurs the copy, and stretches it behind the video, with a dark layer. The

@@ -112,7 +112,7 @@ These screens are from the Android TV emulator and a phone emulator.
 - Subtitles from OpenSubtitles when no subtitle addon is in your list
 - A subtitle delay and an audio delay in the player options
 - Side bars of a 4:3 video filled with an ambient blur of the picture, or a
-  zoom to fill the screen
+  zoom or a stretch to fill the screen
 - Profiles, as on Netflix: each person has a picture, a history, a
   watchlist, and settings
 - A "New episodes" row for the shows that you follow
