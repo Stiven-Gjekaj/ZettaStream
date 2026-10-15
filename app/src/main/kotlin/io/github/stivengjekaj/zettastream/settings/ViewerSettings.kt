@@ -31,7 +31,7 @@ enum class SubtitleFont(val label: String) { Default("Default"), Sans("Sans"), S
 enum class SubtitleEdge(val label: String) { None("None"), Outline("Outline"), Shadow("Drop shadow"), Raised("Raised") }
 
 /** What fills the bars beside a video of another shape, such as an old 4:3 anime. */
-enum class SideBars(val label: String) { Black("Black"), Ambient("Ambient blur"), Zoom("Zoom to fill") }
+enum class SideBars(val label: String) { Black("Black"), Ambient("Ambient blur"), Zoom("Zoom to fill"), Stretch("Stretch to fill") }
 
 /** The choices of the viewer. Each value has a default that works with no change. */
 @Serializable

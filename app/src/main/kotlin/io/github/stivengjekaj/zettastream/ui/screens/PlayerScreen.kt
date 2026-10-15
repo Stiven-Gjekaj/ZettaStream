@@ -860,7 +860,12 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     // Apply the subtitle style when the view exists and each time the viewer changes it.
     LaunchedEffect(viewer, playerView) { SubtitleStyle.apply(playerView?.subtitleView, viewer) }
     LaunchedEffect(viewer.sideBars, playerView) {
-        playerView?.resizeMode = if (viewer.sideBars == SideBars.Zoom) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
+        // Zoom keeps the shape and cuts the top and the bottom. Stretch fills the screen and changes the shape.
+        playerView?.resizeMode = when (viewer.sideBars) {
+            SideBars.Zoom -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            SideBars.Stretch -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+        }
     }
 
     LaunchedEffect(message) { if (message != null) { delay(2500); message = null } }
@@ -1009,7 +1014,7 @@ private fun AmbientFill(player: Player, view: PlayerView?) {
     val screen = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
     LaunchedEffect(view) {
         val surface = view?.videoSurfaceView as? android.view.SurfaceView ?: return@LaunchedEffect
-        val bitmap = android.graphics.Bitmap.createBitmap(Ambient.WIDTH, Ambient.HEIGHT, android.graphics.Bitmap.Config.ARGB_8888)
+        val bitmap = androidx.core.graphics.createBitmap(Ambient.WIDTH, Ambient.HEIGHT)
         val pixels = IntArray(Ambient.WIDTH * Ambient.HEIGHT)
         var shown = IntArray(0)
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
