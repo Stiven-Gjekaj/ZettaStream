@@ -50,8 +50,6 @@ data class OptionRow(
     val onSelect: (() -> Unit)? = null,
 )
 
-val PlaybackSpeeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
-
 @OptIn(UnstableApi::class)
 object TrackChoices {
     fun choices(player: Player, type: Int): List<TrackChoice> {

@@ -48,7 +48,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -287,7 +286,6 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     var countdownLeft by remember { mutableIntStateOf(0) }
     var optionsRow by remember { mutableIntStateOf(0) }
     var tracksVersion by remember { mutableIntStateOf(0) }
-    var speed by remember { mutableFloatStateOf(1f) }
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
     var pendingStep by remember { mutableIntStateOf(0) }
     var pendingAt by remember { mutableLongStateOf(0L) }
@@ -612,10 +610,6 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             c.scope.launch { c.settings.update { change(it, next) } }
         }
         fun size(step: Int) = cycle(SubtitleSize.entries, viewer.subtitleSize, step) { v, x -> v.copy(subtitleSize = x) }
-        fun setSpeed(step: Int) {
-            speed = PlaybackSpeeds[(PlaybackSpeeds.indexOf(speed) + step).coerceIn(0, PlaybackSpeeds.lastIndex)]
-            player.setPlaybackSpeed(speed)
-        }
         val rows = mutableListOf(
             OptionRow("Subtitles", subs.getOrNull(subIndex)?.label ?: "Off", { pickSub(-1) }, { pickSub(1) }),
             OptionRow("Audio", audio.getOrNull(audioIndex)?.label ?: "One track", { pickAudio(-1) }, { pickAudio(1) }),
@@ -636,12 +630,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
                 { cycle(SideBars.entries, viewer.sideBars, -1) { v, x -> v.copy(sideBars = x) } },
                 { cycle(SideBars.entries, viewer.sideBars, 1) { v, x -> v.copy(sideBars = x) } }),
         )
-        when (playback) {
-            is VideoPlayback -> if (playback.episodes.size > 1) {
-                rows += OptionRow("Episode", "Previous  /  Next", { optionsOpen = false; changeEpisode(-1) }, { optionsOpen = false; changeEpisode(1) })
-            }
-            is LivePlayback -> rows += OptionRow("Channel", "Previous  /  Next", { changeEpisode(-1) }, { changeEpisode(1) })
-        }
+        // The episode, the speed, and the source are not here: Channel up and down change the episode,
+        // and Yellow chooses another source. A short list is quicker to use.
+        if (playback is LivePlayback) rows += OptionRow("Channel", "Previous  /  Next", { changeEpisode(-1) }, { changeEpisode(1) })
         fun shiftSubtitles(direction: Int) {
             subtitleDelay = Timing.step(subtitleDelay, direction, Timing.SUBTITLE_STEP, Timing.SUBTITLE_LIMIT)
             timing.subtitleDelayMs = subtitleDelay
@@ -653,10 +644,6 @@ fun PlayerScreen(app: AppState, playback: Playback) {
         }
         rows.add(1, OptionRow("Subtitle delay", Timing.label(subtitleDelay), { shiftSubtitles(-1) }, { shiftSubtitles(1) }))
         rows.add(3, OptionRow("Audio delay", Timing.label(viewer.audioDelayMs), { shiftAudio(-1) }, { shiftAudio(1) }))
-        if (playback is VideoPlayback) {
-            rows += OptionRow("Speed", if (speed == 1f) "Normal" else "${speed}x", { setSpeed(-1) }, { setSpeed(1) })
-            rows += OptionRow("Source", "Choose another source", onSelect = { chooseSource() })
-        }
         return rows
     }
 
