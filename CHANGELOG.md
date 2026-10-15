@@ -13,6 +13,11 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.4.1 (2026-10-15)
+
+- Side bars has a new choice, "Stretch to fill": the full picture fills the
+  screen, wider than its true shape.
+
 ## 1.4.0 (2026-10-15)
 
 - Side bars: the bars beside a 4:3 video, such as an old anime, take a soft
