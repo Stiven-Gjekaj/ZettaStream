@@ -698,3 +698,10 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - A protected stream that does not let the app copy its frames keeps black
   bars.
 
+## 2026-10-15: A shorter options panel
+
+- The player options have no rows for the episode, the speed, or the
+  source. Channel up and down change the episode, and Yellow chooses another
+  source. The speed is always normal. This replaces the episode row of
+  "Player options for a remote with few keys". Live TV keeps its channel row.
+

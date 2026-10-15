@@ -235,7 +235,8 @@ torrent addon's settings also changes its torrents into HTTP links.
 
 A remote with no Menu key and no number keys can still do each action. Press
 Left at the start of a row to reach the icon bar. In the player, hold OK for
-the options, which also change the episode or the channel.
+the options, which also change the channel. Channel up and down change the
+episode, and Yellow chooses another source.
 
 A game controller and a keyboard also work. A or Enter is OK. B or Escape is
 Back. Start, X, or Tab is Menu. Y is Info. L1 and R1 are Channel down and up.
