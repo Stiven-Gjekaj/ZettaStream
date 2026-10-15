@@ -856,11 +856,17 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     // gets no effects at all, so the video goes from the decoder to the screen as before.
     var effectsOn by remember { mutableStateOf(false) }
     var filterSet by remember { mutableStateOf(false) }
-    LaunchedEffect(viewer.videoFilter) {
+    val screenShape = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.let { if (it.height > 0) it.width.toFloat() / it.height else 16f / 9f }
+    LaunchedEffect(viewer.videoFilter, viewer.sideBars) {
         val matrix = ColourMatrix.of(viewer.videoFilter)
         val first = !filterSet
         filterSet = true
+        // Once the effects ran, the video goes through them until the player closes. They draw the
+        // picture in its own shape, so Stretch must be an effect too, or the picture keeps its bars.
+        val stretch = viewer.sideBars == SideBars.Stretch
         if (matrix == null && !effectsOn) return@LaunchedEffect
+        // While the viewer goes through the choices, only the last one restarts the video.
+        if (!first) delay(FILTER_SETTLE)
         runCatching {
             // The video pipeline takes new effects only when it starts, so a change during playback
             // starts it again at the same position. The filter of the start needs no restart.
@@ -868,19 +874,20 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             val at = player.currentPosition
             val playing = player.playWhenReady
             if (restart) player.stop()
+            val effects = mutableListOf<androidx.media3.common.Effect>()
             if (matrix != null) {
                 val gl = ColourMatrix.toGl(matrix)
-                player.setVideoEffects(listOf(androidx.media3.effect.RgbMatrix { _, _ -> gl }))
-            } else {
-                player.setVideoEffects(emptyList())
+                effects += androidx.media3.effect.RgbMatrix { _, _ -> gl }
             }
-            effectsOn = matrix != null
+            if (stretch) effects += androidx.media3.effect.Presentation.createForAspectRatio(screenShape, androidx.media3.effect.Presentation.LAYOUT_STRETCH_TO_FIT)
+            player.setVideoEffects(effects)
+            effectsOn = true
             if (restart) {
                 player.prepare()
                 player.seekTo(at)
                 player.playWhenReady = playing
             }
-            Diagnostics.log("Player", "filter ${viewer.videoFilter}" + if (restart) ", restart at $at" else "")
+            Diagnostics.log("Player", "filter ${viewer.videoFilter}, stretch $stretch" + if (restart) ", restart at $at" else "")
         }.onFailure { Diagnostics.log("Player", "the filter cannot run", it) }
     }
     LaunchedEffect(viewer.sideBars, playerView) {
@@ -1085,3 +1092,6 @@ private fun AmbientFill(player: ExoPlayer, view: PlayerView?) {
         }
     }
 }
+
+/** The wait after a change of the filter or the side bars, before the video restarts with it. */
+private const val FILTER_SETTLE = 800L
