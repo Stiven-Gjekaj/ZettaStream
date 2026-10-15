@@ -38,6 +38,7 @@ import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.settings.SettingsStore
 import io.github.stivengjekaj.zettastream.settings.SubtitleBackground
 import io.github.stivengjekaj.zettastream.settings.SubtitleColor
+import io.github.stivengjekaj.zettastream.settings.SideBars
 import io.github.stivengjekaj.zettastream.settings.SubtitleEdge
 import io.github.stivengjekaj.zettastream.settings.SubtitleFont
 import io.github.stivengjekaj.zettastream.settings.SubtitleSize
@@ -130,6 +131,7 @@ fun SettingsScreen(app: AppState) {
         item { SettingsRow("Subtitle text color", viewer.subtitleColor.label, tv) { set { it.copy(subtitleColor = SettingsStore.next(SubtitleColor.entries, it.subtitleColor)) } } }
         item { SettingsRow("Subtitle background", "${viewer.subtitleBackground.label}. A box behind the text.", tv) { set { it.copy(subtitleBackground = SettingsStore.next(SubtitleBackground.entries, it.subtitleBackground)) } } }
         item { SettingsRow("Subtitle font", viewer.subtitleFont.label, tv) { set { it.copy(subtitleFont = SettingsStore.next(SubtitleFont.entries, it.subtitleFont)) } } }
+        item { SettingsRow("Side bars", "${viewer.sideBars.label}. For a video of another shape, such as an old 4:3 anime.", tv) { set { it.copy(sideBars = SettingsStore.next(SideBars.entries, it.sideBars)) } } }
         item { SettingsRow("Subtitle edge", "${viewer.subtitleEdge.label}. An edge keeps text readable with no background.", tv) { set { it.copy(subtitleEdge = SettingsStore.next(SubtitleEdge.entries, it.subtitleEdge)) } } }
         item {
             SettingsRow("Audio language", SettingsStore.languageName(viewer.audioLanguage), tv) {

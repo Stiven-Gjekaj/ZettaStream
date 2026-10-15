@@ -30,6 +30,9 @@ enum class SubtitleFont(val label: String) { Default("Default"), Sans("Sans"), S
 /** The edge around each letter, so that text without a box stays readable. */
 enum class SubtitleEdge(val label: String) { None("None"), Outline("Outline"), Shadow("Drop shadow"), Raised("Raised") }
 
+/** What fills the bars beside a video of another shape, such as an old 4:3 anime. */
+enum class SideBars(val label: String) { Black("Black"), Ambient("Ambient blur"), Zoom("Zoom to fill") }
+
 /** The choices of the viewer. Each value has a default that works with no change. */
 @Serializable
 data class ViewerSettings(
@@ -41,6 +44,7 @@ data class ViewerSettings(
     val subtitleBackground: SubtitleBackground = SubtitleBackground.None,
     val subtitleFont: SubtitleFont = SubtitleFont.Default,
     val subtitleEdge: SubtitleEdge = SubtitleEdge.Outline,
+    val sideBars: SideBars = SideBars.Ambient,
     val autoplayNext: Boolean = true,
     val autoSkipIntro: Boolean = false,
     /** The TV switches to the frame rate of the video, so that a pan does not judder. */

@@ -1,5 +1,10 @@
 package io.github.stivengjekaj.zettastream.ui.screens
 
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.media3.ui.AspectRatioFrameLayout
+import io.github.stivengjekaj.zettastream.player.Ambient
+import io.github.stivengjekaj.zettastream.settings.SideBars
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.Lifecycle
@@ -627,6 +632,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             OptionRow("Edge", viewer.subtitleEdge.label,
                 { cycle(SubtitleEdge.entries, viewer.subtitleEdge, -1) { v, x -> v.copy(subtitleEdge = x) } },
                 { cycle(SubtitleEdge.entries, viewer.subtitleEdge, 1) { v, x -> v.copy(subtitleEdge = x) } }),
+            OptionRow("Side bars", viewer.sideBars.label,
+                { cycle(SideBars.entries, viewer.sideBars, -1) { v, x -> v.copy(sideBars = x) } },
+                { cycle(SideBars.entries, viewer.sideBars, 1) { v, x -> v.copy(sideBars = x) } }),
         )
         when (playback) {
             is VideoPlayback -> if (playback.episodes.size > 1) {
@@ -851,6 +859,9 @@ fun PlayerScreen(app: AppState, playback: Playback) {
 
     // Apply the subtitle style when the view exists and each time the viewer changes it.
     LaunchedEffect(viewer, playerView) { SubtitleStyle.apply(playerView?.subtitleView, viewer) }
+    LaunchedEffect(viewer.sideBars, playerView) {
+        playerView?.resizeMode = if (viewer.sideBars == SideBars.Zoom) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
+    }
 
     LaunchedEffect(message) { if (message != null) { delay(2500); message = null } }
     LaunchedEffect(prompt, pendingAt) { if (prompt != null) { delay(CONFIRM_WINDOW); prompt = null; pendingStep = 0 } }
@@ -859,9 +870,14 @@ fun PlayerScreen(app: AppState, playback: Playback) {
     val overlay = app.isTv && (now < overlayUntil || !playing || error != null)
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
+        // The ambient fill is behind the video, so it shows only in the bars.
+        if (viewer.sideBars == SideBars.Ambient) AmbientFill(player, playerView)
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
+                    // The bars beside the video show what is behind the view.
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
                     this.player = player
                     playerView = this
                     useController = !app.isTv && !app.inPictureInPicture
@@ -978,4 +994,65 @@ private fun restoreFrameRate(context: Context) {
     val activity = context.activity() ?: return
     if (activity.window.attributes.preferredDisplayModeId == 0) return
     activity.window.attributes = activity.window.attributes.apply { preferredDisplayModeId = 0 }
+}
+
+/**
+ * The blurred colours of the video behind it, like the ambient mode of YouTube. A few times a
+ * second, it copies the frame at a tiny size from the surface of the video. The video itself
+ * goes from the decoder to the screen as before. A protected stream that does not let the app
+ * copy its frames keeps black bars.
+ */
+@OptIn(UnstableApi::class)
+@Composable
+private fun AmbientFill(player: Player, view: PlayerView?) {
+    var frame by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    val screen = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
+    LaunchedEffect(view) {
+        val surface = view?.videoSurfaceView as? android.view.SurfaceView ?: return@LaunchedEffect
+        val bitmap = android.graphics.Bitmap.createBitmap(Ambient.WIDTH, Ambient.HEIGHT, android.graphics.Bitmap.Config.ARGB_8888)
+        val pixels = IntArray(Ambient.WIDTH * Ambient.HEIGHT)
+        var shown = IntArray(0)
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        var copied = false
+        while (true) {
+            val size = player.videoSize
+            val needed = Ambient.needed(size.width, size.height, size.pixelWidthHeightRatio, screen.width, screen.height)
+            // A paused video needs one copy only.
+            if (needed && surface.holder.surface.isValid && (player.isPlaying || !copied)) {
+                val result = kotlinx.coroutines.suspendCancellableCoroutine { done ->
+                    runCatching { android.view.PixelCopy.request(surface, bitmap, { done.resumeWith(Result.success(it)) }, handler) }
+                        .onFailure { done.resumeWith(Result.success(android.view.PixelCopy.ERROR_UNKNOWN)) }
+                }
+                if (result == android.view.PixelCopy.SUCCESS) {
+                    bitmap.getPixels(pixels, 0, Ambient.WIDTH, 0, 0, Ambient.WIDTH, Ambient.HEIGHT)
+                    val soft = Ambient.blur(pixels, Ambient.WIDTH, Ambient.HEIGHT, 2)
+                    // A new picture only for a clear change, such as a new scene.
+                    if (Ambient.change(soft, shown) >= Ambient.MIN_CHANGE) {
+                        shown = soft
+                        frame = android.graphics.Bitmap.createBitmap(soft, Ambient.WIDTH, Ambient.HEIGHT, android.graphics.Bitmap.Config.ARGB_8888).asImageBitmap()
+                    }
+                    copied = true
+                }
+            } else if (!needed) {
+                frame = null
+                shown = IntArray(0)
+                copied = false
+            }
+            if (player.isPlaying) copied = false
+            delay(Ambient.INTERVAL_MS)
+        }
+    }
+    // The fill changes with no fade: a fade redraws the full screen for each step.
+    frame.let { image ->
+        if (image != null) {
+            Box(Modifier.fillMaxSize()) {
+                androidx.compose.foundation.Image(
+                    image, null, contentScale = ContentScale.FillBounds, filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                // A dark layer keeps the eye on the video.
+                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.25f)))
+            }
+        }
+    }
 }
