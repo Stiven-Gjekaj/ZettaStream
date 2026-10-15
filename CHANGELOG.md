@@ -13,6 +13,12 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.4.0 (2026-10-15)
+
+- Side bars: the bars beside a 4:3 video, such as an old anime, take a soft
+  blur of the colours of the picture, as in the ambient mode of YouTube.
+  The player options and Settings can change it to black bars or a zoom.
+
 ## 1.3.3 (2026-10-15)
 
 - Fixes a freeze and a crash of search with a long source list. The merge of
