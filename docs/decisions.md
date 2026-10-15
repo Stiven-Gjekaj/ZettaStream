@@ -680,3 +680,19 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   give comes first among equal matches.
 - The same search within 10 minutes answers from memory.
 
+## 2026-10-15: Side bars
+
+- A video of another shape than the screen, such as an old 4:3 anime, has
+  bars at the sides. The setting "Side bars" chooses what fills them:
+  "Ambient blur" (the default), "Black", or "Zoom to fill". It is in the
+  player options and in Settings.
+- Ambient blur copies the frame at 32 x 18 pixels two times a second,
+  blurs the copy, and stretches it behind the video, with a dark layer. The
+  video itself goes from the decoder to the screen as before. A blur of each
+  frame on the graphics chip looks better, but it costs too much on a TV.
+- The fill changes only when the colours change clearly, and with no fade,
+  because each draw covers the full screen. On the emulator it costs about
+  the same as black bars.
+- A protected stream that does not let the app copy its frames keeps black
+  bars.
+
