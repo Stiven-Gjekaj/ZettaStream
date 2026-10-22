@@ -25,6 +25,7 @@ import io.github.stivengjekaj.zettastream.source.SourceStore
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
 import io.github.stivengjekaj.zettastream.update.UpdateInstaller
 import io.github.stivengjekaj.zettastream.ui.Lite
+import io.github.stivengjekaj.zettastream.ui.LiteImages
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -83,6 +84,9 @@ class ZettaStreamApp : Application(), SingletonImageLoader.Factory {
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
-        .components { add(OkHttpNetworkFetcherFactory(callFactory = { container.imageHttp })) }
+        .components {
+            add(LiteImages())
+            add(OkHttpNetworkFetcherFactory(callFactory = { container.imageHttp }))
+        }
         .build()
 }
