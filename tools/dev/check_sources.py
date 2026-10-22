@@ -6,7 +6,7 @@ opens the first bytes of two stream links. For a playlist, it counts the
 channels and opens a sample of them. For a guide, it counts the programmes
 that have not ended.
 
-Run: python3 -I tools/dev/check_sources.py private/sources-ready.txt
+Run: python3 -I tools/dev/check_sources.py private/sources-2026-10-23.txt
 """
 import concurrent.futures as cf
 import gzip
