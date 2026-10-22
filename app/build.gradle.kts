@@ -58,6 +58,11 @@ android {
         }
     }
 
+    // Android 7 has no java.time. The build adds a copy of it to the app.
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -94,6 +99,8 @@ dependencies {
     implementation(libs.libtorrent4j.arm)
     implementation(libs.libtorrent4j.arm64)
     debugImplementation(libs.libtorrent4j.x64)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -16,6 +16,7 @@ junit = "4.13.2"
 kxml = "2.3.0"
 libtorrent4j = "2.1.0-39"
 profileinstaller = "1.4.1"
+desugar = "2.1.5"
 benchmark = "1.5.0"
 uiautomator = "2.4.0"
 testExtJunit = "1.3.0"
@@ -49,6 +50,7 @@ kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml" }
 libtorrent4j = { group = "org.libtorrent4j", name = "libtorrent4j", version.ref = "libtorrent4j" }
 libtorrent4j-arm = { group = "org.libtorrent4j", name = "libtorrent4j-android-arm", version.ref = "libtorrent4j" }
 libtorrent4j-arm64 = { group = "org.libtorrent4j", name = "libtorrent4j-android-arm64", version.ref = "libtorrent4j" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
