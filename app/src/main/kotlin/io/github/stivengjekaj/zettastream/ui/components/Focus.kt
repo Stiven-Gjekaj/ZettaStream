@@ -24,6 +24,7 @@ import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.focus.FocusEventModifierNode
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import io.github.stivengjekaj.zettastream.ui.Lite
 import io.github.stivengjekaj.zettastream.ui.theme.Accent
 import io.github.stivengjekaj.zettastream.ui.theme.Corner
 import kotlinx.coroutines.launch
@@ -77,12 +78,15 @@ private class FocusRingNode(
             if (rememberForReturn) FocusReturn.last = { requestFocus() }
             onFocus()
         }
-        val target = if (focused) scaleTo else 1f
-        coroutineScope.launch { scale.animateTo(target) }
+        // In Lite mode the item keeps its size. The ring alone shows the focus.
+        val target = if (focused && !Lite.on) scaleTo else 1f
+        if (Lite.on) coroutineScope.launch { scale.snapTo(target) } else coroutineScope.launch { scale.animateTo(target) }
     }
 
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
+        // In Lite mode nothing scales, so the item needs no layer of its own.
+        if (Lite.on) return layout(placeable.width, placeable.height) { placeable.place(0, 0) }
         // The layer reads the scale, so only the layer changes while the scale moves.
         return layout(placeable.width, placeable.height) {
             placeable.placeWithLayer(0, 0) {
