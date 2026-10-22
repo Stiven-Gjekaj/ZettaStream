@@ -756,3 +756,42 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   its native library does not load on Android 7.
 - The emulator for these checks is `android-24;default;arm64-v8a`. Google
   gives the Android TV 7 image only for x86, which does not run on the Mac.
+
+## 2026-10-22: A download link for old TVs
+
+- GitHub serves release files from `release-assets.githubusercontent.com`
+  with a Let's Encrypt certificate. Android 7.0 does not trust it, so
+  Downloader shows "unknown error" on an old TV.
+- The release workflow copies the APK to the `download` branch. The branch
+  has one commit with the newest APK only. The workflow pushes it with force,
+  so the repository does not grow with each release.
+- jsDelivr serves the branch at
+  `https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@download/ZettaStream.apk`.
+  Its chain ends at GlobalSign Root R3, which Android 7.0 has. The workflow
+  purges the jsDelivr cache after the push.
+- jsDelivr does not serve a GitHub file larger than 20 MB. The APK is about
+  15 MB now.
+
+## 2026-10-22: Lite mode
+
+- The abod TV with Android 7.0 is slow on each screen. It has no developer
+  options, so the app cannot be profiled on it.
+- Settings, App, Lite mode has three values: Auto, On, and Off. Auto turns it
+  on below Android 8, on a low-RAM device, or below 2.5 GB of memory. The row
+  also shows the memory, cores, and chip of the device.
+- The setting is in the profile settings, as the others are. With Auto, each
+  profile gets the same result.
+- Lite mode removes the work that a weak TV feels on each key press:
+  - A focused item keeps its size and has no layer of its own. The ring stays.
+  - The home banner stays on one title. It has no crossfade and no moving
+    marks. Its image loads at 960 x 540.
+  - Coil decodes images with 16-bit colour when they have no transparency.
+  - The TV rail opens with no animation.
+  - The title of a focused card does not scroll. A marquee draws a new frame
+    for as long as it moves.
+  - The player uses black side bars in place of the ambient blur.
+- Measurement on an Android 7.0 emulator with 2 cores and 1 GB: with the
+  focus still on a card, the screen drew 9 to 12 frames in 12 seconds
+  without Lite mode, and 3 with it. During a D-pad route through Home, the
+  difference was smaller than the noise of the emulator, which draws in
+  software. The real effect needs the TV.

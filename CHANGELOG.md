@@ -13,6 +13,16 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.7.0 (2026-10-22)
+
+- Lite mode in Settings, App, for a slow TV: Auto, On, or Off. Auto turns it
+  on for Android 7 and for a TV with little memory. It stops the animations,
+  keeps the home banner still, loads smaller images, and uses black side
+  bars in the player.
+- The Lite mode row shows the memory, cores, and chip of the device.
+- A download link for old TVs that cannot open the GitHub link:
+  `https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@download/ZettaStream.apk`
+
 ## 1.6.0 (2026-10-22)
 
 - ZettaStream runs on Android 7.0 and newer. Before, it needed Android 8.0.

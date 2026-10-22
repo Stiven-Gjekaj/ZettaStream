@@ -170,6 +170,23 @@ The code always gives the newest release. To update, enter the same code
 again and install over the old version.
 The home screen tells you when a newer version is available.
 
+### An old TV
+
+An old TV, such as one with Android 7.0, does not trust the certificate of
+GitHub downloads. Downloader then shows "unknown error". Type this URL in
+Downloader instead:
+
+```
+https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@download/ZettaStream.apk
+```
+
+jsDelivr serves the newest APK with a certificate that old TVs trust.
+Each release updates it within a few minutes.
+
+If the TV is slow, open Settings, App, Lite mode. Lite mode is on by itself
+on Android 7 and on a TV with less than 2.5 GB of memory. The same row
+shows the memory and the chip of the TV.
+
 ## Install on a phone
 
 Open the [newest release](https://github.com/Stiven-Gjekaj/ZettaStream/releases/latest)
