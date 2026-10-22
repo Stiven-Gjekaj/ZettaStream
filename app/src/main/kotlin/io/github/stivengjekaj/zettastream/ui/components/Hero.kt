@@ -45,6 +45,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import io.github.stivengjekaj.zettastream.ui.Lite
 import io.github.stivengjekaj.zettastream.addon.MetaPreview
 import io.github.stivengjekaj.zettastream.ui.FocusMemory
 import io.github.stivengjekaj.zettastream.addon.Display
@@ -57,6 +60,10 @@ import kotlinx.coroutines.delay
 
 /** The time that each title of the banner shows, while no button of the banner has the focus. */
 private const val SLIDE_TIME = 8_000L
+
+/** The size of the banner image in Lite mode, in pixels. */
+private const val LITE_COVER_WIDTH = 960
+private const val LITE_COVER_HEIGHT = 540
 
 /** The start of the FocusMemory key of a banner button. The number of the button follows. */
 private const val BANNER_KEY = "banner|"
@@ -94,20 +101,27 @@ fun HeroBanner(
     var index by rememberSaveable { mutableIntStateOf(0) }
     var focused by remember { mutableStateOf(false) }
     // The banner moves on by itself, but not while the viewer is on one of its buttons.
-    LaunchedEffect(items.size, focused) {
-        while (!focused && items.size > 1) {
+    // In Lite mode it stays on one title, because each change loads a large image.
+    val lite = Lite.on
+    LaunchedEffect(items.size, focused, lite) {
+        while (!focused && !lite && items.size > 1) {
             delay(SLIDE_TIME)
             index = (index + 1) % items.size
         }
     }
     val meta = items[index % items.size]
     Box(Modifier.fillMaxWidth().height(if (tv) 470.dp else 320.dp)) {
-        Crossfade(meta, label = "banner") { m ->
+        val context = LocalPlatformContext.current
+        @Composable
+        fun cover(m: MetaPreview) {
+            // In Lite mode the image is half the size. Under the gradients, the difference is hard to see.
+            val model = if (lite) ImageRequest.Builder(context).data(m.background ?: m.poster).size(LITE_COVER_WIDTH, LITE_COVER_HEIGHT).build() else m.background ?: m.poster
             AsyncImage(
-                m.background ?: m.poster, null, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize(),
+                model, null, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize(),
                 onSuccess = { onCoverLoaded() }, onError = { onCoverLoaded() },
             )
         }
+        if (lite) cover(meta) else Crossfade(meta, label = "banner") { cover(it) }
         // The text stays easy to read on any art.
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(0f to Background.copy(alpha = 0.92f), 0.55f to Background.copy(alpha = 0.35f), 1f to Background.copy(alpha = 0f))))
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Background.copy(alpha = 0f), 1f to Background)))
@@ -147,7 +161,8 @@ fun HeroBanner(
         // One mark for each title. The mark of the title on screen is long and white.
         Row(Modifier.align(Alignment.BottomCenter).padding(bottom = if (tv) 18.dp else 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             items.indices.forEach { i ->
-                val width by animateDpAsState(if (i == index % items.size) 26.dp else 10.dp, label = "dot")
+                val target = if (i == index % items.size) 26.dp else 10.dp
+                val width = if (lite) target else animateDpAsState(target, label = "dot").value
                 Box(Modifier.width(width).height(4.dp).clip(Corner).background(if (i == index % items.size) TextPrimary else Outline))
             }
         }
