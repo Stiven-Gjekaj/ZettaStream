@@ -762,13 +762,20 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - GitHub serves release files from `release-assets.githubusercontent.com`
   with a Let's Encrypt certificate. Android 7.0 does not trust it, so
   Downloader shows "unknown error" on an old TV.
-- The release workflow copies the APK to the `download` branch. The branch
-  has one commit with the newest APK only. The workflow pushes it with force,
-  so the repository does not grow with each release.
-- jsDelivr serves the branch at
-  `https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@download/ZettaStream.apk`.
-  Its chain ends at GlobalSign Root R3, which Android 7.0 has. The workflow
-  purges the jsDelivr cache after the push.
+- The release workflow puts the APK in a commit of its own, with no parent,
+  and tags it `apk-vX.Y.Z`. The tag keeps the commit on GitHub.
+- jsDelivr serves the APK at `https://cdn.jsdelivr.net/gh/<repo>@<commit>/ZettaStream.apk`.
+  Its chain ends at GlobalSign Root R3, which Android 7.0 has.
+- The link names the commit, not a branch. A first version used a `download`
+  branch. jsDelivr kept the old commit for that branch after the purge, and
+  its version list for the repository gave an error 502. A link to a commit
+  cannot give an old file.
+- The workflow downloads the file through jsDelivr and compares its SHA-256
+  with the APK. If they differ after 5 minutes, the job fails. Then it adds
+  the link to the notes of the release.
+- The readme gives the link of 1.7.0. A TV needs only a version from 1.6.0,
+  because from 1.6.0 the app updates itself from GitHub on Android 7.
+- Each release adds about 15 MB to the repository, in its `apk-` tag.
 - jsDelivr does not serve a GitHub file larger than 20 MB. The APK is about
   15 MB now.
 

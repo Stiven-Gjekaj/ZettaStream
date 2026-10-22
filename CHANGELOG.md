@@ -20,8 +20,8 @@ newest one.
   keeps the home banner still, loads smaller images, and uses black side
   bars in the player.
 - The Lite mode row shows the memory, cores, and chip of the device.
-- A download link for old TVs that cannot open the GitHub link:
-  `https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@download/ZettaStream.apk`
+- A download link for old TVs that cannot open the GitHub link. The readme
+  and the notes of each release give it.
 
 ## 1.6.0 (2026-10-22)
 

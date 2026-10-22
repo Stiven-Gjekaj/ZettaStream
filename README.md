@@ -177,11 +177,12 @@ GitHub downloads. Downloader then shows "unknown error". Type this URL in
 Downloader instead:
 
 ```
-https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@download/ZettaStream.apk
+https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@5476948f230292986bfec25133b529a757e25cc1/ZettaStream.apk
 ```
 
-jsDelivr serves the newest APK with a certificate that old TVs trust.
-Each release updates it within a few minutes.
+jsDelivr serves the APK with a certificate that old TVs trust. This link
+gives version 1.7.0. From 1.6.0, the app updates itself from GitHub, also
+on Android 7. The notes of each release give the link to its own APK.
 
 If the TV is slow, open Settings, App, Lite mode. Lite mode is on by itself
 on Android 7 and on a TV with less than 2.5 GB of memory. The same row
