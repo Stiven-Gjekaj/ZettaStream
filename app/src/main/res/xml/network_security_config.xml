@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Many IPTV channels and some addons use plain HTTP. See docs/decisions.md. -->
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
-    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration" />
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration">
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- Android 7.0 does not have the Let's Encrypt roots. Without them, HTTPS to many hosts fails. -->
+            <certificates src="@raw/isrg_root_x1" />
+            <certificates src="@raw/isrg_root_x2" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>
