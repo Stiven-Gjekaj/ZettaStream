@@ -173,7 +173,7 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 
 - The Hitachi TV runs Android TV 11 (API level 30), software version
   v1.23.0.0. It does not run Android 12.
-- The app keeps `minSdk = 26`. Android TV 11 is in the range.
+- The app keeps `minSdk = 26`. Android TV 11 is in the range. On 2026-10-22, `minSdk` changed to 24. See "The app runs on Android 7.0".
 - The Mac cannot run an Android TV 11 emulator, because Google gives only an
   x86 image for API level 30. The emulator uses Android TV 12 (API level 31,
   arm64). The Hitachi TV confirms the behavior of API level 30.
@@ -731,3 +731,28 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
   screen. A change of the filter or of the side bars waits 0.8 seconds, so
   only the last choice restarts the video.
 
+
+## 2026-10-22: The app runs on Android 7.0
+
+- An abod Android TV runs Android 7.0 (API level 24). The app did not
+  install on it, because `minSdk` was 26.
+- `minSdk` is 24 now.
+- Core library desugaring adds `java.time` to the app. Android 7 does not
+  have it.
+- The adaptive launcher icon is in `mipmap-anydpi-v26`. Android 7 uses the
+  PNG icons in the other `mipmap` folders.
+- Android 7.0 does not have the ISRG roots of Let's Encrypt. The network
+  security config adds ISRG Root X1 and X2 from `res/raw`, next to the system
+  roots. Without them, HTTPS fails to hosts such as `iptv-org.github.io`.
+  Cinemeta and the other strem.io hosts use Google Trust Services, which
+  Android 7.0 trusts.
+- Android 7 ignores the weight of a variable font. Below API level 26 the font
+  family has only the regular Karla, so Compose makes bold text itself.
+- Picture-in-picture starts only on API levels 26 to 30. Android 7 has no
+  small window.
+- On Android 7 the update installer opens the security settings for unknown
+  sources. It does not ask per app.
+- libtorrent4j stays at 2.1.0-38. Version 2.1.0-39 needs API level 28, and
+  its native library does not load on Android 7.
+- The emulator for these checks is `android-24;default;arm64-v8a`. Google
+  gives the Android TV 7 image only for x86, which does not run on the Mac.

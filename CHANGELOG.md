@@ -13,6 +13,13 @@ A tag such as `v0.1.0` builds the signed APK and attaches it to a release on
 GitHub as `ZettaStream.apk`. The Downloader URL in the readme always gives the
 newest one.
 
+## 1.6.0 (2026-10-22)
+
+- ZettaStream runs on Android 7.0 and newer. Before, it needed Android 8.0.
+- HTTPS works on Android 7.0 to hosts with Let's Encrypt certificates, for
+  example many IPTV playlists.
+- Torrent streams work on Android 7.
+
 ## 1.5.1 (2026-10-15)
 
 - The CRT filter is much stronger: large scanlines, dark corners, and the

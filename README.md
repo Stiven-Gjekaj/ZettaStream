@@ -7,7 +7,7 @@
 _Plays your Stremio addons and IPTV playlists, made for a remote control_
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Android-8.0%2B-000000?style=for-the-badge&logo=android&logoColor=white" alt="Android 8.0 or newer"/>
+  <img src="https://img.shields.io/badge/Android-7.0%2B-000000?style=for-the-badge&logo=android&logoColor=white" alt="Android 7.0 or newer"/>
   <img src="https://img.shields.io/badge/Android_TV-ready-000000?style=for-the-badge&logo=androidtv&logoColor=white" alt="Ready for Android TV"/>
   <img src="https://img.shields.io/badge/Kotlin-Compose-000000?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin and Jetpack Compose"/>
 </p>
