@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.stivengjekaj.zettastream"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 37
         versionCode = 32
         versionName = "1.5.1"

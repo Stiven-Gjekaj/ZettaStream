@@ -121,12 +121,12 @@ class MainActivity : ComponentActivity() {
 
     /**
      * On a phone, the player goes into a small window when the viewer leaves the app, so the
-     * video goes on. A TV has no such window.
+     * video goes on. A TV has no such window, and Android 7 has none either.
      */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         // From Android 12, the window opens by itself. See updatePictureInPicture.
-        if (!app.isTv && app.current is Screen.Player && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        if (!app.isTv && app.current is Screen.Player && Build.VERSION.SDK_INT in Build.VERSION_CODES.O until Build.VERSION_CODES.S) {
             runCatching { enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()) }
         }
     }

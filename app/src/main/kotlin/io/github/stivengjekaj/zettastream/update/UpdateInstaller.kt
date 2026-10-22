@@ -55,11 +55,12 @@ class UpdateInstaller(private val context: Context, http: OkHttpClient, private 
         // Some TVs close the confirm dialog with no answer. After a time, a new press starts again.
         if (state.value is UpdateState.Installing && System.currentTimeMillis() - installingSince < INSTALL_WAIT) return
         // Android asks one time if this app can install apps. Some TVs have no screen for this.
-        if (!context.packageManager.canRequestPackageInstalls()) {
+        if (!canInstall()) {
             val opened = runCatching {
                 context.startActivity(
-                    Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "package:${context.packageName}".toUri())
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    // Android 7 has one switch for all apps, "Unknown sources", in the security settings.
+                    (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "package:${context.packageName}".toUri())
+                    else Intent(Settings.ACTION_SECURITY_SETTINGS)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
             }
             state.value = if (opened.isSuccess) UpdateState.NeedsPermission
@@ -80,6 +81,12 @@ class UpdateInstaller(private val context: Context, http: OkHttpClient, private 
             }
         }
     }
+
+    /** Android 8 asks for each app. Android 7 has the "Unknown sources" switch for all apps. */
+    @Suppress("DEPRECATION")
+    private fun canInstall(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.packageManager.canRequestPackageInstalls()
+        else Settings.Secure.getInt(context.contentResolver, Settings.Secure.INSTALL_NON_MARKET_APPS, 0) == 1
 
     private suspend fun download(): File = withContext(Dispatchers.IO) {
         val target = File(context.cacheDir, "update.apk")
