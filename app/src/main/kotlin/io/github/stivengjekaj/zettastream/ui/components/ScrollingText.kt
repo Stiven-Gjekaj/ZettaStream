@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
+import io.github.stivengjekaj.zettastream.ui.Lite
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
@@ -31,7 +32,8 @@ fun ScrollingText(
 ) {
     val height = with(LocalDensity.current) { (lineHeight * maxLines).toDp() }
     Box(modifier.heightIn(min = height), contentAlignment = Alignment.TopStart) {
-        if (active) {
+        // A marquee draws a new frame for as long as it moves. In Lite mode the text stays still.
+        if (active && !Lite.on) {
             Text(
                 text, color = color, fontSize = fontSize, lineHeight = lineHeight, fontWeight = fontWeight, maxLines = 1,
                 modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 1200, repeatDelayMillis = 1500),
