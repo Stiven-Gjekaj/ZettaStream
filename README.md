@@ -173,8 +173,9 @@ The home screen tells you when a newer version is available.
 ### An old TV
 
 An old TV, such as one with Android 7.0, does not trust the certificate of
-GitHub downloads. Downloader then shows "unknown error". Type this URL in
-Downloader instead:
+GitHub downloads. Downloader then shows "unknown error". Enter the code
+**`1216046`** in Downloader instead. The code opens this URL, which you can
+also type:
 
 ```
 https://cdn.jsdelivr.net/gh/Stiven-Gjekaj/ZettaStream@5476948f230292986bfec25133b529a757e25cc1/ZettaStream.apk

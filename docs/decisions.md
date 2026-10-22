@@ -776,6 +776,8 @@ Add a new choice at the end. Do not remove an old choice. Mark it as replaced.
 - The readme gives the link of 1.7.0. A TV needs only a version from 1.6.0,
   because from 1.6.0 the app updates itself from GitHub on Android 7.
 - Each release adds about 15 MB to the repository, in its `apk-` tag.
+- The Downloader code `1216046` opens the jsDelivr link of 1.7.0. The code
+  `8764108` stays on the GitHub link for newer TVs.
 - jsDelivr does not serve a GitHub file larger than 20 MB. The APK is about
   15 MB now.
 
