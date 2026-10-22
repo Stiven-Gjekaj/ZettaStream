@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.ui.components
 
+import io.github.stivengjekaj.zettastream.ui.Lite
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.collectAsState
 import io.github.stivengjekaj.zettastream.ui.screens.ProfileCircle
@@ -93,7 +94,9 @@ fun TvRail(app: AppState, current: Screen, modifier: Modifier = Modifier) {
     val profileItem = remember { FocusRequester() }
     val selectedIndex = NavItems.indexOfFirst { it.screen == current }.coerceAtLeast(0)
     app.railEntry = items[selectedIndex]
-    val width by animateDpAsState(if (open) RailOpenWidth else RailWidth, label = "rail")
+    // In Lite mode the bar opens at once. Each frame of the animation measures the bar again.
+    val target = if (open) RailOpenWidth else RailWidth
+    val width = if (Lite.on) target else animateDpAsState(target, label = "rail").value
     Column(
         modifier
             .fillMaxHeight()
