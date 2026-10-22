@@ -33,4 +33,17 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" ZettaStream.apk \
             --title "ZettaStream $GITHUB_REF_NAME" \
-            --notes "See CHANGELOG.md. On a TV, enter the code 8764108 in the Downloader app. The code opens https://github.com/${{ github.repository }}/releases/latest/download/ZettaStream.apk"
+            --notes "See CHANGELOG.md. On a TV, enter the code 8764108 in the Downloader app. The code opens https://github.com/${{ github.repository }}/releases/latest/download/ZettaStream.apk. An old TV that cannot open that link can use https://cdn.jsdelivr.net/gh/${{ github.repository }}@download/ZettaStream.apk"
+      # GitHub serves the release with a Let's Encrypt certificate. Android 7.0 and older do
+      # not trust it. jsDelivr uses a GlobalSign root, which old TVs trust. The download branch
+      # holds one commit with the newest APK only, so the repository does not grow.
+      - name: Copy the APK to the download branch for jsDelivr
+        run: |
+          mkdir download && cp ZettaStream.apk download/ && cd download
+          git init -q -b download
+          git config user.name "Stiven Gjekaj"
+          git config user.email "stivenagostingjekaj@gmail.com"
+          git add ZettaStream.apk
+          git commit -q -m "Add the APK of $GITHUB_REF_NAME"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" download
+          curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@download/ZettaStream.apk" > /dev/null
