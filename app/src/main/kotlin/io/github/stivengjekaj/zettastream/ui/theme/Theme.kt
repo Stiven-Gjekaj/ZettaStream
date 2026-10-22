@@ -1,5 +1,6 @@
 package io.github.stivengjekaj.zettastream.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -36,7 +37,9 @@ private fun karla(weight: FontWeight) = Font(
     variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
 )
 
-val Sans = FontFamily(
+// Android 7 ignores the weight of a variable font, so each weight looks regular. With only the
+// regular face, Compose makes the heavy weights bold itself.
+val Sans = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) FontFamily(karla(FontWeight.Normal)) else FontFamily(
     karla(FontWeight.Light),
     karla(FontWeight.Normal),
     karla(FontWeight.Medium),
