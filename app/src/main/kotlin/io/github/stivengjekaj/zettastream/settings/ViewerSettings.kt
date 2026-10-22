@@ -33,6 +33,9 @@ enum class SubtitleEdge(val label: String) { None("None"), Outline("Outline"), S
 /** What fills the bars beside a video of another shape, such as an old 4:3 anime. */
 enum class SideBars(val label: String) { Black("Black"), Ambient("Ambient blur"), Stretch("Stretch to fill") }
 
+/** Lite mode makes the app lighter for a weak device. Auto turns it on for old or small hardware. */
+enum class LiteMode(val label: String) { Auto("Auto"), On("On"), Off("Off") }
+
 /** The choices of the viewer. Each value has a default that works with no change. */
 @Serializable
 data class ViewerSettings(
@@ -63,6 +66,7 @@ data class ViewerSettings(
     val rowOrder: List<String> = emptyList(),
     /** The keys of the home rows that the viewer turned off. */
     val hiddenRows: Set<String> = emptySet(),
+    val liteMode: LiteMode = LiteMode.Auto,
 )
 
 /** Keeps the viewer settings in the private storage of the app. */

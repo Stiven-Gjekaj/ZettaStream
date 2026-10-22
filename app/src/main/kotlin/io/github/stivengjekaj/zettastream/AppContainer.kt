@@ -24,6 +24,7 @@ import io.github.stivengjekaj.zettastream.torrent.TorrentEngine
 import io.github.stivengjekaj.zettastream.source.SourceStore
 import io.github.stivengjekaj.zettastream.update.UpdateChecker
 import io.github.stivengjekaj.zettastream.update.UpdateInstaller
+import io.github.stivengjekaj.zettastream.ui.Lite
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,6 +66,10 @@ class AppContainer(app: Application) {
         // The "Play next" row of the TV follows the library, a few seconds after each change.
         @OptIn(FlowPreview::class)
         scope.launch(Dispatchers.IO) { library.data.debounce(3_000).collect { watchNext.sync(Library.continueWatching(it)) } }
+        // Lite mode follows the setting. The scope runs on the main thread, so the first value
+        // is in place before the first screen draws.
+        val weak = isWeak(app.hardware())
+        scope.launch { settings.settings.collect { Lite.on = Lite.resolve(it.liteMode, weak) } }
     }
 }
 

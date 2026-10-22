@@ -36,6 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.stivengjekaj.zettastream.BuildConfig
 import io.github.stivengjekaj.zettastream.settings.SettingsStore
+import io.github.stivengjekaj.zettastream.settings.LiteMode
+import io.github.stivengjekaj.zettastream.ui.Lite
+import io.github.stivengjekaj.zettastream.deviceSummary
+import androidx.compose.ui.platform.LocalContext
 import io.github.stivengjekaj.zettastream.settings.SubtitleBackground
 import io.github.stivengjekaj.zettastream.settings.SubtitleColor
 import io.github.stivengjekaj.zettastream.settings.SideBars
@@ -148,6 +152,15 @@ fun SettingsScreen(app: AppState) {
         item { SettingsRow("Share while streaming", "${onOff(viewer.torrentUpload)}. When off, the app uploads almost nothing.", tv) { set { it.copy(torrentUpload = !it.torrentUpload) } } }
         item { SettingsRow("VPN notice at start", onOff(viewer.vpnNotice), tv) { set { it.copy(vpnNotice = !it.vpnNotice) } } }
         item { Section("App", tv) }
+        item {
+            val context = LocalContext.current
+            val device = remember { context.deviceSummary() }
+            SettingsRow(
+                "Lite mode",
+                "${viewer.liteMode.label}, now ${if (Lite.on) "on" else "off"}. Fewer animations, smaller images, and black side bars, for a slow TV. Auto turns it on for old or small hardware. This device: $device.",
+                tv,
+            ) { set { it.copy(liteMode = SettingsStore.next(LiteMode.entries, it.liteMode)) } }
+        }
         item { SettingsRow("Remote control test", "Shows the code of each button that you press", tv) { app.open(Screen.KeyTest) } }
         item { SettingsRow("Clear the watch history", "Removes the progress of each video. The watchlist stays.", tv) { confirmClear = true } }
         item {
