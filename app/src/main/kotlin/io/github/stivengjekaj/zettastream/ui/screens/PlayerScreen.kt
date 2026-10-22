@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.media3.ui.AspectRatioFrameLayout
 import io.github.stivengjekaj.zettastream.player.Ambient
 import io.github.stivengjekaj.zettastream.settings.SideBars
+import io.github.stivengjekaj.zettastream.ui.Lite
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.Lifecycle
@@ -632,7 +633,7 @@ fun PlayerScreen(app: AppState, playback: Playback) {
             OptionRow("Filter", viewer.videoFilter.label + if (viewer.videoFilter.colour) " (more power)" else "",
                 { cycle(VideoFilter.entries, viewer.videoFilter, -1) { v, x -> v.copy(videoFilter = x) } },
                 { cycle(VideoFilter.entries, viewer.videoFilter, 1) { v, x -> v.copy(videoFilter = x) } }),
-            OptionRow("Side bars", viewer.sideBars.label,
+            OptionRow("Side bars", viewer.sideBars.label + if (Lite.on && viewer.sideBars == SideBars.Ambient) " (black in Lite mode)" else "",
                 { cycle(SideBars.entries, viewer.sideBars, -1) { v, x -> v.copy(sideBars = x) } },
                 { cycle(SideBars.entries, viewer.sideBars, 1) { v, x -> v.copy(sideBars = x) } }),
         )
@@ -903,7 +904,8 @@ fun PlayerScreen(app: AppState, playback: Playback) {
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         // The ambient fill is behind the video, so it shows only in the bars.
-        if (viewer.sideBars == SideBars.Ambient) AmbientFill(player, playerView)
+        // The ambient fill copies and blurs frames while the video plays. Lite mode leaves the bars black.
+        if (viewer.sideBars == SideBars.Ambient && !Lite.on) AmbientFill(player, playerView)
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
