@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.stivengjekaj.zettastream"
         minSdk = 24
         targetSdk = 37
-        versionCode = 33
-        versionName = "1.6.0"
+        versionCode = 34
+        versionName = "1.7.0"
         // Only the benchmark build starts with a source list. See the baselineprofile module.
         buildConfigField("String", "SEED_SOURCES", "\"\"")
     }
